@@ -1,0 +1,1904 @@
+# LORENZ ISTA — FINAL END-TO-END BUILD PROMPT
+## Awwwards-Level Design · Role-Based Dashboards · Excel Auto-Fill Enrollment
+### Paste this entire document into Replit AI, Kimi, Bolt.new, Cursor, or v0.dev
+
+---
+
+```
+PROJECT   : Lorenz International Skills Training Academy Website
+DESIGN    : Awwwards.com quality — refined, editorial, intentional
+THEME     : Light only. No dark mode.
+FONT      : Roboto (all weights) — smooth, clean, readable
+CORNERS   : 12–16px border-radius on cards. 8px on buttons/inputs. Not pill-shaped.
+ROLES     : 3 (Trainee · Staff · Admin) — single /login page, separate dashboards
+EXCEL     : Every enrollment auto-appends a row to LISTA_Enrollments.xlsx
+STACK     : Next.js 14 + Tailwind CSS + MongoDB + ExcelJS + Nodemailer + JWT
+```
+
+---
+
+## MASTER INSTRUCTION
+
+> Build a **complete, production-ready, full-stack web application** for
+> **Lorenz International Skills Training Academy, Inc. (LISTA)** using
+> every specification in this document. The design must feel like it could
+> win an Awwwards.com honorable mention — not generic, not AI-template-looking.
+> Think editorial clarity, intentional spacing, refined typography, subtle
+> micro-interactions. Light theme only. Roboto font throughout.
+> Every card has smooth 12–16px rounded corners. Buttons and inputs use 8px.
+> The enrollment form auto-saves every submission as a new row in an Excel
+> file on the server. There is one login page for all three roles —
+> the system detects the role from the database and redirects accordingly.
+
+---
+---
+
+# PART 1 — DESIGN SYSTEM
+## "The DNA of the entire website"
+
+---
+
+## 1.1 Color Palette (Extracted from the official LISTA logo seal)
+
+```css
+/* paste into globals.css */
+:root {
+
+  /* ── BRAND PRIMARIES (from logo) ── */
+  --royal:          #1B3A8C;   /* Gear bg → primary: headings, nav, buttons */
+  --royal-deep:     #0F2560;   /* Torch body → deep accent, footer */
+  --royal-mid:      #1E3F96;   /* Hover state of royal */
+  --royal-10:       #EEF3FC;   /* 10% royal tint → section bg, card bg */
+  --royal-20:       #D8E4F8;   /* 20% tint → hover wash, chip bg */
+
+  --emerald:        #1A6B3A;   /* Circle ring → secondary accent, success */
+  --emerald-mid:    #1D7A42;   /* Hover state of emerald */
+  --emerald-10:     #EAF5EE;   /* 10% tint → confirmed badges, feature bg */
+
+  --flame-gold:     #D4900A;   /* Torch flame → TWSP scholarship, CTAs accent */
+  --flame-gold-10:  #FEF6E4;   /* 10% tint → scholarship cards */
+
+  --flame-red:      #CC2B2B;   /* Flame tip → error, rejected status ONLY */
+  --flame-red-10:   #FEF0F0;   /* 10% tint → error bg */
+
+  /* ── NEUTRALS ── */
+  --white:          #FFFFFF;
+  --surface:        #F8F7F5;   /* Off-white page bg */
+  --surface-2:      #F0EEE9;   /* Subtle section alternate */
+  --border:         #E2DFDA;   /* Default border */
+  --border-strong:  #C8C4BC;   /* Emphasized border */
+
+  /* ── TEXT ── */
+  --text-primary:   #0D1B3E;   /* Almost-black navy for headings */
+  --text-body:      #3D4A6B;   /* Readable body text */
+  --text-muted:     #7A89A8;   /* Labels, captions, hints */
+  --text-faint:     #B0BAD0;   /* Placeholders */
+
+  /* ── STATUS ── */
+  --pending:        #D4900A;
+  --pending-bg:     #FEF6E4;
+  --confirmed:      #1A6B3A;
+  --confirmed-bg:   #EAF5EE;
+  --rejected:       #CC2B2B;
+  --rejected-bg:    #FEF0F0;
+  --waitlisted:     #4F46E5;
+  --waitlisted-bg:  #EEF2FF;
+
+  /* ── SPACING TOKENS ── */
+  --r-sm:     8px;    /* buttons, inputs, badges */
+  --r-md:     12px;   /* small cards, chips, tags */
+  --r-lg:     16px;   /* main cards, panels */
+  --r-xl:     20px;   /* hero panels, modal containers */
+
+  /* ── SHADOWS (Awwwards-style: barely-there) ── */
+  --shadow-xs:  0 1px 2px rgba(15,37,96,0.04);
+  --shadow-sm:  0 2px 8px rgba(15,37,96,0.06);
+  --shadow-md:  0 4px 20px rgba(15,37,96,0.08);
+  --shadow-lg:  0 8px 40px rgba(15,37,96,0.10);
+  --shadow-card: 0 2px 12px rgba(15,37,96,0.07), 0 0 0 1px rgba(15,37,96,0.04);
+
+  /* ── TRANSITIONS ── */
+  --ease-out:   cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.45, 0, 0.55, 1);
+  --duration:   220ms;
+}
+```
+
+---
+
+## 1.2 Typography — Roboto
+
+```css
+/* Google Fonts import */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Slab:wght@400;500;700&display=swap');
+
+:root {
+  --font-body:    'Roboto', system-ui, -apple-system, sans-serif;
+  --font-display: 'Roboto Slab', Georgia, serif;
+}
+
+/*
+  FONT ROLE GUIDE:
+  ─────────────────────────────────────────────────────────────
+  --font-display  Roboto Slab 400/500/700  →  Hero H1, H2, section headings,
+                                               pull quotes, mission statement
+  --font-body     Roboto 300/400/500/700   →  EVERYTHING else: nav, body text,
+                                               labels, buttons, inputs, tables
+
+  WEIGHT RULES:
+  300 → subtle body copy, captions on white bg
+  400 → standard body text, descriptions
+  500 → nav links, card titles, UI labels, button text
+  700 → page H1 on hero, stat numbers, badge text
+
+  NEVER use weights below 300.
+  NEVER use font-size below 12px.
+  ─────────────────────────────────────────────────────────────
+*/
+
+/* TYPE SCALE */
+.t-display  { font-family: var(--font-display); font-size: clamp(42px, 5vw, 64px); font-weight: 500; line-height: 1.1;  letter-spacing: -0.02em; }
+.t-h1       { font-family: var(--font-display); font-size: clamp(32px, 4vw, 52px); font-weight: 500; line-height: 1.15; letter-spacing: -0.02em; }
+.t-h2       { font-family: var(--font-display); font-size: clamp(26px, 3vw, 40px); font-weight: 500; line-height: 1.2;  letter-spacing: -0.015em; }
+.t-h3       { font-family: var(--font-display); font-size: clamp(20px, 2vw, 28px); font-weight: 500; line-height: 1.3;  }
+.t-h4       { font-family: var(--font-body);    font-size: 18px;  font-weight: 500; line-height: 1.4; }
+.t-body-lg  { font-family: var(--font-body);    font-size: 17px;  font-weight: 400; line-height: 1.75; }
+.t-body     { font-family: var(--font-body);    font-size: 15px;  font-weight: 400; line-height: 1.7;  }
+.t-body-sm  { font-family: var(--font-body);    font-size: 14px;  font-weight: 400; line-height: 1.65; }
+.t-label    { font-family: var(--font-body);    font-size: 12px;  font-weight: 500; line-height: 1;    letter-spacing: 0.06em; text-transform: uppercase; }
+.t-caption  { font-family: var(--font-body);    font-size: 12px;  font-weight: 400; line-height: 1.5;  color: var(--text-muted); }
+```
+
+---
+
+## 1.3 Awwwards-Level Design Rules (MANDATORY — apply everywhere)
+
+```
+PRINCIPLES
+─────────────────────────────────────────────────────────────────────────
+✦ Whitespace is the design. Every element needs room to breathe.
+  Section padding: 96px vertical, 6% horizontal. Never less.
+  Card inner padding: 28px–36px.
+
+✦ Typography hierarchy must be stark and deliberate.
+  H1 vs body text should have at least 2.5× size ratio.
+  Color contrast: body text min 7:1 on white.
+
+✦ Borders are for structure, not decoration.
+  Use 1px solid var(--border) ONLY where separation is needed.
+  Never add borders "just in case."
+
+✦ Shadows define depth, not decoration.
+  Use var(--shadow-card) on floating elements only.
+  Most cards sit directly on the page — no shadow, just subtle border.
+
+✦ Every interaction has a micro-animation.
+  Hover: translateY(-2px) + shadow lift in 220ms var(--ease-out).
+  Button press: scale(0.98) in 100ms.
+  Page transitions: opacity 0→1 + translateY 12px→0 in 350ms.
+
+✦ Color is intentional, not decorative.
+  Royal blue = authority, trust, government
+  Emerald = growth, future, success
+  Flame gold = ambition, scholarship, achievement
+  Flame red = ONLY for errors and urgency
+
+✦ Section backgrounds alternate deliberately:
+  white → surface (#F8F7F5) → royal-10 (#EEF3FC) → white
+
+✦ Cards: border-radius 16px, subtle shadow-card, white bg.
+  Inner chips/tags: border-radius 8px.
+  Buttons: border-radius 8px, never pill-shaped.
+  Inputs: border-radius 8px.
+  Modals: border-radius 20px.
+
+✦ No generic stock-photo placeholder text.
+  Every placeholder frame has a dashed border + the words
+  "Insert [specific photo]" e.g. "Insert campus front photo"
+
+✦ Grid gutter: 24px on desktop. 16px on tablet. 12px on mobile.
+
+✦ Max content width: 1200px always centered with margin: 0 auto.
+  Hero: full-width. Content sections: 1200px max.
+─────────────────────────────────────────────────────────────────────────
+```
+
+---
+
+## 1.4 Component Library
+
+```css
+/* ── BUTTONS ── */
+.btn {
+  font-family: var(--font-body);
+  font-size: 14px; font-weight: 500;
+  border-radius: var(--r-sm);
+  padding: 12px 24px;
+  border: none; cursor: pointer;
+  transition: all var(--duration) var(--ease-out);
+  display: inline-flex; align-items: center; gap: 8px;
+  white-space: nowrap; letter-spacing: 0.01em;
+}
+.btn:active { transform: scale(0.98); }
+
+.btn-primary {
+  background: var(--royal); color: #fff;
+  box-shadow: 0 2px 8px rgba(27,58,140,0.25);
+}
+.btn-primary:hover {
+  background: var(--royal-mid);
+  box-shadow: 0 4px 16px rgba(27,58,140,0.30);
+  transform: translateY(-1px);
+}
+.btn-emerald {
+  background: var(--emerald); color: #fff;
+  box-shadow: 0 2px 8px rgba(26,107,58,0.2);
+}
+.btn-emerald:hover {
+  background: var(--emerald-mid);
+  transform: translateY(-1px);
+}
+.btn-outline {
+  background: transparent;
+  color: var(--royal);
+  border: 1.5px solid var(--royal);
+}
+.btn-outline:hover {
+  background: var(--royal-10);
+  transform: translateY(-1px);
+}
+.btn-ghost {
+  background: transparent;
+  color: var(--text-body);
+  border: 1.5px solid var(--border);
+}
+.btn-ghost:hover { background: var(--surface); }
+.btn-gold {
+  background: var(--flame-gold); color: #fff;
+  box-shadow: 0 2px 8px rgba(212,144,10,0.25);
+}
+.btn-gold:hover { filter: brightness(1.05); transform: translateY(-1px); }
+.btn-lg  { padding: 15px 32px; font-size: 15px; }
+.btn-sm  { padding: 8px 16px;  font-size: 13px; }
+.btn-full { width: 100%; justify-content: center; }
+
+/* ── CARDS ── */
+.card {
+  background: var(--white);
+  border-radius: var(--r-lg);
+  border: 1px solid var(--border);
+  padding: 28px;
+  transition: box-shadow var(--duration) var(--ease-out),
+              transform var(--duration) var(--ease-out);
+}
+.card-hover:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-3px);
+}
+.card-flat {
+  background: var(--white);
+  border-radius: var(--r-lg);
+  border: 1px solid var(--border);
+  padding: 28px;
+}
+.card-royal {
+  background: var(--royal);
+  border-radius: var(--r-lg);
+  padding: 28px;
+}
+.card-surface {
+  background: var(--surface);
+  border-radius: var(--r-lg);
+  border: 1px solid var(--border);
+  padding: 24px;
+}
+
+/* ── FORM ELEMENTS ── */
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+.form-label {
+  font-family: var(--font-body);
+  font-size: 12px; font-weight: 500;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.form-input, .form-select, .form-textarea {
+  font-family: var(--font-body);
+  font-size: 15px; font-weight: 400;
+  color: var(--text-primary);
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 12px 16px;
+  outline: none;
+  transition: border-color var(--duration), background var(--duration);
+  width: 100%;
+}
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+  border-color: var(--royal);
+  background: var(--white);
+  box-shadow: 0 0 0 3px rgba(27,58,140,0.08);
+}
+.form-input.error { border-color: var(--flame-red); }
+.form-input.error:focus { box-shadow: 0 0 0 3px rgba(204,43,43,0.08); }
+.form-error { font-size: 12px; color: var(--flame-red); margin-top: 4px; }
+.form-textarea { min-height: 100px; resize: vertical; }
+
+/* ── STATUS BADGES ── */
+.badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 5px 12px;
+  border-radius: var(--r-sm);
+  font-family: var(--font-body);
+  font-size: 12px; font-weight: 500;
+}
+.badge::before {
+  content: ''; width: 6px; height: 6px;
+  border-radius: 50%; background: currentColor; opacity: 0.6;
+}
+.badge-pending    { background: var(--pending-bg);    color: var(--pending); }
+.badge-confirmed  { background: var(--confirmed-bg);  color: var(--confirmed); }
+.badge-rejected   { background: var(--rejected-bg);   color: var(--rejected); }
+.badge-waitlisted { background: var(--waitlisted-bg); color: var(--waitlisted); }
+
+/* ── STAT CARDS ── */
+.stat-card {
+  background: var(--white);
+  border-radius: var(--r-lg);
+  border: 1px solid var(--border);
+  padding: 24px;
+}
+.stat-value {
+  font-family: var(--font-display);
+  font-size: 36px; font-weight: 500;
+  color: var(--text-primary); line-height: 1;
+  margin-bottom: 6px;
+}
+.stat-label {
+  font-family: var(--font-body);
+  font-size: 13px; font-weight: 400;
+  color: var(--text-muted);
+}
+.stat-delta {
+  font-size: 12px; font-weight: 500;
+  padding: 2px 8px; border-radius: 6px;
+  display: inline-block; margin-top: 8px;
+}
+.stat-delta.up   { background: var(--confirmed-bg); color: var(--confirmed); }
+.stat-delta.down { background: var(--rejected-bg);  color: var(--rejected); }
+
+/* ── SECTION LABELS (Awwwards-style) ── */
+.section-eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: var(--font-body);
+  font-size: 11px; font-weight: 500;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--emerald);
+  margin-bottom: 14px;
+}
+.section-eyebrow::before {
+  content: '';
+  display: inline-block;
+  width: 28px; height: 2px;
+  background: var(--emerald);
+  border-radius: 2px;
+}
+
+/* ── SCROLL REVEAL ── */
+.reveal {
+  opacity: 0; transform: translateY(20px);
+  transition: opacity 0.5s var(--ease-out), transform 0.5s var(--ease-out);
+}
+.reveal.visible { opacity: 1; transform: translateY(0); }
+.reveal-delay-1 { transition-delay: 0.1s; }
+.reveal-delay-2 { transition-delay: 0.2s; }
+.reveal-delay-3 { transition-delay: 0.3s; }
+```
+
+---
+
+## 1.5 Responsive Breakpoints
+
+```css
+/* BREAKPOINTS */
+/* sm  */ @media (max-width: 639px)  { /* Mobile ≤ 639px  */ }
+/* md  */ @media (max-width: 767px)  { /* Tablet ≤ 767px  */ }
+/* lg  */ @media (max-width: 1023px) { /* Laptop ≤ 1023px */ }
+/* xl  */ @media (min-width: 1024px) { /* Desktop 1024px+ */ }
+/* 2xl */ @media (min-width: 1280px) { /* Wide 1280px+    */ }
+
+/* MOBILE RULES */
+/* All section padding: 56px 24px on mobile              */
+/* Cards: padding 20px on mobile                         */
+/* Dashboard sidebar: hidden → drawer on mobile          */
+/* Bottom nav: fixed 64px, 5 icons on mobile dashboards  */
+/* Buttons: full width on mobile                         */
+/* Tables → card list view on mobile                     */
+/* Grids: 1 column on mobile, 2 on tablet, 3 on desktop  */
+```
+
+---
+---
+
+# PART 2 — SCHOOL CONTENT (All Real Data — No Lorem Ipsum)
+
+---
+
+## 2.1 Identity
+
+| Field | Value |
+|---|---|
+| Full Name | Lorenz International Skills Training Academy, Inc. |
+| Short Name | Lorenz ISTA / LISTA |
+| Tagline | "We are investing in your future." |
+| Founded | 2014, Gingoog City, Misamis Oriental, Philippines |
+| Type | TESDA-accredited Technical-Vocational Institution (TVET) |
+| Website | lorenzinternational.org |
+
+## 2.2 Contact
+
+| Field | Value |
+|---|---|
+| Main Address | FJY Bldg., National Highway, Barangay 24-A, Gingoog City, Misamis Oriental |
+| Alt Address | Guno–Condeza Streets, Brgy. 16, Gingoog City |
+| Farm / Training Site | Lunotan, Gingoog City, Misamis Oriental |
+| Telephone | (088) 861-4200 |
+| Mobile 1 | 0955-881-5161 |
+| Mobile 2 | 0917-523-2724 |
+| Mobile 3 | 0926-854-1906 |
+| Office Hours | Monday – Saturday, 8:00 AM – 5:00 PM |
+
+## 2.3 Leadership
+
+| Role | Name |
+|---|---|
+| School President | Ms. Maggie Zapanta-Tse |
+
+## 2.4 Mission & Vision
+
+**Mission:** Empowering individuals through collaborative technical training, innovative education, and industry-driven production services. We foster excellence and drive transformative growth within the global technological landscape.
+
+**Vision:** To be the leading, nationally recognized center of excellence in providing accurate, reliable, and efficient competency assessments aligned with global standards.
+
+## 2.5 Accreditations & Partners
+
+1. TESDA — Technical Education and Skills Development Authority (Primary accreditor)
+2. CHED — Commission on Higher Education
+3. DepEd — Department of Education
+4. ATI — Agricultural Training Institute, Region X, Northern Mindanao
+5. City Agriculture Office — Gingoog City
+6. TWSP — Training for Work Scholarship Program (TESDA)
+
+## 2.6 Courses
+
+| # | Course | NC Level | Category | TWSP |
+|---|---|---|---|---|
+| 1 | Computer Systems Servicing | NC II | ICT | ❌ |
+| 2 | Driving | NC II | Automotive | ✅ |
+| 3 | Electrical Installation & Maintenance | NC II | Construction | ❌ |
+| 4 | HEO — Backhoe Loader Operations | NC II | Construction | ❌ |
+| 5 | Bookkeeping | NC III | Business | ✅ |
+| 6 | Agricultural Crops Production | NC I | Agriculture | ✅ |
+| 7 | Tailoring | NC II | Garments | ❌ |
+
+## 2.7 Assessment Center
+
+- TESDA-accredited, PTCACS-certified
+- Targets: 1,500 certifications, 75% employment rate
+- Assesses all 7 qualifications above
+
+## 2.8 Events & Community
+
+**Event 1 — Women's Training (March 2024)**
+- 30 women, urban gardening + composting
+- Partners: ATI Northern Mindanao + City Agriculture Office Gingoog
+
+**Event 2 — Rabbitry TOT (June 2024)**
+- 20 participants from 3 provinces, 5-day training
+- Partner: ATI-RTC Region X, held at LISTA farm, Lunotan
+
+## 2.9 Testimonials
+
+- "Salamat sa Lorenz ISTA! Nakakuha na ako ng trabaho bilang electrician." — Graduate, Electrical NC II
+- "Nag-avail ako ng TWSP scholarship para sa Bookkeeping. Libre ang training, sobrang worth it!" — Graduate, Bookkeeping NC III
+- "Ang instructors dito ay propesyonal at maalam. Natuto talaga ako ng praktikal na skills." — Graduate, Computer Systems Servicing NC II
+- "Ang Lorenz Assessment Center ay mabilis at maayos ang proseso." — Assessment Client
+
+## 2.10 FAQs
+
+1. Who can apply for TWSP? — Unemployed, underemployed, or employed Filipinos seeking upgrade.
+2. Is TWSP free? — Yes, full coverage. Allowance may be given.
+3. How many slots? — Limited, first come first served. Call (088) 861-4200.
+4. Required documents? — PSA Birth Certificate, valid ID, proof of residency, educational certificate.
+5. How long is training? — Depends on course. Tailoring NC II = min 275 hours.
+6. Self-funded enrollment? — Yes, welcome.
+7. After training? — Take TESDA National Competency Assessment, receive NC I/II/III.
+8. Online training? — Face-to-face only at Gingoog City campus.
+
+---
+---
+
+# PART 3 — PUBLIC WEBSITE PAGES
+
+---
+
+## 3.1 Global Navigation
+
+**Fixed top bar. 72px height. White background. 1px solid var(--border) bottom.**
+
+```
+LEFT:  School logo (circular seal image or "L" initials in royal circle)
+       + "Lorenz ISTA" in Roboto Slab 500, --royal
+       + "Gingoog City · Est. 2014" in Roboto 400, --text-muted, 11px
+
+CENTER (desktop): About | Courses | Assessment | Scholarships
+       — Roboto 500, 14px, --text-body. Active = --royal underline.
+
+RIGHT: [Enroll Now] → btn-primary btn-sm
+       If logged in: show role avatar chip → [My Dashboard]
+
+MOBILE: Logo + hamburger → full-screen overlay nav
+```
+
+---
+
+## 3.2 Home Page (/)
+
+**HERO SECTION:**
+
+Layout: 2-column (55% left text / 45% right image). Full viewport height.
+
+Left column — white background:
+```
+[Left border accent: 4px gradient, royal → emerald, full height]
+
+Eyebrow text (section-eyebrow, emerald):
+  "TESDA & CHED Accredited · Gingoog City · Est. 2014"
+
+H1 (t-h1, Roboto Slab, --royal):
+  "Invest in Your
+   Future. Build
+   Real Skills."
+  — "Future." in --emerald
+  — "Real Skills." in --royal
+
+Body (t-body, Roboto 400, --text-body):
+  "Lorenz International Skills Training Academy offers
+   nationally recognized TVET programs that open doors
+   to careers in the Philippines and abroad."
+
+Buttons (gap 12px):
+  [Apply Now →]  → btn-primary btn-lg
+  [View Courses] → btn-outline btn-lg
+
+Stats row (top border 1px --border, padding-top 28px):
+  [1,500+]  [75%]      [2014]
+  Cert Target  Employment  Est. Year
+  — Values: Roboto Slab 500 32px, --royal
+  — Labels: Roboto 400 12px uppercase, --text-muted
+```
+
+Right column — var(--royal-10) background:
+```
+[Campus/school photo — full bleed inside column]
+Placeholder: dashed 2px border, label "Insert campus hero photo"
+
+Floating accreditation card (white, border-radius 16px, shadow-md):
+  Position: absolute, bottom 32px, left 24px, right 24px
+  Content: "Nationally Accredited Programs"
+  Tags: [TESDA] [CHED] [DepEd] [TWSP] [ATI]
+  — Tags: border-radius 8px, royal bg, white text, 12px Roboto 500
+```
+
+Below hero — Royal blue trust bar (--royal bg, 56px tall):
+```
+TESDA Accredited · CHED Recognized · DepEd Listed · TWSP Partner · ATI Partner
+— Items: Roboto 500 12px uppercase white 75% opacity
+— Separators: 6px circle, --flame-gold
+```
+
+**ABOUT PREVIEW SECTION** (white bg):
+```
+Eyebrow: "About the Academy"
+H2: "Building Competence. Enabling Careers."
+2-column grid:
+  Left: Mission quote card (royal bg, Roboto Slab italic white)
+        + 2×2 pillars grid (Quality Assessment / Global Standards /
+          Skills Development / Career Placement)
+  Right: Academy description text + contact details (address, phone, hours)
+CTA: "Learn More About LISTA →" (text link, --royal, Roboto 500)
+```
+
+**COURSES SECTION** (--surface bg):
+```
+Eyebrow: "Programs Offered"
+H2: "7 TESDA-Accredited Training Courses"
+3-column card grid — each card:
+  - Icon area (48×48px, --royal-10 bg, border-radius 12px)
+  - Course name (Roboto Slab 500, 18px, --text-primary)
+  - NC Level badge (border-radius 8px, royal bg, white text, 12px)
+  - TWSP badge if applicable (flame-gold bg, white)
+  - Description (Roboto 400, 14px, --text-muted)
+  - "Enroll →" text link
+  Hover: translateY(-3px) + shadow-md in 220ms
+```
+
+**ASSESSMENT CENTER PREVIEW** (--royal bg):
+```
+Eyebrow (white 60%): "Assessment Center"
+H2 (white): "Lorenz ISTA Assessment Center"
+Body (white 65%): Short description
+4 metric cards (white bg, border-radius 16px):
+  1,500 Certifications · 75% Employment · PTCACS Certified · 7 Qualifications
+CTA: [Learn More →] btn with white border
+```
+
+**SCHOLARSHIP BANNER** (--flame-gold-10 bg, --flame-gold 3px left border):
+```
+H3: "TWSP Scholarship Slots Available"
+Pills: [Bookkeeping NC III] [Driving NC II] [Agricultural Crops Production NC I]
+CTA: [Check Available Slots →] btn-gold
+```
+
+**TESTIMONIALS** (white bg):
+```
+Eyebrow: "Student Stories"
+H2: "What Our Graduates Say"
+3-column quote cards (border-radius 16px, surface bg, --border)
+  — Large quotation mark (Roboto Slab 96px, --royal-20)
+  — Quote text (Roboto 400 italic, 15px)
+  — Attribution (Roboto 500, 13px, --royal)
+```
+
+**FINAL CTA** (--royal-deep bg):
+```
+H2 (white): "Begin Your Skills Journey Today"
+Body (white 65%): "Join thousands of Filipinos..."
+[Enroll Now — Free Inquiry] → btn-gold btn-lg
+```
+
+---
+
+## 3.3 About Page (/about)
+
+Sections:
+1. Page hero banner (--royal bg): "About Lorenz ISTA" + breadcrumb
+2. Who We Are — full text + founding year 2014
+3. Mission card (royal bg) + Vision card (white, royal border-left 4px)
+4. 4 Pillars — 2×2 grid, surface bg cards with emerald numbered icons
+5. Leadership — Ms. Maggie Zapanta-Tse card (photo placeholder + bio)
+6. Accreditations — horizontal badge strip (TESDA | CHED | DepEd | ATI | TWSP)
+7. Community Events — 2 cards: Women's Training (March 2024) + Rabbitry (June 2024)
+8. Google Maps embed — FJY Bldg., National Highway, Gingoog City
+9. CTA strip: "Ready to enroll?" → /courses
+
+---
+
+## 3.4 Courses Page (/courses)
+
+1. Page banner (royal): "Our Programs"
+2. Filter pills: All | NC I | NC II | NC III | ICT | Automotive | Construction | Business | Agriculture | Garments
+   — JS-powered. Active pill: royal bg, white text.
+3. 3-column course card grid (border-radius 16px, shadow-card on hover)
+   Each card:
+   - Category icon (48px, --royal-10 bg, border-radius 12px)
+   - NC badge + TWSP badge
+   - Course name (Roboto Slab 500)
+   - Description (Roboto 400, --text-muted)
+   - 3 career outcomes
+   - [Enroll in this Course →] btn-primary btn-sm
+     (pre-fills course in enrollment form via URL ?course=)
+4. Assessment callout card (full-width, --royal-10 bg, border-radius 16px)
+
+---
+
+## 3.5 Assessment Center (/assessment)
+
+1. Page banner
+2. PTCACS explanation block
+3. 4 Objectives (numbered, emerald numbers, Roboto Slab)
+4. 4 Metric cards
+5. Qualifications list (numbered, clean table-like layout)
+6. 3-step process: Register → Get Assessed → Get Certified
+7. Book assessment CTA → /enroll?type=assessment
+
+---
+
+## 3.6 Scholarships (/scholarships)
+
+1. Page banner
+2. TWSP overview
+3. 3 scholarship course cards (flame-gold-10 bg, gold left border)
+4. Eligibility — clean bordered list
+5. 7-step application guide (emerald step numbers)
+6. FAQ accordion (8 questions, smooth open/close animation)
+7. CTA → /enroll
+
+---
+
+## 3.7 Enroll Page (/enroll)
+
+Layout: 60% form (white) / 40% info pane (--royal bg)
+
+FORM FIELDS (26 total — see Part 5):
+- Section A: Personal (5 fields)
+- Section B: Contact (5 fields)
+- Section C: Education (2 fields)
+- Section D: Course Selection (3 fields)
+- Section E: Scholarship (2 fields)
+- Section F: Additional + Consent (3 fields)
+
+On submit → POST /api/enroll → success modal with reference number
+           → auto-creates Trainee account
+           → auto-appends row to Excel
+           → sends confirmation email
+
+Info pane (right, --royal bg):
+- Contact details with icon-boxes (--royal-mid bg, border-radius 12px)
+- Office hours
+- Social links (Facebook, Google Maps)
+
+---
+
+## 3.8 Footer
+
+4 columns:
+1. Logo + "We are investing in your future." + copyright
+2. Quick Links: Home | About | Courses | Assessment | Scholarships | Enroll
+3. Contact: address, phones, hours
+4. Accreditations: TESDA | CHED | TWSP badge row
+
+Bottom bar (--royal-deep bg):
+"© 2025 Lorenz International Skills Training Academy, Inc. All rights reserved."
+
+---
+---
+
+# PART 4 — LOGIN PAGE (Single Page, All 3 Roles)
+
+---
+
+## 4.1 Design
+
+**Route:** /login
+**Layout:** Split screen — 50% left brand panel / 50% right form panel
+
+**LEFT PANEL (--royal bg, full height):**
+```
+[Centered, padded 56px]
+
+[LISTA Logo — circular seal or L monogram]
+Font: Roboto Slab 500
+
+Title: "Lorenz ISTA"
+       Subtitle: "Gingoog City, Misamis Oriental"
+       (Roboto 400, white 70%)
+
+Mission quote:
+"We are investing
+ in your future."
+(Roboto Slab 400 italic, white, 24px)
+
+Accreditation badges (bottom):
+[TESDA] [CHED] [DepEd]
+— small white chips, 8px border-radius, white-20% bg
+```
+
+**RIGHT PANEL (white bg, full height):**
+```
+[Centered card, max-width 420px]
+
+Headline: "Welcome Back"
+          (Roboto Slab 500, 32px, --royal)
+
+Subtext: "Sign in to your account to continue."
+          (Roboto 400, 15px, --text-muted)
+
+Form fields:
+  [Email Address]  → form-input
+  [Password]       → form-input type="password" + show/hide toggle
+  [Forgot Password?] → text-link right-aligned, 12px, --royal
+
+[Sign In]  → btn-primary btn-full btn-lg (Roboto 500)
+
+Divider: "── or ──" (Roboto 400, --text-muted, 13px)
+
+[New student? Submit an enrollment inquiry] → link to /enroll
+
+Footer note (bottom, small, --text-muted):
+"By signing in, you agree to our Privacy Policy
+ in accordance with RA 10173 (Data Privacy Act of 2012)."
+```
+
+**ROLE DETECTION (how the system knows which dashboard to load):**
+```
+POST /api/auth/login { email, password }
+→ Find user in DB
+→ Check user.role
+→ If 'trainee' → redirect to /dashboard
+→ If 'staff'   → redirect to /staff
+→ If 'admin'   → redirect to /admin
+→ If wrong password → show error inline (red border on password field)
+→ After 5 failed attempts → lock for 15 minutes, show countdown
+```
+
+**FORGOT PASSWORD (/forgot-password):**
+```
+Same split layout.
+Right panel: email input + "Send Reset Link" + back-to-login link.
+On submit: "Check your email for a reset link." (success message, emerald bg).
+```
+
+---
+---
+
+# PART 5 — ENROLLMENT FORM FIELDS & EXCEL SYSTEM
+
+---
+
+## 5.1 All Form Fields
+
+**Section A — Personal Information**
+| # | Field | Type | Options | Required |
+|---|---|---|---|---|
+| 1 | First Name | text | — | ✅ |
+| 2 | Last Name | text | — | ✅ |
+| 3 | Date of Birth | date | — | ✅ |
+| 4 | Gender | select | Male / Female / Prefer not to say | ✅ |
+| 5 | Civil Status | select | Single / Married / Widowed / Separated | ✅ |
+
+**Section B — Contact Information**
+| # | Field | Type | Notes | Required |
+|---|---|---|---|---|
+| 6 | Email Address | email | — | ✅ |
+| 7 | Contact Number | tel | Philippine format 09XX-XXX-XXXX | ✅ |
+| 8 | Complete Home Address | textarea | — | ✅ |
+| 9 | City / Municipality | text | — | ✅ |
+| 10 | Province | text | — | ✅ |
+
+**Section C — Educational Background**
+| # | Field | Type | Options | Required |
+|---|---|---|---|---|
+| 11 | Highest Educational Attainment | select | Elementary Graduate / HS Graduate / SHS Graduate / College Level / College Graduate / Vocational Graduate | ✅ |
+| 12 | School Last Attended | text | — | ❌ |
+
+**Section D — Course Selection**
+| # | Field | Type | Options | Required |
+|---|---|---|---|---|
+| 13 | Course of Interest | select | All 7 courses (pre-fill from URL ?course=) | ✅ |
+| 14 | Preferred Schedule | select | Morning 8AM–12PM / Afternoon 1PM–5PM / Full Day 8AM–5PM | ✅ |
+| 15 | Enrollment Type | select | New Enrollee / Re-enrollee / Assessment Only | ✅ |
+
+**Section E — Scholarship**
+| # | Field | Type | Options | Required |
+|---|---|---|---|---|
+| 16 | Applying for TWSP Scholarship? | select | Yes, I want to apply / No, self-funded / I need more information | ✅ |
+| 17 | Current Employment Status | select | Unemployed / Underemployed / Employed (seeking upgrade) / Student | ✅ |
+
+**Section F — Additional**
+| # | Field | Type | Options | Required |
+|---|---|---|---|---|
+| 18 | How did you hear about us? | select | Facebook / Friend or Family / TESDA Website / Walk-in / Other | ❌ |
+| 19 | Additional Notes | textarea | — | ❌ |
+| 20 | Consent checkbox | checkbox | "I agree my info will be used for enrollment processing per RA 10173." | ✅ |
+
+**Anti-spam (hidden):**
+```html
+<input type="text" name="website" style="display:none" tabindex="-1" autocomplete="off">
+```
+If `website` field is filled → silently discard, return fake success.
+
+## 5.2 Form Validation
+
+```javascript
+firstName:  required, minLength(2)
+lastName:   required, minLength(2)
+dob:        required, age >= 15 years
+email:      required, valid email format
+contact:    required, regex: /^(09|\+639)\d{9}$/
+address:    required, minLength(10)
+city:       required
+province:   required
+education:  required, must select
+course:     required, must select
+schedule:   required, must select
+enrollType: required, must select
+scholarship:required, must select
+employment: required, must select
+consent:    required, must be checked
+```
+
+Errors: show below each field with red Roboto 12px.
+On blur validation — not only on submit.
+Submit button disabled until all required fields valid.
+
+## 5.3 Success Modal
+
+```
+Overlay: rgba(15,37,96,0.75) backdrop — blur(4px)
+Modal: white, border-radius 20px, max-width 480px, shadow-lg, padding 48px
+
+[Checkmark icon — 56px circle, --emerald bg, white ✓]
+
+H3 (Roboto Slab 500, 28px, --royal): "Inquiry Submitted!"
+
+Body (Roboto 400, 15px, --text-body):
+"Thank you for your interest in Lorenz ISTA.
+ Your reference number is:"
+
+Reference chip (--royal-10 bg, --royal border 1px, border-radius 12px, padding 14px 24px):
+  "LISTA-2025-00001" — Roboto 500 22px --royal + [Copy icon]
+
+"Our admissions team will contact you within 24 hours.
+ Login credentials have been sent to your email."
+
+Contact row: 📞 (088) 861-4200 · Mon–Sat 8AM–5PM
+
+[Go to My Dashboard] → btn-primary btn-lg
+[Close]              → text link, --text-muted, Roboto 400
+```
+
+## 5.4 Excel File — Column Layout
+
+**File:** `data/LISTA_Enrollments.xlsx`
+**Sheet:** `Enrollments`
+
+| Col | Header | Example |
+|---|---|---|
+| A | Reference Number | LISTA-2025-00001 |
+| B | Submission Date | 05/01/2025 |
+| C | Submission Time | 10:32 AM |
+| D | First Name | Juan |
+| E | Last Name | Dela Cruz |
+| F | Date of Birth | 01/15/2000 |
+| G | Gender | Male |
+| H | Civil Status | Single |
+| I | Email Address | juan@email.com |
+| J | Contact Number | 0917-123-4567 |
+| K | Complete Address | 123 Rizal St., Brgy. 5 |
+| L | City / Municipality | Gingoog City |
+| M | Province | Misamis Oriental |
+| N | Highest Educational Attainment | Senior High School Graduate |
+| O | School Last Attended | Gingoog City National High School |
+| P | Course of Interest | Electrical Installation & Maintenance NC II |
+| Q | Preferred Schedule | Morning (8AM–12PM) |
+| R | Enrollment Type | New Enrollee |
+| S | TWSP Scholarship Application | No, self-funded |
+| T | Current Employment Status | Unemployed |
+| U | How They Heard About Us | Facebook |
+| V | Additional Notes | — |
+| W | Application Status | Pending |
+
+**Excel styling:**
+- Row 1 header: #1B3A8C fill, white bold Roboto 11pt, 32px height, frozen
+- Rows: alternating white / #F8F7F5
+- Column W status cells: color-coded (see Part 1 status colors)
+- Auto-filter on all columns. Freeze row 1.
+
+## 5.5 ExcelJS Backend Code
+
+```javascript
+// lib/excel.js
+const ExcelJS = require('exceljs');
+const path = require('path');
+const fs = require('fs');
+
+const EXCEL_PATH = path.join(process.cwd(), 'data', 'LISTA_Enrollments.xlsx');
+
+const COLUMNS = [
+  { header: 'Reference Number',               key: 'refNo',       width: 20 },
+  { header: 'Submission Date',                 key: 'date',        width: 16 },
+  { header: 'Submission Time',                 key: 'time',        width: 14 },
+  { header: 'First Name',                      key: 'firstName',   width: 16 },
+  { header: 'Last Name',                       key: 'lastName',    width: 16 },
+  { header: 'Date of Birth',                   key: 'dob',         width: 14 },
+  { header: 'Gender',                          key: 'gender',      width: 12 },
+  { header: 'Civil Status',                    key: 'civilStatus', width: 14 },
+  { header: 'Email Address',                   key: 'email',       width: 28 },
+  { header: 'Contact Number',                  key: 'contact',     width: 18 },
+  { header: 'Complete Address',                key: 'address',     width: 36 },
+  { header: 'City / Municipality',             key: 'city',        width: 20 },
+  { header: 'Province',                        key: 'province',    width: 18 },
+  { header: 'Highest Educational Attainment',  key: 'education',   width: 26 },
+  { header: 'School Last Attended',            key: 'school',      width: 28 },
+  { header: 'Course of Interest',              key: 'course',      width: 36 },
+  { header: 'Preferred Schedule',              key: 'schedule',    width: 20 },
+  { header: 'Enrollment Type',                 key: 'enrollType',  width: 18 },
+  { header: 'TWSP Scholarship Application',    key: 'scholarship', width: 22 },
+  { header: 'Current Employment Status',       key: 'employment',  width: 22 },
+  { header: 'How They Heard About Us',         key: 'heardFrom',   width: 20 },
+  { header: 'Additional Notes',                key: 'notes',       width: 40 },
+  { header: 'Application Status',              key: 'status',      width: 16 },
+];
+
+async function appendEnrollment(data) {
+  if (!fs.existsSync(path.join(process.cwd(), 'data'))) {
+    fs.mkdirSync(path.join(process.cwd(), 'data'), { recursive: true });
+  }
+
+  let workbook = new ExcelJS.Workbook();
+  let worksheet;
+
+  if (fs.existsSync(EXCEL_PATH)) {
+    await workbook.xlsx.readFile(EXCEL_PATH);
+    worksheet = workbook.getWorksheet('Enrollments');
+  } else {
+    worksheet = workbook.addWorksheet('Enrollments');
+    worksheet.columns = COLUMNS;
+    const headerRow = worksheet.getRow(1);
+    headerRow.font      = { bold: true, color: { argb: 'FFFFFFFF' }, size: 11, name: 'Calibri' };
+    headerRow.fill      = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1B3A8C' } };
+    headerRow.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+    headerRow.height    = 32;
+    worksheet.autoFilter = { from: 'A1', to: 'W1' };
+    worksheet.views     = [{ state: 'frozen', ySplit: 1 }];
+  }
+
+  const now = new Date();
+  const rowCount = worksheet.rowCount;
+  const refNo = `LISTA-${now.getFullYear()}-${String(rowCount).padStart(5, '0')}`;
+
+  const newRow = worksheet.addRow({
+    refNo,
+    date:       now.toLocaleDateString('en-PH'),
+    time:       now.toLocaleTimeString('en-PH'),
+    firstName:  data.firstName,
+    lastName:   data.lastName,
+    dob:        data.dob,
+    gender:     data.gender,
+    civilStatus:data.civilStatus,
+    email:      data.email,
+    contact:    data.contact,
+    address:    data.address,
+    city:       data.city,
+    province:   data.province,
+    education:  data.education,
+    school:     data.school  || '—',
+    course:     data.course,
+    schedule:   data.schedule,
+    enrollType: data.enrollType,
+    scholarship:data.scholarship,
+    employment: data.employment,
+    heardFrom:  data.heardFrom || '—',
+    notes:      data.notes    || '—',
+    status:     'Pending',
+  });
+
+  const isEven = (worksheet.rowCount % 2 === 0);
+  newRow.fill      = { type: 'pattern', pattern: 'solid', fgColor: { argb: isEven ? 'FFFFFFFF' : 'FFF8F7F5' } };
+  newRow.font      = { size: 10, name: 'Calibri', color: { argb: 'FF0D1B3E' } };
+  newRow.alignment = { vertical: 'middle' };
+  newRow.height    = 22;
+
+  const statusCell = newRow.getCell('status');
+  statusCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFEF6E4' } };
+  statusCell.font = { ...newRow.font, color: { argb: 'FFD4900A' }, bold: true };
+  statusCell.alignment = { horizontal: 'center', vertical: 'middle' };
+
+  await workbook.xlsx.writeFile(EXCEL_PATH);
+  return refNo;
+}
+
+module.exports = { appendEnrollment };
+```
+
+---
+---
+
+# PART 6 — TRAINEE DASHBOARD
+
+---
+
+## 6.1 Layout
+
+```
+DESKTOP:
+┌──────────────────────────────────────────────────────────────────┐
+│ SIDEBAR (260px, --royal bg)     │  MAIN AREA (--surface bg)     │
+│                                 │                                │
+│  [Avatar — teal initials ring]  │  TOP BAR (white, 64px)        │
+│  Juan Dela Cruz                 │  [Page title] [🔔] [User chip]│
+│  Trainee                        │  ──────────────────────────── │
+│  Ref: LISTA-2025-00001          │                                │
+│  ─────────────────────────────  │  CONTENT (padding: 32px)      │
+│  MENU:                          │  max-width: 960px              │
+│  🏠  Overview                   │                                │
+│  📋  My Application             │                                │
+│  📅  My Schedule                │                                │
+│  🏅  My Certificate             │                                │
+│  📢  Announcements              │                                │
+│  ❓  Help & FAQ                 │                                │
+│  ─────────────────────────────  │                                │
+│  🚪  Logout                     │                                │
+└──────────────────────────────────────────────────────────────────┘
+
+MOBILE (375px):
+┌────────────────────────────┐
+│  ≡  Lorenz ISTA        🔔  │  ← Top bar (white, 60px)
+├────────────────────────────┤
+│  [Content area]            │
+│  padding: 20px             │
+│                            │
+│                            │
+│                            │
+├────────────────────────────┤
+│  🏠    📋    📅    🏅    ❓│  ← Bottom nav (white, 64px, fixed)
+└────────────────────────────┘
+```
+
+**Sidebar styling (desktop):**
+- Background: --royal
+- Logo: white Roboto Slab 500
+- Nav items: Roboto 400 14px, white 70%. Active: white 100% + white left border 3px + --royal-mid bg
+- User avatar: initials circle, --emerald bg, white Roboto 700 16px
+- Ref number: Roboto Mono 11px, white 50%
+
+## 6.2 Trainee — Overview
+
+```
+Welcome card (white, border-radius 16px, royal-10 bg, 4px left border --emerald):
+  "Welcome back, Juan! 👋"   (Roboto Slab 500, 24px, --royal)
+  "We are investing in your future." (Roboto 400, 15px, --text-muted)
+
+APPLICATION STATUS CARD (full-width, border-radius 16px, color-coded bg):
+  PENDING:    --pending-bg bg, --pending left border 4px
+  CONFIRMED:  --confirmed-bg bg, --confirmed left border 4px
+  REJECTED:   --rejected-bg bg, --rejected left border 4px
+  WAITLISTED: --waitlisted-bg bg, --waitlisted left border 4px
+
+  Content:
+  [Status badge]
+  H3 (Roboto Slab 500, 20px): "Your application is under review."
+  Body (Roboto 400, 14px): status-specific message
+  Row: Ref No. (copyable) | Course | Submitted date
+
+3 QUICK STAT CARDS (grid, border-radius 16px, white, border):
+  [Reference No.] [Days Since Applied] [NC Level]
+
+LATEST ANNOUNCEMENT (white card, border-radius 16px, border):
+  Gold left-border 4px
+  📢 Title (Roboto 500, 15px, --royal)
+  Date + preview text + "Read more →"
+
+WHAT TO EXPECT NEXT (surface card, border-radius 16px, steps):
+  Step 1: Review (1–3 days) → Step 2: Confirmation → Step 3: Enrollment → Step 4: Training
+```
+
+## 6.3 Trainee — My Application
+
+Full read-only view of submitted form. All 26 fields, grouped by section with gold divider lines.
+
+Header:
+- Ref number chip (border-radius 12px, --royal-10 bg, --royal text)
+- Status badge
+- Submission timestamp
+
+Status timeline (horizontal):
+```
+●────────────○────────────○────────────○
+Submitted    Under Review  Decision     Enrolled
+```
+
+## 6.4 Trainee — My Schedule
+
+Empty state: illustration + "Schedule not yet posted. We'll email you when it's ready."
+Posted state: schedule card (white, border-radius 16px, dates/time/location/trainer, [Add to Calendar] button)
+
+## 6.5 Trainee — My Certificate
+
+Progress bar: Training → Training Complete → Assessment Taken → Certified
+If certified: [Download Certificate PDF] btn-emerald
+
+## 6.6 Trainee — Announcements
+
+List of cards (border-radius 16px, white, gold left-border on unread).
+Date badge, title, preview, [Read more].
+
+## 6.7 Trainee — Help & FAQ
+
+Accordion (8 questions from Part 2.10). Smooth open/close animation 280ms.
+Contact block at bottom.
+
+---
+---
+
+# PART 7 — STAFF DASHBOARD
+
+---
+
+## 7.1 Layout
+
+```
+DESKTOP:
+┌────────────────────────────────────────────────────────────────────┐
+│ TOP BAR (full width, white, 64px, border-bottom 1px --border)      │
+│ [≡ Logo]  Staff Portal — Lorenz ISTA       [🔔 count] [👤 Name ▾] │
+├──────────────┬─────────────────────────────────────────────────────┤
+│ SIDEBAR      │  MAIN CONTENT (--surface bg, padding 32px)         │
+│ (220px white │                                                     │
+│  border-r)   │                                                     │
+│              │                                                     │
+│ 📊 Overview  │                                                     │
+│ 📋 Enrollments│                                                    │
+│ 🔍 Search    │                                                     │
+│ 📅 Schedule  │                                                     │
+│ 📢 Notices   │                                                     │
+│ ── logout ── │                                                     │
+└──────────────┴─────────────────────────────────────────────────────┘
+
+MOBILE: Top bar + bottom 5-tab nav. Sidebar as drawer.
+```
+
+**Sidebar styling (desktop, white):**
+- Roboto 500 13px, --text-body. Active: --royal text + --royal-10 bg + 3px left border --royal.
+
+## 7.2 Staff — Overview
+
+4 stat cards (border-radius 16px, white, 1px border):
+```
+[Total: 142]  [Pending: 89]  [Confirmed: 38]  [Rejected: 15]
+— Values: Roboto Slab 500 36px --royal
+— Labels: Roboto 400 13px --text-muted
+— Delta chips: ↑12 this week (emerald bg) or ↓3 (red bg)
+```
+
+2-column charts:
+- Bar chart: Enrollments per Course (Recharts BarChart, --royal bars, --flame-gold hover)
+- Line chart: Daily trend last 7 days (--royal line, --royal-10 area fill)
+
+Recent activity (last 10 rows):
+Each: avatar initials · Name · Course · Status badge · Time ago
+
+## 7.3 Staff — Enrollments Table
+
+**Search + Filter bar:**
+```
+[🔍 Search by name, ref, email...]  [Course ▼]  [Status ▼]  [Date ▼]  [Reset]
+```
+
+**Desktop table (sortable headers, alternating rows):**
+| Col | Content |
+|---|---|
+| Ref No. | Roboto Mono 12px, copyable |
+| Full Name | Roboto 500 14px |
+| Course | + NC badge |
+| TWSP | Yes / No chip |
+| Submitted | Relative time |
+| Status | Inline select dropdown |
+| Actions | [View] [Notify] |
+
+Pagination: 25 per page.
+Bulk: checkboxes → [Confirm Selected] [Export Selected]
+
+**Mobile card list:**
+```
+┌─────────────────────────────────┐
+│ Juan Dela Cruz                  │
+│ Electrical Installation NC II   │
+│ LISTA-2025-00001                │
+│ 🟡 Pending · May 1, 2025        │
+│ [View Details]   [Confirm ✓]   │
+└─────────────────────────────────┘
+Swipe left → quick actions: Confirm · Reject · View
+```
+
+## 7.4 Staff — Applicant Detail Slide-over
+
+**Desktop:** Right slide-over (480px, white, border-radius 20px top-left bottom-left, shadow-lg)
+**Mobile:** Full-screen bottom sheet (border-radius 20px top, swipe down to close)
+
+Content:
+```
+[Status badge] [Ref: LISTA-2025-00001] [Submitted date]
+
+STATUS CHANGE:
+[Pending ▼]  dropdown → Confirmed / Rejected / Waitlisted
+[Save Status] btn-primary
+[Notify Trainee by Email] btn-outline
+
+READ-ONLY FORM DATA:
+All 26 fields, clean 2-col grid.
+Section headers with emerald numbered icons.
+
+INTERNAL NOTES (staff only):
+Previous notes list
+[Add note...] textarea + [Save Note] btn-ghost btn-sm
+```
+
+## 7.5 Staff — Search
+
+Large autofocused search input (48px tall, border-radius 12px, border --border).
+Debounced live results (300ms). Same card format as enrollment list.
+
+## 7.6 Staff — Schedule Manager
+
+Calendar view (desktop) / List view (mobile).
+[+ Add Schedule] → modal (border-radius 20px):
+- Course dropdown
+- Start Date + End Date
+- Time slot
+- Location
+- Trainer name
+- Notes
+On save: email sent to all confirmed trainees of that course.
+
+## 7.7 Staff — Post Announcement
+
+Title + body (rich text) + target + file attachment option.
+Published list below with edit/delete.
+
+---
+---
+
+# PART 8 — ADMIN DASHBOARD
+
+---
+
+## 8.1 Layout
+
+```
+DESKTOP:
+┌──────────────────────────────────────────────────────────────────────┐
+│ SIDEBAR (260px, --royal bg, same as trainee but with gold accents)   │
+│                                                                      │
+│  [Gold "A" avatar] Ms. Maggie Tse  │  MAIN AREA (--surface bg)      │
+│  Admin · School President          │  TOP BAR (white 64px)           │
+│  ──────────────────────────────    │  ─────────────────────────────  │
+│  MAIN                              │                                 │
+│  📊  Analytics                     │  CONTENT                       │
+│  📋  All Enrollments               │  padding: 32px                 │
+│  👥  User Management               │  max-width: 1140px             │
+│  📢  Announcements                 │                                 │
+│  📅  Schedule Manager              │                                 │
+│  🏅  Certificates                  │                                 │
+│  ──────────────────────────────    │                                 │
+│  ASSESSMENT CENTER                 │                                 │
+│  📝  Records                       │                                 │
+│  ✅  Results                       │                                 │
+│  ──────────────────────────────    │                                 │
+│  SYSTEM                            │                                 │
+│  📥  Export Data                   │                                 │
+│  ⚙️   Settings                     │                                 │
+│  🚪  Logout                        │                                 │
+└──────────────────────────────────────────────────────────────────────┘
+
+Active sidebar item: --flame-gold text + white 10% bg + 3px --flame-gold left border
+```
+
+## 8.2 Admin — Analytics
+
+**4 Stat cards (border-radius 16px, white, top accent border 3px):**
+```
+[Total: 142]     [Pending Week: 89]   [Scholarship: 24]  [Certified: 12]
+top-border: royal  top-border: gold    top-border: emerald  top-border: emerald
+```
+
+**4 Charts (2×2 grid, each in white card, border-radius 16px):**
+1. Bar — Enrollments per Course (month)
+2. Line — Enrollment trend 6 months
+3. Pie — Scholarship vs Self-funded
+4. Horizontal bar — Top courses all-time
+
+**Recent activity (15 rows):**
+Avatar · Name · Course · Status badge · Timestamp
+
+**Quick actions row:**
+```
+[📥 Download Today's Excel] [📢 Post Announcement] [📅 Add Schedule] [👤 Invite Staff]
+```
+
+## 8.3 Admin — All Enrollments
+
+Same table as Staff + extra columns: [Delete ✕]
+Bulk: [Confirm All] [Export Selected] [Delete Selected]
+Row click → Applicant Detail (editable version with delete option)
+
+**[Download Full Excel]** button: top-right, btn-gold, calls GET /api/export
+
+## 8.4 Admin — User Management
+
+Table: Name | Email | Role badge | Created | Last Login | Status | Actions
+[+ Create Staff Account] btn-primary → modal with name + email → sends invite email
+
+Role badge border-radius 8px:
+- Trainee: --emerald-10 bg, --emerald text
+- Staff:   --royal-10 bg, --royal text
+- Admin:   --flame-gold-10 bg, --flame-gold text
+
+Actions: Edit | Deactivate | Reset Password
+
+## 8.5 Admin — Announcements Manager
+
+Create/Edit/Delete.
+Target: All Trainees / Specific Course / All Users
+Scheduled publish. Rich text. File attachment.
+Table: Title | Target | Published | Views | Actions
+
+## 8.6 Admin — Schedule Manager
+
+Full calendar. Color-coded by course.
+Create/edit → email sent. Delete → cancellation email.
+
+## 8.7 Admin — Certificates
+
+Table: Trainee | Course | NC Level | Status | Certificate | Actions
+Status pipeline (dropdown): Training → Complete → Assessment → Passed / Failed
+[Upload PDF] per trainee → appears in their dashboard.
+
+## 8.8 Admin — Assessment Records
+
+For Enrollment Type = "Assessment Only":
+Table: Name | Course | Date | Assessor | Result (Competent / Not Yet Competent) | Remarks | Certificate
+
+## 8.9 Admin — Export Data
+
+```
+4 download sections (cards, border-radius 16px):
+1. Full Enrollment Excel — all time — [Download] btn-gold
+2. Filtered Export — date range + course + status pickers — [Generate]
+3. Assessment Records — [Download]
+4. User List — [Download]
+
+Last exported: timestamp
+File naming: LISTA_Enrollments_YYYY-MM-DD.xlsx
+```
+
+## 8.10 Admin — Settings
+
+Enrollment toggle (on/off) — shows banner on /enroll when off
+Scholarship slot tracker (table per course: Total | Taken | Available)
+Course management (activate/deactivate courses)
+Admin profile (name, email, password)
+Email template editor (5 templates)
+
+---
+---
+
+# PART 9 — API ENDPOINTS
+
+---
+
+| Method | Route | Auth | Purpose |
+|---|---|---|---|
+| POST | /api/auth/login | Public | Login all roles |
+| POST | /api/auth/logout | Any | Clear cookie |
+| GET | /api/auth/me | Any+token | Get current user |
+| POST | /api/auth/forgot-password | Public | Send reset email |
+| POST | /api/auth/reset-password | Public | Set new password |
+| POST | /api/enroll | Public | Submit form → Excel + DB + email |
+| GET | /api/enrollments | Staff/Admin | All enrollments |
+| GET | /api/enrollments/:id | Staff/Admin | Single enrollment |
+| PATCH | /api/enrollments/:id/status | Staff/Admin | Update status |
+| POST | /api/enrollments/:id/note | Staff/Admin | Add note |
+| GET | /api/my-enrollment | Trainee | Own enrollment |
+| GET | /api/users | Admin | All users |
+| POST | /api/users/invite-staff | Admin | Create staff |
+| PATCH | /api/users/:id | Admin | Edit user |
+| DELETE | /api/users/:id | Admin | Deactivate |
+| GET | /api/announcements | Any+token | Get announcements |
+| POST | /api/announcements | Staff/Admin | Create |
+| PATCH | /api/announcements/:id | Staff/Admin | Edit |
+| DELETE | /api/announcements/:id | Admin | Delete |
+| GET | /api/schedules | Any+token | Get schedules |
+| POST | /api/schedules | Staff/Admin | Create |
+| PATCH | /api/schedules/:id | Staff/Admin | Edit |
+| DELETE | /api/schedules/:id | Admin | Delete |
+| GET | /api/certificates/my | Trainee | Own certificate |
+| POST | /api/certificates/:id | Admin | Upload cert PDF |
+| GET | /api/analytics | Admin | Dashboard data |
+| GET | /api/export | Admin | Download Excel |
+
+---
+---
+
+# PART 10 — DATABASE SCHEMA
+
+---
+
+```javascript
+// User
+{
+  _id, firstName, lastName, email, passwordHash,
+  role: ['trainee','staff','admin'],
+  status: ['active','deactivated'],
+  enrollmentId, resetToken, resetExpires,
+  lastLogin, createdAt, updatedAt
+}
+
+// Enrollment
+{
+  _id, refNo, userId,
+  firstName, lastName, dob, gender, civilStatus,
+  email, contact, address, city, province,
+  education, school, course, schedule, enrollType,
+  scholarship, employment, heardFrom, notes,
+  status: ['Pending','Confirmed','Rejected','Waitlisted'],
+  staffNotes: [{ note, addedBy, addedAt }],
+  emailsSent: [{ type, sentAt }],
+  submittedAt, updatedAt
+}
+
+// Announcement
+{ _id, title, body, target, targetCourse, fileUrl, publishAt, createdBy, createdAt }
+
+// Schedule
+{ _id, course, startDate, endDate, timeSlot, location, trainer, notes, notifiedAt, createdBy }
+
+// Certificate
+{ _id, enrollmentId, userId, course, ncLevel,
+  status: ['training','training_complete','assessment_taken','passed','failed'],
+  certificateUrl, issuedDate }
+
+// AssessmentRecord
+{ _id, enrollmentId, userId, course, ncLevel, assessmentDate, assessor,
+  result: ['Competent','Not Yet Competent'], remarks, certificateId }
+```
+
+---
+---
+
+# PART 11 — EMAIL TEMPLATES
+
+---
+
+All emails: from "Lorenz ISTA <noreply@lorenzinternational.org>"
+Footer on every email:
+```
+Lorenz International Skills Training Academy, Inc.
+FJY Bldg., National Highway, Brgy. 24-A, Gingoog City
+(088) 861-4200 | Mon–Sat 8AM–5PM
+lorenzinternational.org | "We are investing in your future."
+```
+
+**Template 1 — Enrollment Confirmation:**
+Subject: `Your LISTA Application Has Been Received — [Ref: {refNo}]`
+Body: Ref number, course, date, temp password + dashboard link.
+
+**Template 2 — Status Update:**
+Subject: `Your LISTA Application Status Update — {status}`
+Body: New status with action message (confirmed = visit office, rejected = contact us, waitlisted = on queue).
+
+**Template 3 — Schedule Posted:**
+Subject: `Your Training Schedule Is Now Available — {course}`
+Body: Start/end date, time, location, trainer, dashboard link.
+
+**Template 4 — Staff Invite:**
+Subject: `Staff Access Granted — Lorenz ISTA Portal`
+Body: Login URL, temp password, instructions.
+
+**Template 5 — Password Reset:**
+Subject: `Reset Your Lorenz ISTA Password`
+Body: Reset link (expires 1 hour), if-not-you message.
+
+---
+---
+
+# PART 12 — SECURITY
+
+---
+
+```
+Auth:
+✅ bcryptjs — 12 salt rounds
+✅ JWT in httpOnly + Secure + SameSite=Strict cookie
+✅ 24-hour expiry, silent refresh within last 2 hours
+✅ 5 failed login attempts → lock 15 min with countdown
+✅ Password reset token expires in 1 hour
+
+API:
+✅ Rate limit: POST /api/enroll → 5/IP/hour
+✅ Rate limit: POST /api/auth/login → 10/IP/15min
+✅ CORS: lorenzinternational.org only
+✅ All inputs validated with Zod server-side
+✅ Generic error messages (never expose DB details)
+
+Forms:
+✅ Honeypot field (if filled → silently discard)
+✅ Server-side sanitize: trim, strip HTML
+✅ File uploads: PDF only, max 5MB, UUID filename
+
+Files:
+✅ data/ NOT in public directory
+✅ Excel: Admin-only via /api/export (auth required)
+✅ data/ in .gitignore
+✅ HTTPS enforced (HTTP → HTTPS redirect)
+```
+
+---
+---
+
+# PART 13 — ENVIRONMENT VARIABLES
+
+---
+
+```env
+NODE_ENV=production
+PORT=3000
+BASE_URL=https://lorenzinternational.org
+
+JWT_SECRET=minimum_32_character_random_secret_here
+JWT_EXPIRY=24h
+
+ADMIN_FIRST_NAME=Maggie
+ADMIN_LAST_NAME=Zapanta-Tse
+ADMIN_EMAIL=admin@lorenzinternational.org
+ADMIN_PASSWORD=strong_password_here
+
+MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/lorenz-ista
+
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=noreply@lorenzinternational.org
+SMTP_PASS=gmail_app_password
+EMAIL_FROM="Lorenz ISTA <noreply@lorenzinternational.org>"
+
+EXCEL_DIR=./data
+```
+
+---
+---
+
+# PART 14 — FILE STRUCTURE
+
+---
+
+```
+lorenz-ista/
+├── app/
+│   ├── (public)/
+│   │   ├── page.tsx               ← Home /
+│   │   ├── about/page.tsx
+│   │   ├── courses/page.tsx
+│   │   ├── assessment/page.tsx
+│   │   ├── scholarships/page.tsx
+│   │   ├── enroll/page.tsx
+│   │   ├── login/page.tsx         ← Single login for all roles
+│   │   └── forgot-password/page.tsx
+│   ├── (dashboard)/
+│   │   ├── dashboard/             ← Trainee
+│   │   │   ├── page.tsx
+│   │   │   ├── application/page.tsx
+│   │   │   ├── schedule/page.tsx
+│   │   │   ├── certificate/page.tsx
+│   │   │   ├── announcements/page.tsx
+│   │   │   └── help/page.tsx
+│   │   ├── staff/                 ← Staff
+│   │   │   ├── page.tsx
+│   │   │   ├── enrollments/page.tsx
+│   │   │   ├── search/page.tsx
+│   │   │   ├── schedule/page.tsx
+│   │   │   └── announcements/page.tsx
+│   │   └── admin/                 ← Admin
+│   │       ├── page.tsx
+│   │       ├── enrollments/page.tsx
+│   │       ├── users/page.tsx
+│   │       ├── announcements/page.tsx
+│   │       ├── schedule/page.tsx
+│   │       ├── certificates/page.tsx
+│   │       ├── assessment/page.tsx
+│   │       ├── export/page.tsx
+│   │       └── settings/page.tsx
+│   ├── api/
+│   │   ├── auth/login/route.ts
+│   │   ├── auth/logout/route.ts
+│   │   ├── auth/me/route.ts
+│   │   ├── auth/forgot-password/route.ts
+│   │   ├── auth/reset-password/route.ts
+│   │   ├── enroll/route.ts
+│   │   ├── enrollments/route.ts
+│   │   ├── enrollments/[id]/route.ts
+│   │   ├── enrollments/[id]/status/route.ts
+│   │   ├── enrollments/[id]/note/route.ts
+│   │   ├── users/route.ts
+│   │   ├── users/invite-staff/route.ts
+│   │   ├── users/[id]/route.ts
+│   │   ├── announcements/route.ts
+│   │   ├── announcements/[id]/route.ts
+│   │   ├── schedules/route.ts
+│   │   ├── schedules/[id]/route.ts
+│   │   ├── certificates/route.ts
+│   │   ├── certificates/[id]/route.ts
+│   │   ├── analytics/route.ts
+│   │   └── export/route.ts
+│   ├── layout.tsx
+│   └── globals.css
+├── components/
+│   ├── public/
+│   │   ├── Navbar.tsx
+│   │   ├── Footer.tsx
+│   │   ├── HeroSection.tsx
+│   │   ├── CourseCard.tsx
+│   │   └── EnrollForm.tsx
+│   ├── dashboard/
+│   │   ├── Sidebar.tsx
+│   │   ├── TopBar.tsx
+│   │   ├── BottomNav.tsx
+│   │   ├── StatCard.tsx
+│   │   ├── StatusBadge.tsx
+│   │   ├── EnrollmentTable.tsx
+│   │   └── ApplicantDrawer.tsx
+│   └── ui/
+│       ├── Button.tsx
+│       ├── Input.tsx
+│       ├── Select.tsx
+│       ├── Modal.tsx
+│       ├── Accordion.tsx
+│       └── Toast.tsx
+├── lib/
+│   ├── auth.ts
+│   ├── db.ts
+│   ├── excel.ts
+│   ├── email.ts
+│   ├── validators.ts
+│   └── utils.ts
+├── models/
+│   ├── User.ts
+│   ├── Enrollment.ts
+│   ├── Announcement.ts
+│   ├── Schedule.ts
+│   ├── Certificate.ts
+│   └── AssessmentRecord.ts
+├── middleware.ts
+├── data/                          ← gitignored, Excel lives here
+├── public/images/
+├── .env.local
+├── .gitignore
+├── next.config.js
+├── tailwind.config.js
+└── package.json
+```
+
+---
+---
+
+# PART 15 — PACKAGE DEPENDENCIES
+
+---
+
+```json
+{
+  "dependencies": {
+    "next": "14.x",
+    "react": "18.x",
+    "react-dom": "18.x",
+    "mongoose": "^8.x",
+    "jsonwebtoken": "^9.x",
+    "bcryptjs": "^2.x",
+    "exceljs": "^4.x",
+    "nodemailer": "^6.x",
+    "zod": "^3.x",
+    "react-hook-form": "^7.x",
+    "@hookform/resolvers": "^3.x",
+    "recharts": "^2.x",
+    "lucide-react": "^0.x",
+    "axios": "^1.x",
+    "clsx": "^2.x",
+    "date-fns": "^3.x"
+  },
+  "devDependencies": {
+    "typescript": "^5.x",
+    "@types/node": "^20.x",
+    "@types/react": "^18.x",
+    "@types/jsonwebtoken": "^9.x",
+    "@types/bcryptjs": "^2.x",
+    "@types/nodemailer": "^6.x",
+    "tailwindcss": "^3.x",
+    "postcss": "^8.x",
+    "autoprefixer": "^10.x",
+    "eslint": "^8.x"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "seed": "node scripts/seed.js"
+  }
+}
+```
+
+---
+---
+
+# PART 16 — POST-DEPLOY CHECKLIST
+
+---
+
+```
+PRE-LAUNCH
+□ npm run seed → creates Admin account from .env
+□ Test enrollment form → verify Excel row created in /data/
+□ Test login as Trainee → redirects to /dashboard
+□ Test login as Staff → redirects to /staff
+□ Test login as Admin → redirects to /admin
+□ Test route guard: visit /admin as trainee → redirected to /dashboard
+□ Test status change (Pending → Confirmed) → email sent to trainee
+□ Test Export button → downloads styled LISTA_Enrollments_YYYY-MM-DD.xlsx
+□ Test mobile: all pages on 375px real device
+□ Test login error states (wrong password, locked account)
+□ Verify honeypot blocks bot submissions
+
+SEO
+□ Meta title + description on all 8 public pages
+□ sitemap.xml at /sitemap.xml
+□ robots.txt: allow public, disallow /admin /staff /dashboard /api
+
+SECURITY
+□ HTTPS + HTTP→HTTPS redirect working
+□ .env.local NOT in git
+□ data/ NOT in git
+□ Test rate limit (6 enrollments from same IP → blocked)
+
+PERFORMANCE
+□ All images: WebP, <150KB
+□ Google Fonts: preconnect + display=swap
+□ Lighthouse mobile score > 85
+□ Core Web Vitals: LCP < 2.5s, CLS < 0.1
+```
+
+---
+---
+
+# PART 17 — FINAL AI BUILDER INSTRUCTION
+
+---
+
+**READ THIS LAST — after reading the full document above.**
+
+> Using every specification, color, font rule, component style, content, schema, and code in this document, build the complete Lorenz ISTA full-stack web application. Here is the priority order:
+>
+> **1 — Setup:** Next.js 14 + TypeScript + Tailwind. Install all dependencies from Part 15. Create globals.css with the full design system from Part 1 (colors, typography, components).
+>
+> **2 — Database:** Mongoose connection + all 6 models from Part 10. Seed script for Admin account.
+>
+> **3 — Auth:** JWT middleware, /login page (SINGLE PAGE for all 3 roles), role-based redirect, /forgot-password. Route guards in middleware.ts.
+>
+> **4 — Public website:** All 8 pages with real content from Part 2. Hero redesign per color plan (Royal Blue + Emerald + Flame Gold from logo). No Lorem Ipsum.
+>
+> **5 — Enrollment form:** All 26 fields (Part 5.1), validation (Part 5.2), success modal (Part 5.3). POST /api/enroll → saves to MongoDB, appends Excel row (Part 5.5), creates Trainee account, sends confirmation email.
+>
+> **6 — Trainee Dashboard:** 6 screens (Part 6). Mobile bottom nav + desktop sidebar (--royal bg).
+>
+> **7 — Staff Dashboard:** 6 screens (Part 7). Enrollment table + slide-over detail + mobile card list.
+>
+> **8 — Admin Dashboard:** 9 screens (Part 8). All 4 charts (Recharts). Gold excel download button. User management.
+>
+> **9 — Emails:** All 5 templates wired to all trigger events.
+>
+> **10 — Security + Deploy:** All rules from Part 12. .env from Part 13.
+
+---
+
+**DESIGN NON-NEGOTIABLES:**
+```
+FONT        → Roboto (body) + Roboto Slab (headings). Import from Google Fonts.
+COLORS      → Only from the logo palette in Part 1.1. Do not add random colors.
+CORNERS     → Cards: 16px. Inputs/buttons: 8px. Modals: 20px. NEVER pill-shaped.
+SHADOWS     → Subtle only. var(--shadow-card) on floating elements. Nothing dramatic.
+THEME       → Light ONLY. No dark mode anywhere.
+SPACING     → Generous. Section padding 96px vertical. Card padding 28px.
+HOVER       → Every interactive card/button: translateY(-2px) + shadow in 220ms.
+SCROLL      → Reveal animations: .reveal class + IntersectionObserver.
+MOBILE      → Every page tested at 375px. Dashboards have bottom nav bar.
+QUALITY     → Awwwards.com editorial quality. Not generic. Not AI-template.
+             Intentional typography hierarchy. Deliberate whitespace.
+             No clip-art icons. Use Lucide React icons only.
+             No gradient fills on backgrounds — flat solid colors only.
+```
+
+**SCHOOL DATA REMINDER:**
+```
+Name     : Lorenz International Skills Training Academy, Inc.
+Tagline  : "We are investing in your future."
+Phone    : (088) 861-4200
+Mobile   : 0955-881-5161
+Address  : FJY Bldg., National Highway, Brgy. 24-A, Gingoog City, Misamis Oriental
+Hours    : Mon–Sat 8:00 AM – 5:00 PM
+Founded  : 2014
+President: Ms. Maggie Zapanta-Tse
+```
+
+---
+
+*LORENZ ISTA FINAL BUILD PROMPT v2.0*
+*Awwwards Quality · Role-Based Dashboards · Excel Auto-Fill · Roboto Font*
+*All content real. No placeholders. Production-ready.*
