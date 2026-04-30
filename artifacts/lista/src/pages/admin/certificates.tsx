@@ -38,11 +38,14 @@ export default function AdminCertificatesPage() {
       return;
     }
 
+    const course = courses.find(c => c.slug === form.courseSlug);
     const newCert = {
       id: `cert${Date.now()}`,
       userId: form.userId,
       courseSlug: form.courseSlug,
-      status: "issued",
+      ncLevel: course?.ncLevel ?? "NC II",
+      status: "issued" as const,
+      progressStage: "passed" as const,
       issuedAt: new Date().toISOString(),
       fileUrl: "#"
     };
