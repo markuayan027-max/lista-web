@@ -1,0 +1,233 @@
+You are a senior FlutterFlow app architect and UI/UX designer.
+
+Your task is to SCAFFOLD a complete mobile + web app for:
+
+"Lorenz International Skills Training Academy (LISTA)"
+
+⚠️ PRIORITY:
+DO NOT fully implement backend logic.
+DO NOT overbuild.
+FOCUS on:
+
+1. Pages (screens)
+2. Navigation flow
+3. UI layout structure
+4. Component hierarchy
+5. Basic Firestore collections (light only)
+
+---
+
+# ✅ PHASE 1 — CREATE ALL PAGES (SCREENS)
+
+Create these pages in FlutterFlow:
+
+PUBLIC PAGES:
+
+* HomePage
+* AboutPage
+* CoursesPage
+* AssessmentPage
+* ScholarshipsPage
+* EnrollPage
+* LoginPage
+* ForgotPasswordPage
+
+TRAINEE DASHBOARD:
+
+* DashboardHomePage
+* MyApplicationPage
+* MySchedulePage
+* MyCertificatePage
+* AnnouncementsPage
+* HelpFAQPage
+
+STAFF DASHBOARD:
+
+* StaffOverviewPage
+* StaffEnrollmentsPage
+* StaffSearchPage
+* StaffSchedulePage
+* StaffAnnouncementsPage
+
+ADMIN DASHBOARD:
+
+* AdminAnalyticsPage
+* AdminEnrollmentsPage
+* AdminUsersPage
+* AdminAnnouncementsPage
+* AdminSchedulePage
+* AdminCertificatesPage
+* AdminExportPage
+* AdminSettingsPage
+
+---
+
+# ✅ PHASE 2 — NAVIGATION STRUCTURE
+
+Set up navigation:
+
+PUBLIC FLOW:
+Home → About → Courses → Scholarships → Enroll → Login
+
+AUTH FLOW:
+Login → Role-based redirect:
+
+* Trainee → DashboardHomePage
+* Staff → StaffOverviewPage
+* Admin → AdminAnalyticsPage
+
+DASHBOARD NAV:
+
+Trainee:
+Bottom Nav (mobile):
+
+* Home
+* Application
+* Schedule
+* Certificate
+* Help
+
+Staff:
+Drawer Menu:
+
+* Overview
+* Enrollments
+* Search
+* Schedule
+* Announcements
+
+Admin:
+Drawer Menu:
+
+* Analytics
+* Enrollments
+* Users
+* Announcements
+* Schedule
+* Certificates
+* Export
+* Settings
+
+---
+
+# ✅ PHASE 3 — UI/UX WIREFRAME PER PAGE
+
+For EACH page, define layout using FlutterFlow widgets:
+
+Example:
+
+PAGE: HomePage
+
+* Column (scrollable)
+
+  * Hero Section (Row)
+
+    * Left Column:
+
+      * Text (Headline)
+      * Text (Description)
+      * Row (Buttons)
+    * Right:
+
+      * Image (placeholder)
+  * Container (Trust Bar)
+  * GridView (Courses)
+  * Container (Assessment Section)
+  * Container (Scholarship Banner)
+  * ListView (Testimonials)
+  * CTA Section
+
+---
+
+Repeat this structure for ALL pages.
+
+---
+
+# ✅ PHASE 4 — COMPONENT SYSTEM
+
+Create reusable FlutterFlow components:
+
+* NavbarComponent
+* SidebarComponent (3 variants: Trainee, Staff, Admin)
+* CourseCard
+* StatCard
+* EnrollmentCard
+* StatusBadge
+* AnnouncementCard
+* FormInputField
+* PrimaryButton
+* ModalSuccess
+
+Use consistent:
+
+* Border radius: 12–16px
+* Padding: 16–24px
+* Clean spacing (no clutter)
+
+---
+
+# ✅ PHASE 5 — FIRESTORE STRUCTURE (LIGHT ONLY)
+
+Create collections:
+
+users:
+
+* name
+* email
+* role (trainee/staff/admin)
+
+enrollments:
+
+* refNo
+* name
+* course
+* status
+* createdAt
+
+announcements:
+
+* title
+* body
+* targetRole
+
+schedules:
+
+* course
+* date
+* time
+* trainer
+
+certificates:
+
+* userRef
+* status
+* fileUrl
+
+---
+
+# ✅ PHASE 6 — KEY UX BEHAVIOR
+
+* All pages scrollable
+* Cards have subtle elevation
+* Buttons have hover + press states
+* Forms validate required fields
+* Status badges color-coded:
+
+  * Pending = yellow
+  * Confirmed = green
+  * Rejected = red
+
+---
+
+# 🎯 FINAL OUTPUT
+
+Ensure the result gives:
+
+✔ Complete page list
+✔ Navigation working
+✔ UI skeleton visible
+✔ Ready for backend + logic later
+
+---
+
+Start scaffolding now inside FlutterFlow.

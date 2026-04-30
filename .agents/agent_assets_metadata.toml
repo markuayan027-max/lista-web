@@ -1,0 +1,56 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "M4Y7KVSDuP_-1g2GhBdyt"
+uri = "file://artifacts/lista/public/hero.png"
+type = "image"
+title = "academy homepage hero image"
+
+[[generated]]
+id = "f8Nl0mXxyfk1g1EjTn3ew"
+uri = "file://artifacts/lista/public/course-web-dev.png"
+type = "image"
+title = "web development course cover"
+
+[[generated]]
+id = "bRVxmOeiYCA4jsVIxHwsr"
+uri = "file://artifacts/lista/public/course-data-science.png"
+type = "image"
+title = "data science course cover"
+
+[[generated]]
+id = "HOLpUCDGPX5v9sowEz9kf"
+uri = "file://artifacts/lista/public/course-ui-ux.png"
+type = "image"
+title = "ui ux design course cover"
+
+[[generated]]
+id = "q_5HBPkWQHJWUFUbTn2al"
+uri = "file://artifacts/lista/public/course-healthcare.png"
+type = "image"
+title = "healthcare course cover"
+
+[[generated]]
+id = "44lkAe01zu8HLJJynWKMB"
+uri = "file://artifacts/lista/public/course-marketing.png"
+type = "image"
+title = "digital marketing course cover"
+
+[[generated]]
+id = "ucVAorUidb9Oy5INVwmDq"
+uri = "file://artifacts/lista/public/course-cybersecurity.png"
+type = "image"
+title = "cybersecurity course cover"
+
+[[generated]]
+id = "EtbjUB4P2GxC5QTiGSSwj"
+uri = "file://artifacts/lista/public/course-hospitality.png"
+type = "image"
+title = "hospitality management course cover"
+
+[[generated]]
+id = "itlxudGWEkCofqWLwfyMk"
+uri = "file://artifacts/lista/public/course-project-management.png"
+type = "image"
+title = "project management course cover"
