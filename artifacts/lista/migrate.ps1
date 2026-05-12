@@ -1,5 +1,5 @@
 $INSFORGE_URL = "https://w6pfebj5.ap-southeast.insforge.app"
-$INSFORGE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3OC0xMjM0LTU2NzgtOTBhYi1jZGVmMTIzNDU2NzgiLCJlbWFpbCI6ImFub25AaW5zZm9yZ2UuY29tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2NDc3NTN9.0fXDdWm5dSQ7Ksk3kh86QmT8kCiorXuL8UjcdIxtRok"
+$INSFORGE_ANON_KEY = $env:VITE_INSFORGE_ANON_KEY || "your_anon_key_here"
 
 $migrations = @(
   "ALTER TABLE enrollments ADD COLUMN IF NOT EXISTS middle_name TEXT",
