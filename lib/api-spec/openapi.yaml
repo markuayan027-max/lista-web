@@ -3,20 +3,31 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: API specification for Lorenz ISTA (LISTA)
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: courses
+    description: Course management
+  - name: announcements
+    description: School announcements
+  - name: faqs
+    description: Frequently Asked Questions
+  - name: testimonials
+    description: Student testimonials
+  - name: cases
+    description: Case management for students
+  - name: incidents
+    description: Incident tracking
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +35,91 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /courses:
+    get:
+      operationId: getCourses
+      tags: [courses]
+      summary: Get all courses
+      responses:
+        "200":
+          description: List of courses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Course"
+  /announcements:
+    get:
+      operationId: getAnnouncements
+      tags: [announcements]
+      summary: Get all announcements
+      responses:
+        "200":
+          description: List of announcements
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Announcement"
+  /faqs:
+    get:
+      operationId: getFaqs
+      tags: [faqs]
+      summary: Get all FAQs
+      responses:
+        "200":
+          description: List of FAQs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Faq"
+  /testimonials:
+    get:
+      operationId: getTestimonials
+      tags: [testimonials]
+      summary: Get all testimonials
+      responses:
+        "200":
+          description: List of testimonials
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Testimonial"
+  /cases:
+    get:
+      operationId: getCases
+      tags: [cases]
+      summary: Get all cases
+      responses:
+        "200":
+          description: List of cases
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Case"
+  /incidents:
+    get:
+      operationId: getIncidents
+      tags: [incidents]
+      summary: Get all incidents
+      responses:
+        "200":
+          description: List of incidents
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Incident"
+
 components:
   schemas:
     HealthStatus:
@@ -33,4 +129,58 @@ components:
           type: string
       required:
         - status
+    Course:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        ncLevel: { type: string }
+        sector: { type: string }
+        description: { type: string }
+        twspScholarship: { type: string }
+        isAssessmentOnly: { type: string }
+      required: [id, name, ncLevel, sector, description]
+    Announcement:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        body: { type: string }
+        target: { type: string }
+        createdAt: { type: string, format: date-time }
+      required: [id, title, body, target]
+    Faq:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        question: { type: string }
+        answer: { type: string }
+      required: [id, question, answer]
+    Testimonial:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        quote: { type: string }
+        attribution: { type: string }
+      required: [id, quote, attribution]
+    Case:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        description: { type: string }
+        status: { type: string }
+        priority: { type: string }
+        createdAt: { type: string, format: date-time }
+      required: [id, title, status, priority]
+    Incident:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        caseId: { type: string, format: uuid }
+        studentId: { type: string, format: uuid }
+        type: { type: string }
+        description: { type: string }
+        occurrenceDate: { type: string, format: date-time }
+      required: [id, type, description, occurrenceDate]
 

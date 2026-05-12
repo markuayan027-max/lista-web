@@ -1,0 +1,15 @@
+# Graphify Integration Rules (Antigravity & OpenCode)
+
+You (Antigravity/OpenCode/Gemini) are interacting with a project that uses **Graphify** to index its codebase, reduce token consumption, and improve AI context awareness.
+
+## CRITICAL INSTRUCTION
+BEFORE performing any generalized file searches, directory listings (`ls`), or attempting to understand the overall project architecture, you MUST:
+
+1. Consult the `graphify-out/` directory first.
+2. Read `graphify-out/manifest.json` (or any generated Graphify documentation/graphs) to understand file locations, structural mappings, and existing dependencies.
+3. Use the Graphify context as your "source of truth" to pinpoint exactly which files you need to modify. 
+
+Do NOT perform redundant, brute-force project searches unless the Graphify output is explicitly missing the information you need.
+
+## DAILY VERSIONING RULE
+You MUST ensure that every day, the code that is created or modified is marked so that past versions can be restored. This includes adding date markers to modified sections and ensuring a clear audit trail of changes.

@@ -128,7 +128,7 @@ export default function LoginPage() {
         </p>
         
         <p className="text-[10px] text-muted-foreground leading-relaxed max-w-xs mx-auto">
-          By continuing, you are agreeing to LISTA's <Link href="/terms" className="underline hover:text-foreground">Terms of Service</Link> and <Link href="/privacy" className="underline hover:text-foreground">Privacy Policy</Link>
+          By continuing to Lorenz ISTA, you are agreeing to LISTA's <Link href="/terms" className="underline hover:text-foreground">Terms of Service</Link> and <Link href="/privacy" className="underline hover:text-foreground">Privacy Policy</Link>
         </p>
       </div>
     </div>

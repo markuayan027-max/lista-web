@@ -5,10 +5,14 @@
   "type": "module",
   "scripts": {
     "hello": "tsx ./src/hello.ts",
+    "seed": "tsx --env-file=../.env ./src/seed.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "devDependencies": {
     "@types/node": "catalog:",
-    "tsx": "catalog:"
+    "tsx": "catalog:",
+    "@workspace/db": "workspace:*",
+    "bcryptjs": "^2.4.3",
+    "@types/bcryptjs": "^2.4.6"
   }
 }

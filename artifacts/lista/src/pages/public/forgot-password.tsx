@@ -268,7 +268,7 @@ export default function ForgotPasswordPage() {
       </div>
 
       <p className="text-[10px] text-muted-foreground text-center leading-relaxed max-w-xs mx-auto pt-4">
-        By continuing, you are agreeing to LISTA's{" "}
+        By continuing to Lorenz ISTA, you are agreeing to LISTA's{" "}
         <Link href="/terms" className="underline hover:text-foreground">
           Terms of Service
         </Link>{" "}
