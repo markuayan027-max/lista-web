@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import FormInputField from "@/components/form-input-field";
 import PrimaryButton from "@/components/primary-button";
-import { announcements as initialAnnouncements } from "@/lib/mock-data";
+import { announcements as initialAnnouncements } from "@/lib/institutional-data";
 import { format } from "date-fns";
 
 const containerVariants = {

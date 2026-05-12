@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import StatCard from "@/components/stat-card";
 import EnrollmentCard from "@/components/enrollment-card";
 import { CalendarDays, Users, Award, FileText, Plus, Bell, ChevronRight } from "lucide-react";
-import { schedules, enrollments, users, certificates } from "@/lib/mock-data";
+import { schedules, enrollments, users, certificates } from "@/lib/institutional-data";
 import { isSameDay, parseISO } from "date-fns";
 
 const container = {

@@ -10,7 +10,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { faqs } from "@/lib/mock-data";
+import { faqs } from "@/lib/institutional-data";
 
 export default function TraineeHelpPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -93,7 +93,7 @@ export default function TraineeHelpPage() {
                   </div>
                   <div>
                     <p className="text-sm font-semibold">Email us</p>
-                    <p className="text-sm text-muted-foreground">support@lista.edu</p>
+                    <p className="text-sm text-muted-foreground">admin@lorenzinternational.org</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -102,7 +102,7 @@ export default function TraineeHelpPage() {
                   </div>
                   <div>
                     <p className="text-sm font-semibold">Call us</p>
-                    <p className="text-sm text-muted-foreground">+1 (555) 123-4567</p>
+                    <p className="text-sm text-muted-foreground">09051095284</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -111,7 +111,7 @@ export default function TraineeHelpPage() {
                   </div>
                   <div>
                     <p className="text-sm font-semibold">Hours</p>
-                    <p className="text-sm text-muted-foreground">Mon-Fri, 9am - 5pm EST</p>
+                    <p className="text-sm text-muted-foreground">Mon-Sat, 8am - 5pm</p>
                   </div>
                 </div>
               </div>

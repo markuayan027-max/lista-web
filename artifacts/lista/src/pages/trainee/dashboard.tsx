@@ -11,15 +11,20 @@ import {
   MapPin,
   User as UserIcon,
   HelpCircle,
-  ExternalLink
+  ExternalLink,
+  Trophy,
+  Star,
+  TrendingUp,
+  AlertCircle
 } from "lucide-react";
 import StatCard from "@/components/stat-card";
 import StatusBadge from "@/components/status-badge";
 import AnnouncementCard from "@/components/announcement-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { courses, enrollments, schedules, announcements, certificates } from "@/lib/mock-data";
+import { courses, enrollments, schedules, announcements, certificates } from "@/lib/institutional-data";
 import { format } from "date-fns";
+import { calculateProfileCompletion, loadLocalProfile } from "@/lib/profile-utils";
 
 const container = {
   hidden: { opacity: 0 },
@@ -44,6 +49,11 @@ export default function TraineeDashboardPage() {
   const recentAnnouncements = announcements
     .filter(a => a.targetRole === "all" || a.targetRole === "trainee")
     .slice(0, 3);
+    
+  // Real profile completion check
+  const draft = loadLocalProfile();
+  const completionPercentage = calculateProfileCompletion(draft || myEnrollment);
+  const profileIncomplete = completionPercentage < 100;
 
   return (
     <div className="space-y-8">
@@ -57,6 +67,29 @@ export default function TraineeDashboardPage() {
           <p className="text-muted-foreground mt-1">Here's what's happening with your learning journey.</p>
         </div>
       </motion.div>
+
+      {profileIncomplete && (
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-amber-50 border border-amber-200 p-6 rounded-[2rem] flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm"
+        >
+          <div className="flex items-center gap-4 text-center md:text-left">
+            <div className="w-12 h-12 bg-amber-100 rounded-2xl flex items-center justify-center text-amber-600 shrink-0">
+              <AlertCircle className="w-6 h-6" />
+            </div>
+            <div>
+              <p className="font-black text-amber-900 uppercase tracking-widest text-xs mb-1">Incomplete Profile ({completionPercentage}%)</p>
+              <p className="text-sm text-amber-700 font-medium leading-relaxed max-w-xl">
+                Some TESDA-required fields are still missing. Complete them now to enable **Instant Admission Slips** for your next enrollment.
+              </p>
+            </div>
+          </div>
+          <Link href="/trainee/profile" className="w-full md:w-auto bg-amber-500 hover:bg-amber-600 text-white px-8 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-amber-500/20 text-center">
+            Complete Profile
+          </Link>
+        </motion.div>
+      )}
 
       <motion.div 
         variants={container}
@@ -80,21 +113,40 @@ export default function TraineeDashboardPage() {
             className="h-full"
           />
         </motion.div>
-        <motion.div variants={item}>
-          <StatCard
-            label="Next Session"
-            value={mySchedules.length > 0 ? format(new Date(mySchedules[0].date), "MMM dd") : "None"}
-            icon={CalendarDays}
-            className="h-full"
-          />
+        <motion.div variants={item} className="md:col-span-1">
+          <Card className="h-full border-primary/20 bg-gradient-to-br from-primary-indigo to-primary-electric text-white overflow-hidden relative group">
+            <Trophy className="absolute top-2 right-2 h-16 w-16 text-white/10 -rotate-12 transition-transform group-hover:scale-110" />
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs font-black uppercase tracking-widest text-white/70">Current Rank</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-black">#12</div>
+              <div className="text-[10px] font-bold text-white/80 uppercase mt-1">Global Standings</div>
+              <div className="mt-4 flex items-center gap-2">
+                <div className="flex-1 h-1.5 bg-white/20 rounded-full overflow-hidden">
+                  <div className="h-full bg-accent-gold w-[85%]" />
+                </div>
+                <span className="text-[10px] font-black tracking-tighter">85%</span>
+              </div>
+            </CardContent>
+          </Card>
         </motion.div>
         <motion.div variants={item}>
-          <StatCard
-            label="Certificates"
-            value={myCerts.length.toString()}
-            icon={Award}
-            className="h-full"
-          />
+          <Card className="h-full border-accent-gold/20 bg-white overflow-hidden relative">
+            <Star className="absolute top-2 right-2 h-12 w-12 text-accent-gold/5" />
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs font-black uppercase tracking-widest text-slate-400">Total Points</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-2">
+                <div className="text-3xl font-black text-slate-900">2,450</div>
+                <div className="bg-accent-gold/10 text-accent-gold text-[10px] font-black px-1.5 py-0.5 rounded-md">RP</div>
+              </div>
+              <p className="text-[10px] font-bold text-emerald-600 mt-1 flex items-center gap-1">
+                <TrendingUp className="h-3 w-3" /> +150 this week
+              </p>
+            </CardContent>
+          </Card>
         </motion.div>
       </motion.div>
 

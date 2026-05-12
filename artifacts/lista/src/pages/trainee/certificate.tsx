@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { certificates, courses } from "@/lib/mock-data";
+import { certificates, courses } from "@/lib/institutional-data";
 import StatusBadge from "@/components/status-badge";
 import { Download, Eye, Award } from "lucide-react";
 import { format } from "date-fns";

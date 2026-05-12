@@ -1,12 +1,13 @@
-import { Switch, Route, Router as WouterRouter, Redirect } from "wouter";
+import { Switch, Route, Router as WouterRouter, Redirect, useLocation } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import type { ComponentType, ReactNode } from "react";
+import { type ComponentType, type ReactNode, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/context/auth-context";
 import NotFound from "@/pages/not-found";
 
 import PublicLayout from "@/layouts/public-layout";
+import AuthLayout from "@/layouts/auth-layout";
 import TraineeLayout from "@/layouts/trainee-layout";
 import StaffLayout from "@/layouts/staff-layout";
 import AdminLayout from "@/layouts/admin-layout";
@@ -19,9 +20,17 @@ import AssessmentPage from "@/pages/public/assessment";
 import ScholarshipsPage from "@/pages/public/scholarships";
 import EnrollPage from "@/pages/public/enroll";
 import LoginPage from "@/pages/public/login";
+import SignupPage from "@/pages/public/signup";
 import ForgotPasswordPage from "@/pages/public/forgot-password";
+import AuthCallbackPage from "@/pages/public/auth-callback";
+import AdmissionsPage from "@/pages/public/admissions";
+import NewsDetailPage from "@/pages/public/news-detail";
+import PrivacyPage from "@/pages/public/privacy";
+import TermsPage from "@/pages/public/terms";
 
 import TraineeDashboardPage from "@/pages/trainee/dashboard";
+import TraineeProfilePage from "@/pages/trainee/profile";
+import TraineeRegistrationPage from "@/pages/trainee/registration";
 import TraineeApplicationPage from "@/pages/trainee/application";
 import TraineeSchedulePage from "@/pages/trainee/schedule";
 import TraineeCertificatePage from "@/pages/trainee/certificate";
@@ -75,16 +84,24 @@ function Router() {
       {/* Public Routes */}
       <Route path="/"><PublicLayout><HomePage /></PublicLayout></Route>
       <Route path="/about"><PublicLayout><AboutPage /></PublicLayout></Route>
+      <Route path="/admissions"><PublicLayout><AdmissionsPage /></PublicLayout></Route>
       <Route path="/courses"><PublicLayout><CoursesPage /></PublicLayout></Route>
       <Route path="/courses/:slug"><PublicLayout><CourseDetailPage /></PublicLayout></Route>
       <Route path="/assessment"><PublicLayout><AssessmentPage /></PublicLayout></Route>
       <Route path="/scholarships"><PublicLayout><ScholarshipsPage /></PublicLayout></Route>
       <Route path="/enroll"><PublicLayout><EnrollPage /></PublicLayout></Route>
-      <Route path="/login"><PublicLayout><LoginPage /></PublicLayout></Route>
-      <Route path="/forgot-password"><PublicLayout><ForgotPasswordPage /></PublicLayout></Route>
+      <Route path="/login"><AuthLayout><LoginPage /></AuthLayout></Route>
+      <Route path="/news/:id"><PublicLayout><NewsDetailPage /></PublicLayout></Route>
+      <Route path="/signup"><AuthLayout><SignupPage /></AuthLayout></Route>
+      <Route path="/forgot-password"><AuthLayout><ForgotPasswordPage /></AuthLayout></Route>
+      <Route path="/auth/callback"><AuthLayout><AuthCallbackPage /></AuthLayout></Route>
+      <Route path="/privacy"><PublicLayout><PrivacyPage /></PublicLayout></Route>
+      <Route path="/terms"><PublicLayout><TermsPage /></PublicLayout></Route>
 
       {/* Trainee Routes */}
+      <Route path="/trainee/register"><Protected layout={({children}) => <>{children}</>} allowedRole="trainee"><TraineeRegistrationPage /></Protected></Route>
       <Route path="/trainee"><Protected layout={TraineeLayout} allowedRole="trainee"><TraineeDashboardPage /></Protected></Route>
+      <Route path="/trainee/profile"><Protected layout={TraineeLayout} allowedRole="trainee"><TraineeProfilePage /></Protected></Route>
       <Route path="/trainee/application"><Protected layout={TraineeLayout} allowedRole="trainee"><TraineeApplicationPage /></Protected></Route>
       <Route path="/trainee/schedule"><Protected layout={TraineeLayout} allowedRole="trainee"><TraineeSchedulePage /></Protected></Route>
       <Route path="/trainee/certificate"><Protected layout={TraineeLayout} allowedRole="trainee"><TraineeCertificatePage /></Protected></Route>
@@ -114,11 +131,20 @@ function Router() {
   );
 }
 
+function ScrollToTop() {
+  const [location] = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location]);
+  return null;
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+          <ScrollToTop />
           <Router />
         </WouterRouter>
         <Toaster />

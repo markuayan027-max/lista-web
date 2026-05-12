@@ -24,8 +24,8 @@ export default function SidebarStaff() {
       )}
     >
       <div className={cn("p-6 flex items-center gap-2", isCollapsed && "justify-center px-0")}>
-        <div className="bg-primary text-primary-foreground p-1 rounded-lg shrink-0">
-          <GraduationCap className="h-6 w-6" />
+        <div className="shrink-0">
+          <img src="/logo.webp" alt="LISTA Logo" className="h-12 w-auto object-contain" />
         </div>
         {!isCollapsed && <span className="text-xl font-bold tracking-tighter">LISTA</span>}
       </div>

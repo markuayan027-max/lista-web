@@ -1,15 +1,22 @@
-import { Building2, Users, Target, Award, Globe, BookOpen } from "lucide-react";
+import { Building2, Users, Target, Award, Globe, BookOpen, FileCheck, Eye } from "lucide-react";
 import AvatarInitials from "@/components/avatar-initials";
-import StatCard from "@/components/stat-card";
-
-const leadership = [
-  { name: "Dr. Amanda Lorenz", role: "Founder & CEO", bio: "Former university dean with 20+ years of experience in vocational education." },
-  { name: "Marcus Chen", role: "Chief Academic Officer", bio: "Curriculum design expert focused on aligning education with industry needs." },
-  { name: "Sarah Jenkins", role: "Head of Technology Programs", bio: "Ex-FAANG engineer passionate about bringing cutting-edge tech to students." },
-  { name: "James Wilson", role: "Head of Healthcare Programs", bio: "Registered nurse and administrator with a focus on operational excellence." },
-  { name: "Priya Patel", role: "Director of Admissions", bio: "Dedicated to making education accessible and equitable for all applicants." },
-  { name: "David Kim", role: "Director of Career Services", bio: "Connecting our graduates with top employers around the globe." }
-];
+import { leadership, officialDocuments } from "@/lib/institutional-data";
+import { withBase } from "@/lib/with-base";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 export default function AboutPage() {
   return (
@@ -19,41 +26,75 @@ export default function AboutPage() {
         <div className="container mx-auto px-4 md:px-6">
           <div className="max-w-3xl">
             <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight mb-6">
-              Empowering the next generation of professionals.
+              Welcome to LISTA
             </h1>
             <p className="text-xl text-muted-foreground leading-relaxed">
-              At LISTA, we believe that practical, skills-based education is the key to unlocking human potential and driving economic growth.
+              We provide high-quality technical skills training to help you succeed in your career and build a brighter future.
             </p>
           </div>
         </div>
       </section>
 
       {/* Story */}
-      <section className="py-20">
+      <section className="py-24 overflow-hidden">
         <div className="container mx-auto px-4 md:px-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-start">
-            <div className="space-y-6 text-lg text-muted-foreground leading-relaxed">
-              <h2 className="text-3xl font-bold text-foreground tracking-tight mb-8">Our Story</h2>
-              <p>
-                Founded in 2010 by Dr. Amanda Lorenz, the Lorenz International Skills Training Academy (LISTA) began with a simple premise: traditional education often leaves a gap between what students learn and what employers actually need.
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-start">
+            <div className="lg:col-span-5 space-y-8 text-lg text-muted-foreground leading-relaxed">
+              <div className="space-y-4">
+                <div className="relative pl-6 mb-8">
+                <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-600 via-blue-400 to-transparent rounded-full" />
+                <span className="text-[10px] font-bold text-blue-600 uppercase tracking-[0.3em]">Our Story</span>
+              </div>
+                <h2 className="text-4xl md:text-5xl lg:text-6xl font-black text-foreground tracking-tight leading-[1.1]">Our Story</h2>
+              </div>
+              <p className="text-xl text-foreground font-medium border-l-4 border-primary pl-6 py-2 bg-slate-50/50 rounded-r-2xl">
+                Growing from a family vision into a trusted technical school in Northern Mindanao.
               </p>
               <p>
-                We set out to bridge that gap by partnering directly with industry leaders to design intensive, hands-on training programs. What started as a small technology bootcamp has grown into a comprehensive academy offering courses in healthcare, business, design, and marketing.
+                Started in 2014, LISTA was built to give the people of Gingoog City easy access to great education. We began as a small training center and have now become a nationally recognized school.
               </p>
               <p>
-                Today, LISTA is proud to have graduated over 15,000 students who now work at some of the world's most innovative companies. Our commitment remains the same: practical skills, expert instruction, and unwavering support for our students' success.
+                We focus on teaching practical skills in <strong>Agriculture</strong>, <strong>Automotive</strong>, and <strong>Construction</strong>. We make sure what you learn is exactly what employers need today.
+              </p>
+              <p>
+                Today, as an accredited TESDA Assessment Center, we are proud to help our students not just learn, but to find good jobs and succeed in life.
               </p>
             </div>
-            <div className="grid grid-cols-2 gap-6">
-               <div className="aspect-square rounded-2xl bg-slate-100 p-8 flex flex-col justify-center items-center text-center space-y-4">
-                  <Target className="w-12 h-12 text-primary" />
-                  <h3 className="font-bold text-lg">Mission</h3>
-                  <p className="text-sm text-muted-foreground">To provide accessible, high-quality skills training that transforms careers.</p>
+            
+            <div className="lg:col-span-7 flex flex-col gap-6">
+               {/* Mission Card */}
+               <div className="group relative overflow-hidden rounded-[2.5rem] bg-white border border-slate-100 p-10 md:p-12 shadow-2xl shadow-slate-200/40 hover:shadow-primary/5 hover:border-primary/20 transition-all duration-700">
+                  {/* Decorative background circle */}
+                  <div className="absolute -top-12 -right-12 w-48 h-48 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-colors" />
+                  
+                  <div className="relative flex flex-col md:flex-row gap-8 items-start">
+                    <div className="shrink-0 w-20 h-20 rounded-3xl bg-primary flex items-center justify-center shadow-xl shadow-primary/20 group-hover:scale-110 transition-transform duration-500">
+                      <Target className="w-10 h-10 text-white" />
+                    </div>
+                    <div className="space-y-4">
+                      <h3 className="text-3xl font-black tracking-tight text-foreground group-hover:text-primary transition-colors">Our Mission</h3>
+                      <p className="text-lg md:text-xl text-muted-foreground leading-relaxed">
+                        "To give everyone the best technical training and education so they can succeed in their careers."
+                      </p>
+                    </div>
+                  </div>
                </div>
-               <div className="aspect-square rounded-2xl bg-slate-100 p-8 flex flex-col justify-center items-center text-center space-y-4 translate-y-8">
-                  <Globe className="w-12 h-12 text-primary" />
-                  <h3 className="font-bold text-lg">Vision</h3>
-                  <p className="text-sm text-muted-foreground">A world where anyone can acquire the skills needed to thrive in the modern economy.</p>
+
+               {/* Vision Card */}
+               <div className="group relative overflow-hidden rounded-[2.5rem] bg-slate-50 border border-slate-100 p-10 md:p-12 shadow-xl shadow-slate-200/20 hover:shadow-primary/5 hover:border-primary/20 transition-all duration-700">
+                  <div className="absolute -bottom-12 -left-12 w-48 h-48 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-colors" />
+                  
+                  <div className="relative flex flex-col md:flex-row gap-8 items-start">
+                    <div className="shrink-0 w-20 h-20 rounded-3xl bg-white border border-slate-200 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-500">
+                      <Globe className="w-10 h-10 text-primary" />
+                    </div>
+                    <div className="space-y-4">
+                      <h3 className="text-3xl font-black tracking-tight text-foreground group-hover:text-primary transition-colors">Our Vision</h3>
+                      <p className="text-lg md:text-xl text-muted-foreground leading-relaxed italic">
+                        "To be the best training center where skills are tested fairly and accurately."
+                      </p>
+                    </div>
+                  </div>
                </div>
             </div>
           </div>
@@ -61,24 +102,28 @@ export default function AboutPage() {
       </section>
 
       {/* Stats */}
-      <section className="py-16 bg-primary text-primary-foreground">
-        <div className="container mx-auto px-4 md:px-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 divide-x divide-primary-foreground/20">
-            <div className="text-center px-4">
-              <div className="text-4xl md:text-5xl font-black mb-2">14+</div>
-              <div className="text-primary-foreground/80 font-medium">Years Operating</div>
+      <section className="py-20 bg-slate-50 relative overflow-hidden border-y border-slate-100">
+        <div className="absolute inset-0 opacity-5 bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:32px_32px]" />
+        <div className="container mx-auto px-4 md:px-6 relative z-10">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8 lg:divide-x lg:divide-slate-200">
+            <div className="text-center px-4 space-y-2">
+              <div className="text-5xl md:text-6xl font-black text-foreground tracking-tighter">10+</div>
+              <div className="text-primary font-bold uppercase tracking-[0.2em] text-[10px]">Years Operating</div>
             </div>
-            <div className="text-center px-4">
-              <div className="text-4xl md:text-5xl font-black mb-2">15k</div>
-              <div className="text-primary-foreground/80 font-medium">Alumni</div>
+            <div className="text-center px-4 space-y-2">
+              <div className="text-5xl md:text-6xl font-black text-foreground tracking-tighter">1.5k</div>
+              <div className="text-primary font-bold uppercase tracking-[0.2em] text-[10px]">Target Certifications</div>
             </div>
-            <div className="text-center px-4">
-              <div className="text-4xl md:text-5xl font-black mb-2">92%</div>
-              <div className="text-primary-foreground/80 font-medium">Employment Rate</div>
+            <div className="text-center px-4 space-y-2">
+              <div className="text-5xl md:text-6xl font-black text-foreground tracking-tighter">75%</div>
+              <div className="text-primary font-bold uppercase tracking-[0.2em] text-[10px]">Employment Rate</div>
             </div>
-            <div className="text-center px-4">
-              <div className="text-4xl md:text-5xl font-black mb-2">200+</div>
-              <div className="text-primary-foreground/80 font-medium">Partner Companies</div>
+            <div className="flex flex-col items-center gap-2 mb-4">
+              <div className="flex gap-1.5 mb-2">
+                <div className="w-8 h-1 bg-blue-600 rounded-full" />
+                <div className="w-3 h-1 bg-blue-200 rounded-full" />
+              </div>
+              <span className="text-[10px] font-bold text-blue-600 uppercase tracking-[0.3em]">Accreditations</span>
             </div>
           </div>
         </div>
@@ -97,8 +142,19 @@ export default function AboutPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
             {leadership.map((person, idx) => (
               <div key={idx} className="flex flex-col items-center text-center group">
-                <div className="mb-6 overflow-hidden rounded-full p-1 border-2 border-transparent group-hover:border-primary transition-colors">
-                   <AvatarInitials name={person.name} size="lg" className="w-32 h-32 text-3xl" />
+                <div className="mb-6 relative group/avatar">
+                   <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl opacity-0 group-hover/avatar:opacity-100 transition-opacity" />
+                   <div className="relative overflow-hidden rounded-full p-1 border-2 border-slate-100 group-hover:border-primary transition-all duration-500 scale-100 group-hover:scale-105">
+                      {person.image ? (
+                        <img 
+                          src={withBase(person.image)} 
+                          alt={person.name} 
+                          className="w-32 h-32 rounded-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700"
+                        />
+                      ) : (
+                        <AvatarInitials name={person.name} size="lg" className="w-32 h-32 text-3xl" />
+                      )}
+                   </div>
                 </div>
                 <h3 className="text-xl font-bold mb-1">{person.name}</h3>
                 <p className="text-primary font-medium mb-4">{person.role}</p>
@@ -109,16 +165,145 @@ export default function AboutPage() {
         </div>
       </section>
 
+      {/* Updated on 2026-05-01: Replaced placeholder icons with official logos and added missing primary partners (TESDA, ATI) */}
       {/* Accreditations */}
-      <section className="py-16 bg-slate-50 border-t border-card-border">
+      <section className="py-20 bg-slate-50 border-t border-card-border">
         <div className="container mx-auto px-4 md:px-6 text-center">
-           <h2 className="text-2xl font-bold tracking-tight mb-12">Accreditations & Memberships</h2>
-           <div className="flex flex-wrap justify-center items-center gap-12 opacity-60">
-              <div className="flex items-center gap-3 font-bold text-xl"><Award className="w-8 h-8"/> NVTC Accredited</div>
-              <div className="flex items-center gap-3 font-bold text-xl"><BookOpen className="w-8 h-8"/> Dept. of Education</div>
-              <div className="flex items-center gap-3 font-bold text-xl"><Users className="w-8 h-8"/> Global Skills Alliance</div>
-              <div className="flex items-center gap-3 font-bold text-xl"><Building2 className="w-8 h-8"/> Tech Industry Board</div>
+           <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-16">Officially Accredited & Recognized By</h2>
+           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12 items-center opacity-80">
+              <div className="flex flex-col items-center gap-4 group">
+                <img 
+                  src={withBase('/TESDA_Logo_official-removebg-preview.png')} 
+                  alt="TESDA Logo" 
+                  className="h-16 md:h-20 w-auto object-contain grayscale group-hover:grayscale-0 transition-all duration-500" 
+                />
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">TESDA</span>
+              </div>
+              
+              <div className="flex flex-col items-center gap-4 group">
+                <img 
+                  src={withBase('/DepEd logo.png')} 
+                  alt="DepEd Logo" 
+                  className="h-16 md:h-20 w-auto object-contain grayscale group-hover:grayscale-0 transition-all duration-500" 
+                />
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">DepEd</span>
+              </div>
+              
+              <div className="flex flex-col items-center gap-4 group">
+                <img 
+                  src={withBase('/ATI (Agricultural Training Institute) LOGO.png')} 
+                  alt="ATI Logo" 
+                  className="h-16 md:h-20 w-auto object-contain grayscale group-hover:grayscale-0 transition-all duration-500" 
+                />
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">ATI</span>
+              </div>
+              
+              <div className="flex flex-col items-center gap-4 group">
+                <img 
+                  src={withBase('/NVTC (National Vocational Training Council) is INTERNATIONAL LOGO.webp.png')} 
+                  alt="NVTC International Logo" 
+                  className="h-16 md:h-20 w-auto object-contain grayscale group-hover:grayscale-0 transition-all duration-500" 
+                />
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-center">NVTC International</span>
+              </div>
            </div>
+        </div>
+      </section>
+
+      {/* Official Documents Gallery with Carousel */}
+      <section className="py-24 bg-white">
+        <div className="container mx-auto px-4 md:px-6">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16">
+            <div className="space-y-4 max-w-2xl">
+              <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Legal & Certifications</h2>
+              <p className="text-lg text-muted-foreground">
+                We maintain full transparency with our community. Scroll through our official credentials and click to view in high resolution.
+              </p>
+            </div>
+            <div className="flex items-center gap-2 text-primary font-bold bg-primary/5 px-4 py-2 rounded-full text-sm">
+              <FileCheck className="w-4 h-4" />
+              Verified Institutional Documents
+            </div>
+          </div>
+
+          <div className="px-12">
+            <Carousel
+              opts={{
+                align: "start",
+                loop: true,
+              }}
+              className="w-full"
+            >
+              <CarouselContent>
+                {officialDocuments.map((doc) => (
+                  <CarouselItem key={doc.id} className="sm:basis-1/2 md:basis-1/3 lg:basis-1/4">
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <div className="group cursor-pointer p-1">
+                          <div className="relative aspect-[1/1.41] overflow-hidden rounded-2xl border-2 border-slate-100 bg-slate-50 shadow-sm group-hover:shadow-xl group-hover:border-primary/20 transition-all duration-500">
+                            {/* Placeholder background pattern */}
+                            <div className="absolute inset-0 opacity-5 bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:16px_16px]" />
+                            
+                            {/* Document Preview Image */}
+                            <img 
+                              src={withBase(doc.image)} 
+                              alt={doc.title}
+                              className="w-full h-full object-cover grayscale-[20%] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.src = "https://images.unsplash.com/photo-1589330694653-ded6df03f754?auto=format&fit=crop&q=80&w=600";
+                              }}
+                            />
+                            
+                            {/* Hover Overlay */}
+                            <div className="absolute inset-0 bg-primary/60 opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex flex-col items-center justify-center p-6 text-white text-center backdrop-blur-[2px]">
+                              <Eye className="w-10 h-10 mb-4 scale-50 group-hover:scale-100 transition-transform duration-500" />
+                              <span className="font-bold text-sm tracking-widest uppercase">View Full Document</span>
+                            </div>
+
+                            {/* Badge */}
+                            <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-[10px] font-bold text-primary tracking-tighter uppercase shadow-sm">
+                              {doc.category}
+                            </div>
+                          </div>
+                          <div className="mt-6 space-y-1">
+                            <h3 className="font-bold text-foreground group-hover:text-primary transition-colors text-sm md:text-base truncate">{doc.title}</h3>
+                            <p className="text-xs text-muted-foreground font-medium">{doc.issuedBy}</p>
+                          </div>
+                        </div>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-4xl max-h-[90vh] p-0 overflow-hidden border-none bg-transparent shadow-none">
+                        <DialogHeader className="sr-only">
+                          <DialogTitle>{doc.title}</DialogTitle>
+                          <DialogDescription>{doc.description}</DialogDescription>
+                        </DialogHeader>
+                        <div className="relative w-full h-full flex items-center justify-center p-4">
+                          <img 
+                            src={withBase(doc.image)} 
+                            alt={doc.title} 
+                            className="max-w-full max-h-[85vh] w-auto h-auto rounded-lg shadow-2xl ring-4 ring-white/10 select-none"
+                            onContextMenu={(e) => e.preventDefault()}
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.src = "https://images.unsplash.com/photo-1589330694653-ded6df03f754?auto=format&fit=crop&q=80&w=1200";
+                            }}
+                          />
+                          <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-4">
+                             <div className="bg-black/60 backdrop-blur-md px-6 py-3 rounded-2xl border border-white/20 text-white flex flex-col items-center">
+                                <span className="text-sm font-bold">{doc.title}</span>
+                                <span className="text-[10px] opacity-70 uppercase tracking-widest">{doc.issuedBy}</span>
+                             </div>
+                          </div>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious className="hidden md:flex -left-12" />
+              <CarouselNext className="hidden md:flex -right-12" />
+            </Carousel>
+          </div>
         </div>
       </section>
     </div>

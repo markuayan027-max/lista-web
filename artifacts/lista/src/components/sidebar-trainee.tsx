@@ -1,9 +1,10 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
-import { Home, ClipboardList, Calendar, Award, Bell, HelpCircle, GraduationCap } from "lucide-react";
+import { Home, ClipboardList, Calendar, Award, Bell, HelpCircle, UserCircle } from "lucide-react";
 
 const MENU_ITEMS = [
   { href: "/trainee", label: "Home", icon: Home },
+  { href: "/trainee/profile", label: "My Profile", icon: UserCircle },
   { href: "/trainee/application", label: "Application", icon: ClipboardList },
   { href: "/trainee/schedule", label: "Schedule", icon: Calendar },
   { href: "/trainee/certificate", label: "Certificate", icon: Award },
@@ -18,8 +19,8 @@ export default function SidebarTrainee() {
     <div className="flex flex-col h-full w-64 bg-white border-r border-card-border">
       <div className="p-6">
         <Link href="/" className="flex items-center gap-2 group">
-          <div className="bg-primary text-primary-foreground p-1 rounded-lg">
-            <GraduationCap className="h-6 w-6" />
+          <div className="shrink-0">
+            <img src="/logo.webp" alt="LISTA Logo" className="h-12 w-auto object-contain" />
           </div>
           <span className="text-xl font-bold tracking-tighter">LISTA</span>
         </Link>

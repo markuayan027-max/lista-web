@@ -1,5 +1,5 @@
 import { useAuth } from "@/context/auth-context";
-import { useLocation } from "wouter";
+import { useLocation, Redirect } from "wouter";
 import SidebarTrainee from "@/components/sidebar-trainee";
 import BottomNavTrainee from "@/components/bottom-nav-trainee";
 import AvatarInitials from "@/components/avatar-initials";
@@ -9,8 +9,12 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 export default function TraineeLayout({ children }: { children: React.ReactNode }) {
-  const { user, logout } = useAuth();
-  const [, setLocation] = useLocation();
+  const { user, logout, isRegistered } = useAuth();
+  const [location, setLocation] = useLocation();
+
+  if (user && !isRegistered && location !== "/trainee/register") {
+    return <Redirect to="/trainee/register" />;
+  }
 
   const handleLogout = () => {
     logout();

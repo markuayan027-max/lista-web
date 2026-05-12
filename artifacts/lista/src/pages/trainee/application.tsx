@@ -1,7 +1,7 @@
 import { useAuth } from "@/context/auth-context";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { enrollments, courses } from "@/lib/mock-data";
+import { enrollments, courses } from "@/lib/institutional-data";
 import StatusBadge from "@/components/status-badge";
 import { CheckCircle2, Circle, FileText, Check, MessageSquare, GraduationCap } from "lucide-react";
 import { format } from "date-fns";

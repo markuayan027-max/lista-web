@@ -2,70 +2,85 @@ import { Link } from "wouter";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { withBase } from "@/lib/with-base";
-import { Clock, BarChart, Tag } from "lucide-react";
-import { motion } from "framer-motion";
+import { BookOpen, ArrowRight, CheckCircle2 } from "lucide-react";
+import { useState } from "react";
 
 interface Course {
   slug: string;
-  title: string;
-  category: string;
-  level: string;
-  durationWeeks: number;
-  priceUSD: number;
-  shortDescription: string;
-  coverImageUrl: string;
+  name: string;
+  sector: string;
+  ncLevel: string;
+  shortDescription?: string;
+  coverImageUrl?: string;
+  twspScholarship?: string;
 }
 
 interface CourseCardProps {
   course: Course;
+  rankingPoints?: number;
 }
 
 export default function CourseCard({ course }: CourseCardProps) {
+  const [imageError, setImageError] = useState(false);
+
   return (
-    <Link href={`/courses/${course.slug}`}>
-      <motion.div
-        whileHover={{ y: -4 }}
-        transition={{ duration: 0.2 }}
-        className="cursor-pointer"
-      >
-        <Card className="group overflow-hidden border-card-border shadow-sm transition-all hover:shadow-md">
-          <div className="relative aspect-video overflow-hidden">
-            <img
-              src={withBase(course.coverImageUrl)}
-              alt={course.title}
-              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-            />
-            <div className="absolute top-3 left-3">
-              <Badge className="bg-white/90 text-primary hover:bg-white text-xs font-semibold backdrop-blur-sm">
-                {course.category}
-              </Badge>
+    <div className="h-full">
+      <Link href={`/courses/${course.slug}`} className="block h-full">
+        <div className="cursor-pointer h-full">
+          <Card className="group overflow-hidden bg-white border border-slate-200 hover:border-slate-400 shadow-sm hover:shadow-md transition-all h-full flex flex-col rounded-xl">
+            
+            <div className="relative w-full aspect-[16/10] bg-slate-100 flex items-center justify-center border-b border-slate-200 overflow-hidden shrink-0">
+              {course.coverImageUrl && !imageError ? (
+                <img
+                  src={withBase(course.coverImageUrl)}
+                  alt={course.name}
+                  className="h-full w-full object-cover"
+                  onError={() => setImageError(true)}
+                />
+              ) : (
+                <div className="flex flex-col items-center justify-center w-full h-full text-slate-400">
+                  <BookOpen className="h-8 w-8 mb-2 opacity-50" strokeWidth={1.5} />
+                  <span className="text-xs font-medium uppercase tracking-wider">Program Preview</span>
+                </div>
+              )}
+              
+              <div className="absolute top-3 left-3 flex gap-2">
+                <Badge className="bg-white text-slate-800 hover:bg-slate-50 text-[10px] font-bold uppercase tracking-wider border border-slate-200 shadow-sm">
+                  {course.sector}
+                </Badge>
+              </div>
             </div>
-          </div>
-          <CardContent className="p-5 space-y-3">
-            <h3 className="text-xl font-bold leading-tight group-hover:text-primary/80 transition-colors">
-              {course.title}
-            </h3>
-            <p className="text-sm text-muted-foreground line-clamp-2">
-              {course.shortDescription}
-            </p>
-          </CardContent>
-          <CardFooter className="p-5 pt-0 flex items-center justify-between border-t border-card-border/50 mt-auto">
-            <div className="flex items-center gap-4 text-xs font-medium text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <Clock className="h-3.5 w-3.5" />
-                {course.durationWeeks}w
+
+            <CardContent className="p-6 flex-grow flex flex-col">
+              <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">
+                NC Level {course.ncLevel}
+              </div>
+              
+              <h3 className="text-lg font-bold text-slate-900 mb-3 line-clamp-2 min-h-[3.5rem]">
+                {course.name}
+              </h3>
+              <p className="text-sm text-slate-600 line-clamp-3 mb-4 leading-relaxed min-h-[4.5rem]">
+                {course.shortDescription}
+              </p>
+            </CardContent>
+
+            <CardFooter className="px-6 py-5 border-t border-slate-100 mt-auto flex items-center justify-between">
+              <div className="flex items-center gap-1.5 text-slate-500">
+                {course.twspScholarship === "true" && (
+                  <>
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    <span className="text-xs font-semibold text-slate-700">TWSP Approved</span>
+                  </>
+                )}
+              </div>
+              <span className="text-sm font-semibold text-slate-900 flex items-center gap-1 group-hover:gap-2 transition-all">
+                View Details <ArrowRight className="w-4 h-4" />
               </span>
-              <span className="flex items-center gap-1">
-                <BarChart className="h-3.5 w-3.5" />
-                {course.level}
-              </span>
-            </div>
-            <span className="text-lg font-bold text-primary">
-              ${course.priceUSD}
-            </span>
-          </CardFooter>
-        </Card>
-      </motion.div>
-    </Link>
+            </CardFooter>
+          </Card>
+        </div>
+      </Link>
+    </div>
   );
 }
+

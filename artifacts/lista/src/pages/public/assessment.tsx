@@ -5,7 +5,7 @@ import { Target, ArrowRight, RefreshCw } from "lucide-react";
 import PrimaryButton from "@/components/primary-button";
 import CourseCard from "@/components/course-card";
 import { Progress } from "@/components/ui/progress";
-import { courses } from "@/lib/mock-data";
+import { courses } from "@/lib/institutional-data";
 
 type AssessmentOption = { text: string; category?: string; score?: string };
 type AssessmentQuestion = { id: number; text: string; options: AssessmentOption[] };
@@ -15,51 +15,54 @@ const questions: AssessmentQuestion[] = [
     id: 1,
     text: "Which of these activities sounds most interesting to you?",
     options: [
-      { text: "Building and fixing logical systems or websites", category: "Technology" },
-      { text: "Analyzing numbers and finding patterns", category: "Data" },
-      { text: "Making things look beautiful and easy to use", category: "Design" },
-      { text: "Helping people and organizing care", category: "Healthcare" },
-      { text: "Planning campaigns and understanding audiences", category: "Marketing" },
-      { text: "Leading teams and managing resources", category: "Business" },
+      { text: "Working with plants, soil, and sustainable farming", category: "Agriculture" },
+      { text: "Managing financial records and accounting", category: "Business" },
+      { text: "Fixing computers, networking, and software", category: "ICT" },
+      { text: "Operating heavy machinery or electrical systems", category: "Construction" },
+      { text: "Professional driving and vehicle maintenance", category: "Automotive" },
+      { text: "Pattern drafting and sewing garments", category: "Garments" },
     ]
   },
   {
     id: 2,
-    text: "How much time can you commit to learning per week?",
+    text: "What environment do you prefer working in?",
     options: [
-      { text: "I can study full-time (40+ hours)", score: "intense" },
-      { text: "Part-time (15-20 hours)", score: "moderate" },
-      { text: "Just a few hours on weekends", score: "light" },
+      { text: "Outdoors in a farm or garden", category: "Agriculture" },
+      { text: "Office setting with a computer", category: "Business" },
+      { text: "Technical workshop or IT lab", category: "ICT" },
+      { text: "Construction sites or industrial areas", category: "Construction" },
+      { text: "On the road or in a vehicle", category: "Automotive" },
+      { text: "Tailoring shop or garments factory", category: "Garments" },
     ]
   },
   {
     id: 3,
     text: "What is your primary goal for taking a course?",
     options: [
-      { text: "Start a completely new career", score: "Beginner" },
-      { text: "Level up in my current role", score: "Intermediate" },
-      { text: "Learn a specific tool or software", score: "Beginner" },
+      { text: "Start a small business or be self-employed", score: "Entrepreneur" },
+      { text: "Work for a large company or agency", score: "Corporate" },
+      { text: "Work abroad as a skilled professional", score: "Global" },
     ]
   },
   {
     id: 4,
     text: "How do you prefer to solve problems?",
     options: [
-      { text: "By writing code or technical solutions", category: "Technology" },
-      { text: "By designing visual layouts and user flows", category: "Design" },
-      { text: "By organizing data in spreadsheets", category: "Data" },
-      { text: "By communicating with stakeholders", category: "Business" },
+      { text: "By using manual tools and physical labor", category: "Construction" },
+      { text: "By using digital tools and logic", category: "ICT" },
+      { text: "By following strict rules and regulations", category: "Automotive" },
+      { text: "By using creative design and precision", category: "Garments" },
     ]
   },
   {
     id: 5,
-    text: "What type of role are you aiming for?",
+    text: "Which skill would you like to master most?",
     options: [
-      { text: "Software Engineer / Developer", category: "Technology" },
-      { text: "Data Analyst / Scientist", category: "Data" },
-      { text: "Product / UX Designer", category: "Design" },
-      { text: "Project / Product Manager", category: "Business" },
-      { text: "Marketing Specialist", category: "Marketing" },
+      { text: "Sustainable crop production", category: "Agriculture" },
+      { text: "Professional Bookkeeping", category: "Business" },
+      { text: "Electrical Installation", category: "Construction" },
+      { text: "Computer Servicing", category: "ICT" },
+      { text: "High-speed Tailoring", category: "Garments" },
     ]
   }
 ];

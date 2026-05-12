@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import FormInputField from "@/components/form-input-field";
 import PrimaryButton from "@/components/primary-button";
 import { useToast } from "@/hooks/use-toast";
-import { schedules as initialSchedules, courses } from "@/lib/mock-data";
+import { schedules as initialSchedules, courses } from "@/lib/institutional-data";
 import { format, addDays, startOfWeek, isSameDay } from "date-fns";
 
 export default function StaffSchedulePage() {

@@ -19,7 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Users, BookOpen, Clock, Award } from "lucide-react";
-import { enrollments, courses, certificates, users } from "@/lib/mock-data";
+import { enrollments, courses, certificates, users } from "@/lib/institutional-data";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -225,7 +225,7 @@ export default function AdminAnalyticsPage() {
               <CardTitle className="text-base font-bold">Top Performing Courses</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto hide-scrollbar">
                 <Table>
                   <TableHeader>
                     <TableRow className="border-b border-card-border hover:bg-transparent">

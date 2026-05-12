@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import StatusBadge from "@/components/status-badge";
 import PrimaryButton from "@/components/primary-button";
 import { useToast } from "@/hooks/use-toast";
-import { certificates as initialCertificates, courses, users } from "@/lib/mock-data";
+import { certificates as initialCertificates, courses, users } from "@/lib/institutional-data";
 import { format } from "date-fns";
 
 const containerVariants = {

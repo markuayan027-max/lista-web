@@ -13,7 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import AvatarInitials from "@/components/avatar-initials";
 import FormInputField from "@/components/form-input-field";
 import PrimaryButton from "@/components/primary-button";
-import { users as initialUsers, UserRole } from "@/lib/mock-data";
+import { users as initialUsers, UserRole } from "@/lib/institutional-data";
 
 const containerVariants = {
   hidden: { opacity: 0 },

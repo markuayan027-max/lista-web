@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import AnnouncementCard from "@/components/announcement-card";
-import { announcements } from "@/lib/mock-data";
+import { announcements } from "@/lib/institutional-data";
 import { isToday, isYesterday, isThisWeek, parseISO } from "date-fns";
 
 const container = {

@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import StatusBadge from "./status-badge";
-import { courses } from "@/lib/mock-data";
+import { courses } from "@/lib/institutional-data";
 import { format } from "date-fns";
 
 interface Enrollment {

@@ -7,8 +7,11 @@ import {
   MoreHorizontal, 
   Check, 
   X,
-  FileText
+  FileText,
+  FileSpreadsheet,
+  Printer
 } from "lucide-react";
+import { exportSingleTraineeToExcel, exportSingleTraineeToWord } from "@/lib/export-utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { 
@@ -35,7 +38,7 @@ import {
 } from "@/components/ui/sheet";
 import { useToast } from "@/hooks/use-toast";
 import StatusBadge from "@/components/status-badge";
-import { enrollments as mockEnrollments, courses } from "@/lib/mock-data";
+import { enrollments as mockEnrollments, courses } from "@/lib/institutional-data";
 import { format } from "date-fns";
 
 export default function StaffEnrollmentsPage() {
@@ -156,6 +159,24 @@ export default function StaffEnrollmentsPage() {
                         <Button variant="ghost" size="sm" onClick={() => setSelectedEnrollment(enrollment)}>
                           View
                         </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8 text-emerald-600" 
+                          onClick={() => exportSingleTraineeToExcel(enrollment)}
+                          title="Download Excel"
+                        >
+                          <FileSpreadsheet className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8 text-blue-600" 
+                          onClick={() => exportSingleTraineeToWord(enrollment)}
+                          title="Download Word (Print)"
+                        >
+                          <Printer className="h-4 w-4" />
+                        </Button>
                         {enrollment.status === 'pending' && (
                           <>
                             <Button size="icon" variant="outline" className="h-8 w-8 text-emerald-600 border-emerald-200 hover:bg-emerald-50" onClick={() => handleAction(enrollment.id, 'confirmed')}>
@@ -225,6 +246,23 @@ export default function StaffEnrollmentsPage() {
                       <Button variant="ghost" size="sm" className="h-8">View</Button>
                     </div>
                   </div>
+                </div>
+
+                <div className="pt-2 flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    className="flex-1 gap-2 border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                    onClick={() => exportSingleTraineeToExcel(selectedEnrollment)}
+                  >
+                    <FileSpreadsheet className="h-4 w-4" /> Excel
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="flex-1 gap-2 border-blue-200 text-blue-700 hover:bg-blue-50"
+                    onClick={() => exportSingleTraineeToWord(selectedEnrollment)}
+                  >
+                    <Printer className="h-4 w-4" /> Word Slip
+                  </Button>
                 </div>
 
                 {selectedEnrollment.status === 'pending' && (

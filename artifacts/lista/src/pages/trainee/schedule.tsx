@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, Clock, MapPin, User as UserIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { schedules, courses } from "@/lib/mock-data";
+import { schedules, courses } from "@/lib/institutional-data";
 import { format, addDays, startOfWeek, isSameDay } from "date-fns";
 
 export default function TraineeSchedulePage() {

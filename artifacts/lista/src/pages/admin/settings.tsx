@@ -60,7 +60,7 @@ export default function AdminSettingsPage() {
       </div>
 
       <Tabs defaultValue="profile" className="w-full">
-        <TabsList className="bg-muted/50 p-1 rounded-xl h-auto w-full justify-start overflow-x-auto flex-nowrap shrink-0">
+        <TabsList className="bg-muted/50 p-1 rounded-xl h-auto w-full justify-start overflow-x-auto hide-scrollbar flex-nowrap shrink-0">
           <TabsTrigger value="profile" className="rounded-lg px-4 py-2 font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm">
             <Building2 className="h-4 w-4 mr-2" />
             Academy Profile
@@ -90,12 +90,12 @@ export default function AdminSettingsPage() {
                 <CardContent className="space-y-4">
                   <FormInputField label="Institution Name" defaultValue="LISTA — Lorenz International Skills Training Academy" />
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormInputField label="Support Email" defaultValue="support@lista.edu" type="email" />
-                    <FormInputField label="Phone Number" defaultValue="+1 (555) 123-4567" />
+                    <FormInputField label="Support Email" defaultValue="admin@lorenzinternational.org" type="email" />
+                    <FormInputField label="Phone Number" defaultValue="09051095284" />
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-sm font-semibold tracking-tight">Headquarters Address</label>
-                    <Textarea defaultValue="123 Innovation Drive, Tech District, San Francisco, CA 94105" className="resize-none border-card-border" />
+                    <Textarea defaultValue="FJY Bldg., National Highway, Brgy. 24-A, Gingoog City, Misamis Oriental 9014" className="resize-none border-card-border" />
                   </div>
                 </CardContent>
                 <CardFooter className="bg-muted/10 border-t border-card-border py-4 px-6 flex justify-end">

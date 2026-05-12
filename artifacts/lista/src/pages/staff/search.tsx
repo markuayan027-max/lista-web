@@ -4,7 +4,7 @@ import { Search as SearchIcon, Users, BookOpen, FileText, ChevronRight } from "l
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
-import { users, enrollments, courses } from "@/lib/mock-data";
+import { users, enrollments, courses } from "@/lib/institutional-data";
 import StatusBadge from "@/components/status-badge";
 
 export default function StaffSearchPage() {

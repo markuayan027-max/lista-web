@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import PrimaryButton from "@/components/primary-button";
 import FormInputField from "@/components/form-input-field";
-import { schedules as initialSchedules, courses } from "@/lib/mock-data";
+import { schedules as initialSchedules, courses } from "@/lib/institutional-data";
 import { format, addDays, startOfWeek } from "date-fns";
 
 const containerVariants = {
@@ -201,7 +201,7 @@ export default function AdminSchedulePage() {
             </div>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="grid grid-cols-5 min-w-[800px] overflow-x-auto divide-x divide-card-border">
+            <div className="grid grid-cols-5 min-w-[800px] overflow-x-auto hide-scrollbar divide-x divide-card-border">
               {weekDays.map((day, i) => {
                 const dateStr = format(day, "yyyy-MM-dd");
                 const daySchedules = schedules.filter(s => s.date === dateStr).sort((a, b) => a.startTime.localeCompare(b.startTime));
