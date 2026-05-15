@@ -7,12 +7,12 @@ import {
   FileImage, ShieldCheck, Stethoscope, Compass,
   Users, BookOpen, TrendingUp, ClipboardList,
   UserCheck, Library, BriefcaseBusiness, Trophy,
-  Sparkles, Star, MapPin, Phone, Info, X
+  Star, MapPin, Phone, Info, X
 } from "lucide-react";
 import PrimaryButton from "@/components/primary-button";
 import CourseCard from "@/components/course-card";
 import { useGetCourses, useGetTestimonials } from "@workspace/api-client-react";
-import { courses as mockCourses, testimonials as mockTestimonials, posts as mockPosts, schoolInfo } from "@/lib/institutional-data";
+import { courses as mockCourses, testimonials as mockTestimonials, posts as mockPosts, schoolInfo, scholarshipSlots } from "@/lib/institutional-data";
 import { withBase } from "@/lib/with-base";
 const containerVars = {
   hidden: { opacity: 0 },
@@ -51,9 +51,9 @@ export default function HomePage() {
     },
     { 
       title: "For Educators", 
-      desc: "Get the training points you need for ranking and promotion.", 
+      desc: "Get the training points you need for professional growth.", 
       icon: GraduationCap,
-      details: "Our certificates are accepted for professional ranking in both public and private schools. Fulfill your requirements and move up your career ladder easily."
+      details: "Our certificates are accepted for professional development in both public and private schools. Fulfill your requirements and move up your career ladder easily."
     },
     {
       title: "For Everyone",
@@ -66,23 +66,55 @@ export default function HomePage() {
 
 
   const displayCourses = useMemo(() => {
-    let courses = [];
-    if (apiCourses && Array.isArray(apiCourses) && apiCourses.length > 0) {
-      courses = apiCourses.map(c => ({
-        id: c.id, slug: c.slug, name: c.name, sector: c.sector,
-        ncLevel: c.ncLevel, description: c.description,
-        shortDescription: c.shortDescription || c.description,
-        coverImageUrl: c.coverImageUrl, twspScholarship: c.twspScholarship,
-      }));
-    } else {
-      courses = mockCourses.slice(0, 8).map(c => ({
-        id: c.id, slug: c.slug, name: c.title, sector: c.category,
-        ncLevel: c.ncLevel, description: c.longDescription,
+    type HeroCourse = {
+      id: string;
+      slug: string;
+      name: string;
+      sector: string;
+      ncLevel: string;
+      description: string;
+      shortDescription: string;
+      coverImageUrl?: string;
+      twspScholarship?: string;
+      isFrozen?: boolean;
+    };
+
+    // Use all mock courses, but overlay API data if available
+    let courses: HeroCourse[] = mockCourses.map((c) => {
+      const apiOverride = (apiCourses && Array.isArray(apiCourses)) 
+        ? (apiCourses as any[]).find((ac: any) => ac.slug === c.slug || ac.id === c.id) 
+        : null;
+        
+      const slotInfo = scholarshipSlots.find(s => s.courseSlug === c.slug);
+      
+      if (apiOverride) {
+        return {
+          id: apiOverride.id || c.id,
+          slug: apiOverride.slug || c.slug,
+          name: apiOverride.name || c.title,
+          sector: apiOverride.sector || c.category,
+          ncLevel: apiOverride.ncLevel || c.ncLevel,
+          description: apiOverride.description || c.longDescription,
+          shortDescription: apiOverride.shortDescription || c.shortDescription,
+          coverImageUrl: apiOverride.coverImageUrl || c.galleryImages?.[0],
+          twspScholarship: apiOverride.twspScholarship ?? (c.twsp ? "true" : "false"),
+          isFrozen: slotInfo ? slotInfo.available <= 0 : true,
+        };
+      }
+
+      return {
+        id: c.id,
+        slug: c.slug,
+        name: c.title,
+        sector: c.category,
+        ncLevel: c.ncLevel,
+        description: c.longDescription,
         shortDescription: c.shortDescription,
-        coverImageUrl: c.galleryImages?.[0] || c.coverImageUrl,
+        coverImageUrl: c.galleryImages?.[0],
         twspScholarship: c.twsp ? "true" : "false",
-      }));
-    }
+        isFrozen: slotInfo ? slotInfo.available <= 0 : true,
+      };
+    });
 
     const paidCourse = {
       id: "paid-bcl",
@@ -90,7 +122,7 @@ export default function HomePage() {
       name: "Basic Computer Literacy (BCL)",
       sector: "ICT Sector",
       ncLevel: "Paid Course",
-      description: "Master essential computer skills for modern teaching and administrative work. Perfect for fulfilling professional ranking requirements. Estimated Fee: ₱2,500.",
+      description: "Master essential computer skills for modern teaching and administrative work. Perfect for fulfilling professional development requirements. Estimated Fee: ₱2,500.",
       shortDescription: "Master essential computer skills for modern teaching and administrative work. Estimated Fee: ₱2,500.",
       coverImageUrl: "/hero.png",
       twspScholarship: "false",
@@ -101,7 +133,14 @@ export default function HomePage() {
 
   const testimonials = useMemo(() => {
     if (apiTestimonials && Array.isArray(apiTestimonials) && apiTestimonials.length > 0) {
-      return apiTestimonials.slice(0, 3);
+      return apiTestimonials.slice(0, 3).map((t) => ({
+        id: t.id,
+        quote: t.quote,
+        attribution: t.attribution,
+        name: t.attribution,
+        role: "LISTA Graduate",
+        imageUrl: "/hero.png",
+      }));
     }
     const diversifiedTestimonials = [
       {
@@ -122,7 +161,7 @@ export default function HomePage() {
       },
       {
         id: "m-deped-1",
-        quote: "I just want to express my gratitude. During evaluation of my papers for professional ranking, I got 10 points for training. I can say that this training center is 💯% legit. Tested and proven based on my experience.",
+        quote: "I just want to express my gratitude. The training I received here has been incredibly valuable for my career progression. I can say that this training center is 💯% legit. Tested and proven based on my experience.",
         attribution: "Rosechelle Sumayang",
         name: "Rosechelle Sumayang",
         role: "LICENSED PROFESSIONAL TEACHER",
@@ -164,7 +203,8 @@ export default function HomePage() {
                 LISTA trains thousands of Filipinos in professional and technical skills — from digital literacy to vocational mastery — certified by TESDA.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
-                <Link href="/enroll">
+                {/* 2026-05-13: single application entrypoint */}
+                <Link href="/trainee/register">
                   <PrimaryButton className="h-12 px-8 bg-blue-700 hover:bg-blue-800 text-white text-base font-semibold transition-colors shadow-lg shadow-blue-700/20">
                     Get Started <ArrowRight className="ml-1.5 h-4 w-4" />
                   </PrimaryButton>
@@ -239,19 +279,42 @@ export default function HomePage() {
       </section>
 
       {/* ── Professional Skills Upgrade (Video + Popups) ── */}
-      <section className="py-24 bg-white border-t border-b border-slate-100 overflow-hidden relative">
-        <div className="container mx-auto px-4 md:px-6 relative z-10">
-          <div className="max-w-6xl mx-auto flex flex-col lg:flex-row items-center gap-12 md:gap-20">
+      <section className="py-20 bg-white border-t border-b border-slate-100 overflow-hidden relative">
+        <div className="container mx-auto px-6 md:px-10 relative z-10">
+          <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 items-start gap-8 lg:gap-12">
             
-            {/* Left: Promotion Video (Landscape) */}
+            {/* Left: Content & Heading */}
             <motion.div 
-              className="w-full lg:w-1/2"
+              className="lg:col-span-5 order-2 lg:order-1 pt-4"
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+            >
+              <div className="space-y-6">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-[10px] font-black uppercase tracking-[0.2em] border border-blue-100">
+                  Real Skills
+                </div>
+                <h2 className="text-4xl md:text-5xl lg:text-6xl font-black tracking-tight text-slate-900 leading-[1.1]">
+                  Get Skills for a <br />
+                  <span className="text-blue-700">Better Life.</span>
+                </h2>
+                <p className="text-xl text-slate-600 leading-relaxed max-w-lg">
+                  We help you learn the skills that companies want. Whether you finished Grade 6, High School, or College, we have a program that will help you find a job or get promoted.
+                </p>
+              </div>
+            </motion.div>
+
+            {/* Right: Video Promotion */}
+            <motion.div 
+              className="lg:col-span-7 order-1 lg:order-2 flex flex-col items-center"
               initial={{ opacity: 0, scale: 0.95 }}
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
             >
-              <div className="relative aspect-video rounded-2xl overflow-hidden shadow-[0_24px_48px_-12px_rgba(0,0,0,0.15)] bg-slate-900 group">
+              {/* Video Card */}
+              <div className="w-full relative aspect-video rounded-2xl overflow-hidden shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)] bg-slate-900 group">
                 <video 
                   className="w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-1000"
                   poster="/hero.png"
@@ -278,75 +341,61 @@ export default function HomePage() {
                   </div>
                 </div>
               </div>
-            </motion.div>
+          </motion.div>
+        </div>
 
-            {/* Right: Content & Interactive Benefits */}
-            <motion.div 
-              className="w-full lg:w-1/2"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-            >
-              <div className="space-y-6 mb-10">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-[10px] font-black uppercase tracking-[0.2em] border border-blue-100">
-                  Real Skills
+        {/* Single Line Action Bar: Categories + CTA + Stats (Spans full width below both) */}
+        <motion.div 
+          className="mt-12 w-full flex flex-wrap xl:flex-nowrap items-center justify-center xl:justify-between gap-4 p-2.5 bg-slate-50/80 rounded-3xl border border-slate-100 backdrop-blur-sm shadow-xl shadow-slate-200/20"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+        >
+          {/* 1. Category Quick Links */}
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
+            {benefits.map((item, index) => (
+              <motion.button
+                key={index}
+                onClick={() => setActiveBenefit(item)}
+                className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-white border border-slate-100 hover:border-blue-200 hover:shadow-md transition-all whitespace-nowrap group"
+                whileHover={{ y: -2 }}
+              >
+                <div className="w-7 h-7 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                  <item.icon className="w-4 h-4" />
                 </div>
-                <h2 className="text-4xl md:text-5xl font-black tracking-tight text-slate-900 leading-[1.05]">
-                  Get Skills for a <br />
-                  <span className="text-blue-700">Better Life.</span>
-                </h2>
-                <p className="text-lg text-slate-600 leading-relaxed">
-                  We help you learn the skills that companies want. Whether you finished Grade 6, High School, or College, we have a program that will help you find a job or get promoted.
-                </p>
-              </div>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {benefits.map((item, index) => (
-                  <motion.button
-                    key={index}
-                    onClick={() => setActiveBenefit(item)}
-                    className="flex items-center gap-4 p-4 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-white hover:border-blue-200 hover:shadow-lg transition-all text-left group"
-                    whileHover={{ y: -4 }}
-                  >
-                    <div className="shrink-0 w-12 h-12 rounded-lg bg-white border border-slate-100 flex items-center justify-center shadow-sm group-hover:border-blue-100 group-hover:text-blue-600 transition-colors">
-                      <item.icon className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-slate-900 text-sm mb-1">{item.title}</h4>
-                      <div className="flex items-center gap-1 text-[10px] font-bold text-blue-600 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
-                         Details <Info className="w-3 h-3" />
-                      </div>
-                    </div>
-                  </motion.button>
+                <span className="font-bold text-slate-700 text-[11px] uppercase tracking-wider">{item.title.replace('For ', '')}</span>
+              </motion.button>
+            ))}
+          </div>
+
+          {/* Vertical Divider (Desktop Only) */}
+          <div className="hidden xl:block h-10 w-px bg-slate-200 mx-2" />
+
+          {/* 2. CTA & Stats Group */}
+          <div className="flex items-center gap-6 py-1">
+            <Link href="/courses">
+              <PrimaryButton size="sm" className="h-11 px-8 text-[11px] font-black uppercase tracking-widest bg-blue-700 hover:bg-blue-800 text-white shadow-lg shadow-blue-700/20 group whitespace-nowrap rounded-2xl">
+                Explore All Programs
+                <ArrowRight className="ml-2 h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
+              </PrimaryButton>
+            </Link>
+            
+            <div className="flex items-center gap-4 border-l border-slate-200 pl-6">
+              <div className="flex -space-x-3">
+                {[1,2,3,4].map(i => (
+                  <div key={i} className="w-8 h-8 rounded-full border-2 border-white bg-slate-200 overflow-hidden shadow-sm hover:z-10 transition-all">
+                    <img src={`https://i.pravatar.cc/100?u=${i}`} className="w-full h-full object-cover" alt="Student" />
+                  </div>
                 ))}
               </div>
-              
-              <div className="mt-10 pt-8 border-t border-slate-100 flex flex-col sm:flex-row items-center gap-8">
-                <Link href="/courses">
-                  <PrimaryButton size="lg" className="h-14 px-10 text-base bg-blue-700 hover:bg-blue-800 text-white shadow-xl shadow-blue-700/20 group w-full sm:w-auto">
-                    Explore All Programs
-                    <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                  </PrimaryButton>
-                </Link>
-                <div className="flex items-center gap-3">
-                  <div className="flex -space-x-3">
-                    {[1,2,3,4].map(i => (
-                      <div key={i} className="w-9 h-9 rounded-full border-2 border-white bg-slate-200 overflow-hidden shadow-sm">
-                        <img src={`https://i.pravatar.cc/100?u=${i}`} className="w-full h-full object-cover" alt="Student" />
-                      </div>
-                    ))}
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-sm font-bold text-slate-900 leading-none">12,000+ Students</span>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Trusted & Verified</span>
-                  </div>
-                </div>
+              <div className="text-left leading-tight">
+                <div className="text-[11px] font-black text-slate-900">12,000+</div>
+                <div className="text-[9px] font-bold text-slate-400 uppercase tracking-tight">Verified Students</div>
               </div>
-            </motion.div>
-
+            </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Benefit Details Popup (Modal) */}
         <AnimatePresence>
@@ -393,8 +442,8 @@ export default function HomePage() {
             </div>
           )}
         </AnimatePresence>
-
-      </section>
+      </div>
+    </section>
 
 
 
@@ -420,7 +469,8 @@ export default function HomePage() {
           </div>
 
           <div className="relative">
-            <div className="flex items-center gap-2 text-sm text-slate-400 font-medium mb-4">
+            {/* 2026-05-14: Only show "Swipe to see more" on small screens where cards actually overflow */}
+            <div className="flex items-center gap-2 text-sm text-slate-400 font-medium mb-4 md:hidden">
               <ArrowRight className="w-4 h-4" /> Swipe to see more
             </div>
             <motion.div
@@ -428,12 +478,12 @@ export default function HomePage() {
               initial="hidden"
               whileInView="show"
               viewport={{ once: true, margin: "-100px" }}
-              className="flex overflow-x-auto snap-x snap-mandatory gap-6 pb-8"
+              className="flex overflow-x-auto snap-x snap-mandatory gap-6 pb-8 md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 md:overflow-visible md:pb-0"
               style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
             >
               {displayCourses.map(course => (
-                <motion.div key={course.id} variants={itemVars} className="snap-start shrink-0 w-[85vw] sm:w-[350px] md:w-[380px]">
-                  <CourseCard course={course} />
+                <motion.div key={course.id} variants={itemVars} className="snap-start shrink-0 w-[85vw] md:w-auto">
+                  <CourseCard course={course} hideLockOverlay={true} />
                 </motion.div>
               ))}
             </motion.div>
@@ -731,7 +781,7 @@ export default function HomePage() {
               Join the next cohort and start your journey today.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-2">
-              <Link href="/enroll">
+              <Link href="/trainee/register">
                 <PrimaryButton size="lg" className="bg-white text-blue-700 hover:bg-blue-50 h-13 px-10 text-base font-bold shadow-lg border-none group">
                   Enroll now
                   <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />

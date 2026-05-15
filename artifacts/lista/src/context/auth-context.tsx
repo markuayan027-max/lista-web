@@ -4,6 +4,8 @@ import { lista } from "../lib/insforge";
 
 interface AuthContextType {
   user: User | null;
+  /** True while restoring session from the backend */
+  loading: boolean;
   /** Email + password login */
   login: (email: string, password: string) => Promise<void>;
   /**
@@ -36,15 +38,11 @@ function mapInsForgeUser(insUser: any): User | null {
   if (!insUser) return null;
   const email: string = insUser.email || "";
 
-  // Priority: role stored in app_metadata (set by admin) > email heuristic
+  // Priority: role stored in app_metadata (set by admin)
   let role: UserRole = "trainee";
   const appRole = insUser.app_metadata?.role as string | undefined;
   if (appRole === "admin" || appRole === "staff") {
     role = appRole;
-  } else if (email.includes("admin")) {
-    role = "admin";
-  } else if (email.includes("staff")) {
-    role = "staff";
   }
 
   return {
@@ -159,13 +157,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Don't render children until we know whether there's an active session
-  if (isInitializing) return null;
-
   return (
     <AuthContext.Provider
       value={{
         user,
+        loading: isInitializing,
         login,
         signUp,
         verifyEmail,

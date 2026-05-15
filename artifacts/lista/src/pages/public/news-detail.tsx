@@ -144,7 +144,8 @@ export default function NewsDetailPage() {
                 <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl" />
                 <h3 className="text-2xl font-bold leading-tight relative z-10 text-slate-900">Stay informed on latest scholarship slots</h3>
                 <p className="text-slate-500 text-sm relative z-10 font-medium">Get instant notifications about TESDA qualifications and enrollment periods.</p>
-                <Link href="/enroll">
+                {/* 2026-05-13: single application entrypoint */}
+                <Link href="/trainee/register">
                   <PrimaryButton className="w-full bg-primary text-white hover:bg-primary/90 mt-4">
                     Apply Now
                   </PrimaryButton>

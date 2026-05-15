@@ -75,7 +75,8 @@ export default function Navbar() {
             <Link href="/login" className="text-sm font-bold text-slate-500 hover:text-primary-indigo transition-colors whitespace-nowrap">
               Log in
             </Link>
-            <Link href="/enroll">
+            {/* 2026-05-13: single application entrypoint */}
+            <Link href="/trainee/register">
               <Button className="rounded-full px-8 h-11 font-black bg-primary-indigo hover:bg-slate-900 text-white border-none shadow-lg shadow-primary-indigo/20 transition-all active:scale-95 whitespace-nowrap">
                 Enroll Now
               </Button>
@@ -110,7 +111,7 @@ export default function Navbar() {
                     <Link href="/login" className="text-lg font-bold text-muted-foreground">
                       Log in
                     </Link>
-                    <Link href="/enroll">
+                    <Link href="/trainee/register">
                       <Button className="w-full rounded-xl py-6 text-lg font-bold">
                         Enroll now
                       </Button>

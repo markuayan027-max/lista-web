@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 
-type Status = "pending" | "confirmed" | "rejected" | "issued" | "in_progress";
+type Status = "pending" | "confirmed" | "rejected" | "issued" | "in_progress" | "cancelled";
 
 interface StatusBadgeProps {
   status: Status;
@@ -28,6 +28,10 @@ const statusConfig: Record<Status, { label: string; className: string }> = {
   in_progress: {
     label: "In Progress",
     className: "bg-blue-100 text-blue-700 hover:bg-blue-100 border-blue-200",
+  },
+  cancelled: {
+    label: "Cancelled",
+    className: "bg-slate-100 text-slate-700 hover:bg-slate-100 border-slate-200",
   },
 };
 

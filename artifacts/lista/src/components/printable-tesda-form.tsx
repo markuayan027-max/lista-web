@@ -7,12 +7,38 @@ interface PrintableTESDAFormProps {
   refNo?: string;
 }
 
+const GridBoxes: React.FC<{ length: number; value: string; className?: string; boxClassName?: (i: number) => string }> = ({ length, value, className, boxClassName }) => {
+  const chars = (value || "").toUpperCase().padEnd(length, " ").split("").slice(0, length);
+  return (
+    <div className={cn("flex border-y border-r border-black overflow-hidden", className)}>
+      {chars.map((char, i) => (
+        <div key={i} className={cn(
+          "w-5 h-6 border-l border-black flex items-center justify-center font-bold text-sm leading-none", 
+          boxClassName?.(i)
+        )}>
+          {char === " " ? "" : char}
+        </div>
+      ))}
+    </div>
+  );
+};
+
 const PrintableTESDAForm: React.FC<PrintableTESDAFormProps> = ({ data, refNo }) => {
-  const referenceNumber = (refNo || data.refNo || "19030612340567890").replace(/[^0-9]/g, "").padEnd(15, "0").split("");
+  const refNumString = String(refNo ?? data.refNo ?? "19030612340567890").replace(/[^0-9]/g, "").padEnd(17, "0");
+  
+  const getRefBoxColor = (i: number) => {
+    if (i < 2 || (i >= 6 && i < 11)) return "bg-[#E3F2FD]"; // YY & AC Series: Blue
+    if ((i >= 2 && i < 4) || (i >= 11)) return "bg-[#FFEBEE]"; // Region & Series: Pink
+    if (i >= 4 && i < 6) return "bg-[#E8F5E9]"; // Province: Green
+    return "bg-white";
+  };
 
   return (
     <div className="official-tesda-form bg-white p-[0.5in] text-[#000] font-serif leading-tight w-[8.5in] mx-auto border shadow-2xl print:shadow-none print:p-0 print:m-0" id="printable-form">
       {/* HEADER SECTION */}
+      <div className="flex justify-end mb-1">
+        <span className="text-[10px] font-sans font-bold">TESDA-SOP-CACO-07-F21</span>
+      </div>
       <div className="flex items-center justify-center gap-4 mb-2 border-b-2 border-black pb-2">
         <img src="/TESDA_Logo_official-removebg-preview.png" alt="TESDA" className="w-20 h-20 object-contain" />
         <div className="text-center">
@@ -20,37 +46,37 @@ const PrintableTESDAForm: React.FC<PrintableTESDAFormProps> = ({ data, refNo }) 
           <p className="text-sm italic">Pangasiwaan sa Edukasyong Teknikal at Pagpapaunlad ng Kasanayan</p>
         </div>
       </div>
-
-      <div className="text-right text-[10px] mb-1 font-sans font-bold">TESDA-SOP-CACO-07-F21</div>
       
-      <h1 className="text-3xl font-black text-blue-700 text-center mb-4 uppercase italic tracking-wider">Application Form</h1>
+      <h1 className="text-4xl font-black text-blue-700 text-center my-6 uppercase italic tracking-wider">Application Form</h1>
 
-      {/* REFERENCE NUMBER BOXES */}
-      <div className="flex items-center justify-center gap-4 mb-6">
-        <span className="text-[10px] font-bold uppercase">Reference Number :</span>
-        <div className="flex border-y border-r border-black">
-          {referenceNumber.map((char, i) => (
-            <div key={i} className={cn(
-               "w-6 h-7 border-l border-black flex items-center justify-center font-bold text-lg",
-               i < 2 ? "bg-blue-100" : i < 4 ? "bg-rose-100" : i < 6 ? "bg-emerald-100" : i < 11 ? "bg-orange-100" : "bg-slate-100"
-            )}>
-              {char}
-            </div>
-          ))}
+      {/* REFERENCE NUMBER SECTION */}
+      <div className="flex flex-col items-center mb-6">
+        <div className="flex items-center border border-black bg-white overflow-hidden">
+          <div className="px-4 py-1 font-bold text-[11px] uppercase border-r border-black h-full flex items-center bg-white">Reference Number :</div>
+          <GridBoxes length={17} value={refNumString} boxClassName={getRefBoxColor} className="border-none" />
+        </div>
+        <div className="flex w-[340px] text-[7px] font-bold uppercase mt-1 ml-[145px]">
+          <div className="w-[40px] text-center">YY</div>
+          <div className="w-[40px] text-center">Region</div>
+          <div className="w-[40px] text-center">Province</div>
+          <div className="w-[100px] text-center">Assigned to AC</div>
+          <div className="w-[120px] text-center">Number Series</div>
         </div>
       </div>
 
       {/* SIGNATURE & PHOTO AREA */}
-      <div className="grid grid-cols-3 gap-8 mb-8 items-end">
-        <div className="col-span-2 grid grid-cols-2 gap-4">
-           <div className="border-b border-black text-center pt-8">
-              <span className="text-xs uppercase font-bold block border-t border-black mt-4">Applicant's Signature</span>
+      <div className="flex justify-between items-center mb-8 h-40">
+        <div className="flex-1 flex items-center pr-12 gap-12 h-full">
+           <div className="flex-1 flex flex-col items-center justify-center">
+              <div className="w-full border-b border-black"></div>
+              <span className="text-[10px] uppercase font-bold mt-1">Applicant's Signature</span>
            </div>
-           <div className="border-b border-black text-center pt-8">
-              <span className="text-xs uppercase font-bold block border-t border-black mt-4">Date</span>
+           <div className="flex-1 flex flex-col items-center justify-center">
+              <div className="w-full border-b border-black"></div>
+              <span className="text-[10px] uppercase font-bold mt-1">Date</span>
            </div>
         </div>
-        <div className="border-2 border-black h-40 w-32 ml-auto flex items-center justify-center text-center p-2 leading-tight">
+        <div className="border border-black h-40 w-32 flex items-center justify-center text-center p-2 leading-tight bg-white shrink-0">
            <span className="text-[10px] font-bold uppercase">PICTURE<br/>Colored<br/>Passport Size<br/>White Background</span>
         </div>
       </div>
@@ -60,15 +86,15 @@ const PrintableTESDAForm: React.FC<PrintableTESDAFormProps> = ({ data, refNo }) 
         <tbody>
           <tr>
             <td className="border border-black p-1 font-bold w-1/3">Name of School/Training Center/Company</td>
-            <td className="border border-black p-1 uppercase font-bold">{schoolInfo.fullName}</td>
+            <td className="border border-black p-1 uppercase font-bold text-center">LORENZ INTERNATIONAL SKILLS TRAINING ACADEMY</td>
           </tr>
           <tr>
             <td className="border border-black p-1 font-bold">Address</td>
-            <td className="border border-black p-1 uppercase">{schoolInfo.city}, {schoolInfo.province}</td>
+            <td className="border border-black p-1 uppercase text-center">Poblacion, Gingoog City, Misamis Oriental</td>
           </tr>
           <tr>
             <td className="border border-black p-1 font-bold">Title of Assessment applied for</td>
-            <td className="border border-black p-1 uppercase font-black text-sm">{(data.courseName || data.courseSlug || "DRESSMAKING NC II").replace(/-/g, " ")}</td>
+            <td className="border border-black p-1 uppercase font-black text-sm">{(data.courseName || data.courseSlug || "").replace(/-/g, " ")}</td>
           </tr>
         </tbody>
       </table>
@@ -86,134 +112,204 @@ const PrintableTESDAForm: React.FC<PrintableTESDAFormProps> = ({ data, refNo }) 
       </div>
 
       {/* SECTION 1: CLIENT TYPE */}
-      <div className="bg-slate-200 border border-black p-1 text-xs font-black uppercase mb-1">1. CLIENT TYPE</div>
-      <div className="grid grid-cols-4 gap-2 text-[10px] font-bold mb-4 border border-black p-2">
-         {[ "TVET Graduating Student", "TVET graduate", "Industry worker", "SCEP" ].map(type => (
-            <div key={type} className="flex items-center gap-2">
-               <div className="w-3 h-3 border border-black flex items-center justify-center shrink-0">{data.clientType === type ? '✓' : ''}</div>
-               <span>{type}</span>
+      <div className="bg-[#E0E0E0] border border-black p-1 text-[10px] font-black uppercase mb-0">1. CLIENT TYPE</div>
+      <div className="grid grid-cols-4 gap-y-1 gap-x-2 text-[9px] font-bold mb-3 border border-black p-2 border-t-0">
+         {[ 
+           "TVET Graduating Student", "TVET graduate", "Industry worker", "SCEP", "K-12 Student",
+           "K-12 Graduate", "OFW", "Domestic Worker", "Indigent", "Indigenous People",
+           "PWDs", "Solo Parent", "Others: ________"
+         ].map(type => (
+            <div key={type} className="flex items-center gap-1.5">
+               <div className="w-3 h-3 border border-black flex items-center justify-center shrink-0 text-[10px] font-black">{data.clientType === type ? '✓' : ''}</div>
+               <span className="leading-none">{type}</span>
             </div>
          ))}
       </div>
 
       {/* SECTION 2: PROFILE */}
-      <div className="bg-slate-200 border border-black p-1 text-xs font-black uppercase mb-1">2. PROFILE</div>
-      <div className="border border-black text-[10px]">
-         <div className="p-1 border-b border-black font-bold">2.1. Name:</div>
+      <div className="bg-[#F5F5F5] border-x border-t border-black p-1 text-xs font-black uppercase">2. PROFILE</div>
+      <div className="border border-black text-[9px]">
+         <div className="p-1 border-b border-black font-bold flex justify-between items-center">
+           <span>2.1. Name:</span>
+           <span className="text-[8px] font-normal italic">* Please write in BLOCK LETTERS (use the boxes provided)</span>
+         </div>
          <table className="w-full border-collapse">
             <tbody>
                <tr className="border-b border-black">
-                  <td className="w-24 bg-slate-100 border-r border-black p-1 font-black uppercase">SURNAME</td>
-                  <td className="p-1 font-bold uppercase tracking-[0.3em]">{data.lastName}</td>
+                  <td className="w-28 bg-[#E0E0E0] border-r border-black p-1 font-black uppercase text-[9px]">SURNAME</td>
+                  <td className="p-1">
+                    <GridBoxes length={30} value={data.lastName} />
+                  </td>
                </tr>
                <tr className="border-b border-black">
-                  <td className="w-24 bg-slate-100 border-r border-black p-1 font-black uppercase">FIRSTNAME</td>
-                  <td className="p-1 font-bold uppercase tracking-[0.3em]">{data.firstName}</td>
+                  <td className="w-28 bg-[#E0E0E0] border-r border-black p-1 font-black uppercase text-[9px]">FIRST NAME</td>
+                  <td className="p-1">
+                    <GridBoxes length={30} value={data.firstName} />
+                  </td>
                </tr>
                <tr className="border-b border-black">
-                  <td className="w-24 bg-slate-100 border-r border-black p-1 font-black uppercase leading-none">MIDDLE NAME</td>
-                  <td className="p-1 font-bold uppercase tracking-[0.3em] flex justify-between">
-                     <span>{data.middleName}</span>
-                     <span className="text-[8px] font-normal tracking-normal border-l border-black pl-2">NAME EXTENSION (e.g. Jr., Sr.) : <span className="font-bold underline">{data.extensionName || 'N/A'}</span></span>
+                  <td className="w-28 bg-[#E0E0E0] border-r border-black p-1 font-black uppercase text-[9px] leading-tight">MIDDLE NAME</td>
+                  <td className="p-1 flex items-center justify-between">
+                    <GridBoxes length={20} value={data.middleName} />
+                    <div className="flex items-center gap-1">
+                      <span className="text-[7px] font-bold uppercase leading-none">NAME EXTENSION<br/>(e.g. Jr., Sr.)</span>
+                      <GridBoxes length={4} value={data.extensionName} className="h-5" boxClassName={() => "h-5 w-4 text-[9px]"} />
+                    </div>
                   </td>
                </tr>
             </tbody>
          </table>
 
-         <div className="p-1 border-b border-black flex gap-4">
-            <div className="flex-1">
-               <div className="font-bold mb-4">2.2. Mailing Address</div>
-               <div className="grid grid-cols-3 gap-2">
-                  <div className="border-b border-black h-6 font-bold text-center underline">{data.address}</div>
-                  <div className="border-b border-black h-6 font-bold text-center underline">{data.barangay}</div>
-                  <div className="border-b border-black h-6 font-bold text-center underline">{data.district || 'N/A'}</div>
-                  <div className="text-[8px] text-center font-bold uppercase -mt-1">Number, Street</div>
-                  <div className="text-[8px] text-center font-bold uppercase -mt-1">Barangay</div>
-                  <div className="text-[8px] text-center font-bold uppercase -mt-1">District</div>
-               </div>
-               <div className="grid grid-cols-4 gap-2 mt-2">
-                  <div className="border-b border-black h-6 font-bold text-center underline">{data.city}</div>
-                  <div className="border-b border-black h-6 font-bold text-center underline">{data.province}</div>
-                  <div className="border-b border-black h-6 font-bold text-center underline">{data.region}</div>
-                  <div className="border-b border-black h-6 font-bold text-center underline">{data.zipCode}</div>
-                  <div className="text-[8px] text-center font-bold uppercase -mt-1">City</div>
-                  <div className="text-[8px] text-center font-bold uppercase -mt-1">Province</div>
-                  <div className="text-[8px] text-center font-bold uppercase -mt-1">Region</div>
-                  <div className="text-[8px] text-center font-bold uppercase -mt-1">Zip Code</div>
-               </div>
-            </div>
+         <div className="p-2 border-b border-black">
+            <div className="font-bold mb-2">2.2. Mailing Address:</div>
+             <div className="space-y-3">
+                <div className="grid grid-cols-12 gap-1">
+                   <div className="col-span-5 flex flex-col text-center">
+                      <div className="border border-black h-7 font-bold flex items-center px-1 uppercase text-[10px]">{data.address || data.street || ""}</div>
+                      <div className="text-[8px] font-bold uppercase mt-0.5">Number, Street</div>
+                   </div>
+                   <div className="col-span-4 flex flex-col text-center">
+                      <div className="border border-black h-7 font-bold flex items-center px-1 uppercase text-[10px]">{data.barangay}</div>
+                      <div className="text-[8px] font-bold uppercase mt-0.5">Barangay</div>
+                   </div>
+                   <div className="col-span-3 flex flex-col text-center">
+                      <div className="border border-black h-7 font-bold flex items-center px-1 uppercase text-[10px]">{data.district || ""}</div>
+                      <div className="text-[8px] font-bold uppercase mt-0.5">District</div>
+                   </div>
+                </div>
+                
+                <div className="grid grid-cols-4 gap-1">
+                   <div className="flex flex-col text-center">
+                      <div className="border border-black h-7 font-bold flex items-center px-1 uppercase text-[10px]">{data.city}</div>
+                      <div className="text-[8px] font-bold uppercase mt-0.5">City</div>
+                   </div>
+                   <div className="flex flex-col text-center">
+                      <div className="border border-black h-7 font-bold flex items-center px-1 uppercase text-[10px]">{data.province}</div>
+                      <div className="text-[8px] font-bold uppercase mt-0.5">Province</div>
+                   </div>
+                   <div className="flex flex-col text-center">
+                      <div className="border border-black h-7 font-bold flex items-center px-1 uppercase text-[10px]">{data.region}</div>
+                      <div className="text-[8px] font-bold uppercase mt-0.5">Region</div>
+                   </div>
+                   <div className="flex flex-col text-center">
+                      <div className="border border-black h-7 font-bold flex items-center px-1 uppercase text-[10px]">{data.zipCode || ""}</div>
+                      <div className="text-[8px] font-bold uppercase mt-0.5">Zip Code</div>
+                   </div>
+                </div>
+             </div>
          </div>
 
-         <div className="grid grid-cols-2 border-b border-black">
-            <div className="p-1 border-r border-black">
-               <span className="font-bold">2.3. Mother's Name:</span> <span className="underline font-bold uppercase">{data.motherName}</span>
-            </div>
-            <div className="p-1">
-               <span className="font-bold">2.4. Father's Name:</span> <span className="underline font-bold uppercase">{data.fatherName}</span>
-            </div>
-         </div>
-
-         <div className="grid grid-cols-10 border-b border-black">
-            <div className="col-span-2 p-1 border-r border-black">
-               <div className="font-bold mb-1">2.5. Sex</div>
+         <div className="grid grid-cols-2 border-b border-black divide-x divide-black">
+            <div className="p-1 flex flex-col">
                <div className="flex gap-2">
-                  <div className="flex items-center gap-1"><div className="w-2 h-2 border border-black flex items-center justify-center">{data.gender === 'Male' ? '✓' : ''}</div> Male</div>
-                  <div className="flex items-center gap-1"><div className="w-2 h-2 border border-black flex items-center justify-center">{data.gender === 'Female' ? '✓' : ''}</div> Female</div>
+                 <span className="font-bold">2.3. Mother's Name:</span>
+                 <span className="font-bold uppercase flex-1 border-b border-black border-dotted">{data.motherName}</span>
                </div>
             </div>
-            <div className="col-span-2 p-1 border-r border-black">
-               <div className="font-bold mb-1">2.6. Civil Status</div>
-               <div className="grid grid-cols-2 gap-x-2 text-[8px]">
-                  {["Single", "Married", "Widow/er", "Separated"].map(s => (
-                     <div key={s} className="flex items-center gap-1"><div className="w-2 h-2 border border-black flex items-center justify-center">{data.civilStatus === s ? '✓' : ''}</div> {s}</div>
-                  ))}
+            <div className="p-1 flex flex-col">
+               <div className="flex gap-2">
+                 <span className="font-bold">2.4. Father's Name:</span>
+                 <span className="font-bold uppercase flex-1 border-b border-black border-dotted">{data.fatherName}</span>
                </div>
             </div>
-            <div className="col-span-2 p-1 border-r border-black">
-               <div className="font-bold mb-1">2.7. Contact Number(s)</div>
-               <div className="text-[8px]">
-                  <div className="flex justify-between border-b border-black/20">Tel: <span className="font-bold underline">{data.contact}</span></div>
-                  <div className="flex justify-between border-b border-black/20">Mobile: <span className="font-bold underline">{data.contact}</span></div>
-                  <div className="flex justify-between">E-mail: <span className="font-bold underline">{data.email}</span></div>
-               </div>
-            </div>
-            <div className="col-span-2 p-1 border-r border-black">
-               <div className="font-bold mb-1 leading-none">2.8. Highest Ed Attainment</div>
-               <div className="grid grid-cols-1 text-[8px]">
-                  {["Elementary graduate", "HS graduate", "TVET Graduate", "College Level", "College Graduate"].map(e => (
-                     <div key={e} className="flex items-center gap-1 leading-none"><div className="w-2 h-2 border border-black flex items-center justify-center shrink-0">{data.education === e ? '✓' : ''}</div> {e}</div>
-                  ))}
+         </div>
+
+         <div className="grid grid-cols-10 border-b border-black divide-x divide-black min-h-[4rem]">
+            <div className="col-span-1 p-1">
+               <div className="font-bold text-[8px] mb-1">2.5. Sex</div>
+               <div className="flex flex-col gap-1 text-[7px]">
+                  <div className="flex items-center gap-1"><div className="w-2.5 h-2.5 border border-black flex items-center justify-center font-black">{data.gender === 'Male' ? '✓' : ''}</div> Male</div>
+                  <div className="flex items-center gap-1"><div className="w-2.5 h-2.5 border border-black flex items-center justify-center font-black">{data.gender === 'Female' ? '✓' : ''}</div> Female</div>
                </div>
             </div>
             <div className="col-span-2 p-1">
-               <div className="font-bold mb-1 leading-none">2.9. Employment Status</div>
-               <div className="grid grid-cols-2 gap-x-2 text-[7px] font-bold">
-                  {["Casual", "Contractual", "Job Order", "Probationary", "Permanent", "Self-Employed", "OFW"].map(e => (
-                     <div key={e} className="flex items-center gap-1 leading-none">{data.employmentStatus === e ? '✓' : ''} {e}</div>
+               <div className="font-bold text-[8px] mb-1">2.6. Civil Status</div>
+               <div className="grid grid-cols-1 gap-0.5 text-[7px]">
+                  {["Single", "Married", "Widow/er", "Separated"].map(s => (
+                     <div key={s} className="flex items-center gap-1"><div className="w-2.5 h-2.5 border border-black flex items-center justify-center font-black text-[9px] leading-none">{data.civilStatus === s ? '✓' : ''}</div> {s}</div>
+                  ))}
+               </div>
+            </div>
+            <div className="col-span-3 p-1">
+               <div className="font-bold text-[8px] mb-1">2.7. Contact Number(s)</div>
+               <div className="space-y-0.5 text-[7px]">
+                  <div className="flex gap-1"><span>Tel:</span> <span className="border-b border-black flex-1 h-2.5"></span></div>
+                  <div className="flex gap-1"><span>Mobile:</span> <span className="border-b border-black flex-1 h-2.5 font-bold">{data.contact}</span></div>
+                  <div className="flex gap-1"><span>E-mail:</span> <span className="border-b border-black flex-1 h-2.5 font-bold lowercase">{data.email}</span></div>
+                  <div className="flex gap-1"><span>Fax:</span> <span className="border-b border-black flex-1 h-2.5"></span></div>
+                  <div className="flex gap-1"><span>Others:</span> <span className="border-b border-black flex-1 h-2.5"></span></div>
+               </div>
+            </div>
+            <div className="col-span-2 p-1">
+               <div className="font-bold text-[7px] leading-none mb-1">2.8. Highest Educational Attainment</div>
+               <div className="grid grid-cols-1 text-[6px]">
+                  {["Elementary graduate", "HS graduate", "TVET Graduate", "College Level", "College Graduate"].map(e => (
+                     <div key={e} className="flex items-center gap-1 leading-none h-2.5">
+                        <div className="w-2 h-2 border border-black flex items-center justify-center shrink-0 font-black text-[7px]">{data.education === e ? '✓' : ''}</div> 
+                        <span>{e}</span>
+                     </div>
+                  ))}
+                  <div className="flex items-center gap-1 leading-none h-2.5">
+                    <div className="w-2 h-2 border border-black"></div>
+                    <span>Others: ________</span>
+                  </div>
+               </div>
+            </div>
+            <div className="col-span-2 p-1">
+               <div className="font-bold text-[8px] mb-1 leading-none">2.9. Employment Status</div>
+               <div className="grid grid-cols-1 gap-0.5 text-[6.5px] font-bold">
+                  <div className="flex items-center gap-1 font-black underline mb-0.5">Employed:</div>
+                  {["Casual", "Contractual", "Job Order", "Probationary", "Permanent", "Self-Employed"].map(s => (
+                    <div key={s} className="flex items-center gap-1">
+                      <div className="w-2.5 h-2.5 border border-black flex items-center justify-center font-black">{data.employmentStatus === s ? '✓' : ''}</div>
+                      {s}
+                    </div>
+                  ))}
+                  <div className="flex items-center gap-1 font-black underline mt-1 mb-0.5">Unemployed:</div>
+                  {["TVET Graduate", "Fresh Graduate", "Finished Course", "OFW Returnee"].map(s => (
+                    <div key={s} className="flex items-center gap-1">
+                      <div className="w-2.5 h-2.5 border border-black flex items-center justify-center font-black">{data.employmentStatus === s ? '✓' : ''}</div>
+                      {s}
+                    </div>
                   ))}
                </div>
             </div>
          </div>
 
-         <div className="grid grid-cols-3">
-            <div className="p-1 border-r border-black flex items-center gap-2">
-               <span className="font-bold">2.10. Birth date:</span>
-               <div className="flex border border-black divide-x divide-black h-5">
-                  <div className="w-4 flex items-center justify-center">{data.dob?.split('-')[1]}</div>
-                  <div className="w-4 flex items-center justify-center">{data.dob?.split('-')[2]}</div>
-                  <div className="w-6 flex items-center justify-center font-bold text-[9px]">{data.dob?.split('-')[0]?.substring(2)}</div>
-               </div>
-               <div className="flex flex-col text-[7px] leading-none font-bold">
-                  <span>M M</span>
-                  <span>D D</span>
-                  <span>Y Y</span>
+         <div className="grid grid-cols-12 divide-x divide-black h-12">
+            <div className="col-span-4 p-1 flex items-center gap-2">
+               <span className="font-bold text-[8px] shrink-0">2.10. Birth date:</span>
+               <div className="flex flex-col items-center">
+                  <div className="flex border border-black divide-x divide-black h-6 bg-white">
+                    <div className="w-4 flex items-center justify-center font-bold text-[10px]">{data.dob?.split('-')[1]?.[0]}</div>
+                    <div className="w-4 flex items-center justify-center font-bold text-[10px]">{data.dob?.split('-')[1]?.[1]}</div>
+                    <div className="w-4 flex items-center justify-center font-bold text-[10px]">{data.dob?.split('-')[2]?.[0]}</div>
+                    <div className="w-4 flex items-center justify-center font-bold text-[10px]">{data.dob?.split('-')[2]?.[1]}</div>
+                    <div className="w-4 flex items-center justify-center font-bold text-[10px]">{data.dob?.split('-')[0]?.[2]}</div>
+                    <div className="w-4 flex items-center justify-center font-bold text-[10px]">{data.dob?.split('-')[0]?.[3]}</div>
+                  </div>
+                  <div className="flex w-full justify-between px-1 text-[6px] font-bold uppercase">
+                     <span>M M</span>
+                     <span>D D</span>
+                     <span>Y Y</span>
+                  </div>
                </div>
             </div>
-            <div className="p-1 border-r border-black">
-               <span className="font-bold">2.11. Birth place:</span> <span className="underline font-bold uppercase">{data.birthPlace}</span>
+            <div className="col-span-5 p-1 flex flex-col justify-center">
+               <div className="flex gap-1 items-end">
+                  <span className="font-bold text-[8px] shrink-0">2.11. Birth place:</span> 
+                  <span className="border-b border-black flex-1 font-bold uppercase text-[8px] px-1 h-4 flex items-center">{data.birthPlace}</span>
+               </div>
             </div>
-            <div className="p-1 flex items-center gap-2">
-               <span className="font-bold">2.11. Age:</span> <span className="underline font-black text-sm">{data.age}</span>
+            <div className="col-span-3 p-1 flex items-center gap-2">
+               <div className="flex items-center gap-1">
+                 <span className="font-bold text-[8px]">2.12. Age:</span> 
+                 <span className="border-b border-black font-black text-[11px] px-2 h-4 flex items-center">{data.age}</span>
+               </div>
+               <div className="flex flex-col items-center flex-1">
+                  <div className="border-b border-black w-full h-4 text-center font-bold uppercase text-[9px]">{data.nationality || "FILIPINO"}</div>
+                  <span className="text-[6px] font-bold">2.13. Nationality</span>
+               </div>
             </div>
          </div>
       </div>
@@ -222,13 +318,13 @@ const PrintableTESDAForm: React.FC<PrintableTESDAFormProps> = ({ data, refNo }) 
       <div className="bg-slate-200 border border-black p-1 text-xs font-black uppercase mt-2 mb-1">3. Work Experience (National Qualification-related)</div>
       <table className="w-full border-collapse border border-black text-[9px] mb-4">
          <thead>
-            <tr className="bg-slate-100 text-center font-bold">
-               <th className="border border-black p-1 w-1/3">Name of Company</th>
-               <th className="border border-black p-1">Position</th>
-               <th className="border border-black p-1">Inclusive Dates</th>
-               <th className="border border-black p-1">Monthly Salary</th>
-               <th className="border border-black p-1">Status of Appointment</th>
-               <th className="border border-black p-1">No. of Yrs. Working Exp.</th>
+          <tr className="bg-slate-100 text-[8px] font-bold">
+               <th className="border border-black p-0.5 w-[30%]">3.1. Name of Company</th>
+               <th className="border border-black p-0.5 w-[15%]">3.2. Position</th>
+               <th className="border border-black p-0.5 w-[15%]">3.3. Inclusive Dates</th>
+               <th className="border border-black p-0.5 w-[10%]">3.4. Monthly Salary</th>
+               <th className="border border-black p-0.5 w-[15%]">3.5. Status of Appointment</th>
+               <th className="border border-black p-0.5 w-[15%]">3.6. No. of Yrs. Working Exp.</th>
             </tr>
          </thead>
          <tbody>
@@ -248,6 +344,94 @@ const PrintableTESDAForm: React.FC<PrintableTESDAFormProps> = ({ data, refNo }) 
          </tbody>
       </table>
 
+      {/* SECTION 4: OTHER TRAININGS */}
+      <div className="bg-slate-200 border border-black p-1 text-xs font-black uppercase mt-2 mb-1">4. Other Training/Seminars Attended (National Qualification-Related)</div>
+      <table className="w-full border-collapse border border-black text-[9px] mb-4">
+         <thead>
+            <tr className="bg-slate-100 text-center font-bold">
+               <th className="border border-black p-1 w-1/3">Title</th>
+               <th className="border border-black p-1">Venue</th>
+               <th className="border border-black p-1">Inclusive Dates</th>
+               <th className="border border-black p-1">No. of Hours</th>
+               <th className="border border-black p-1">Conducted By</th>
+            </tr>
+         </thead>
+         <tbody>
+            {[0, 1, 2].map(i => {
+               const train = data.otherTrainings?.[i];
+               return (
+                  <tr key={i} className="h-6">
+                     <td className="border border-black px-1 font-bold">{train?.title || ''}</td>
+                     <td className="border border-black px-1 text-center">{train?.venue || ''}</td>
+                     <td className="border border-black px-1 text-center">{train?.inclusiveDates || ''}</td>
+                     <td className="border border-black px-1 text-center">{train?.noOfHours || ''}</td>
+                     <td className="border border-black px-1 text-center">{train?.conductedBy || ''}</td>
+                  </tr>
+               );
+            })}
+         </tbody>
+      </table>
+
+      {/* SECTION 5: LICENSURE EXAMINATIONS */}
+      <div className="bg-slate-200 border border-black p-1 text-xs font-black uppercase mt-2 mb-1">5. Licensure Examination(s) Passed</div>
+      <table className="w-full border-collapse border border-black text-[9px] mb-4">
+         <thead>
+            <tr className="bg-slate-100 text-center font-bold">
+               <th className="border border-black p-1 w-1/4">Title</th>
+               <th className="border border-black p-1">Year Taken</th>
+               <th className="border border-black p-1">Examination Venue</th>
+               <th className="border border-black p-1">Rating</th>
+               <th className="border border-black p-1">Remarks</th>
+               <th className="border border-black p-1">Expiry Date</th>
+            </tr>
+         </thead>
+         <tbody>
+            {[0, 1, 2].map(i => {
+               const exam = data.licensureExams?.[i];
+               return (
+                  <tr key={i} className="h-6">
+                     <td className="border border-black px-1 font-bold">{exam?.title || ''}</td>
+                     <td className="border border-black px-1 text-center">{exam?.yearTaken || ''}</td>
+                     <td className="border border-black px-1 text-center">{exam?.examinationVenue || ''}</td>
+                     <td className="border border-black px-1 text-center">{exam?.rating || ''}</td>
+                     <td className="border border-black px-1 text-center">{exam?.remarks || ''}</td>
+                     <td className="border border-black px-1 text-center">{exam?.expiryDate || ''}</td>
+                  </tr>
+               );
+            })}
+         </tbody>
+      </table>
+
+      {/* SECTION 6: COMPETENCY ASSESSMENTS */}
+      <div className="bg-slate-200 border border-black p-1 text-xs font-black uppercase mt-2 mb-1">6. Competency Assessment(s) Passed</div>
+      <table className="w-full border-collapse border border-black text-[9px] mb-4">
+         <thead>
+            <tr className="bg-slate-100 text-center font-bold">
+               <th className="border border-black p-1 w-1/4">Title</th>
+               <th className="border border-black p-1">Qualification Level</th>
+               <th className="border border-black p-1">Industry Sector</th>
+               <th className="border border-black p-1">Certificate Number</th>
+               <th className="border border-black p-1">Date of Issuance</th>
+               <th className="border border-black p-1">Expiration Date</th>
+            </tr>
+         </thead>
+         <tbody>
+            {[0, 1, 2].map(i => {
+               const comp = data.competencyAssessments?.[i];
+               return (
+                  <tr key={i} className="h-6">
+                     <td className="border border-black px-1 font-bold">{comp?.title || ''}</td>
+                     <td className="border border-black px-1 text-center">{comp?.qualificationLevel || ''}</td>
+                     <td className="border border-black px-1 text-center">{comp?.industrySector || ''}</td>
+                     <td className="border border-black px-1 text-center">{comp?.certificateNumber || ''}</td>
+                     <td className="border border-black px-1 text-center">{comp?.dateOfIssuance || ''}</td>
+                     <td className="border border-black px-1 text-center">{comp?.expirationDate || ''}</td>
+                  </tr>
+               );
+            })}
+         </tbody>
+      </table>
+
       {/* DOTTED LINE SEPARATOR */}
       <div className="border-t-2 border-dashed border-black my-8 relative">
          <div className="absolute left-1/2 -translate-x-1/2 -top-3 bg-white px-4 text-[10px] font-bold uppercase tracking-[0.5em]">CUT HERE</div>
@@ -258,13 +442,9 @@ const PrintableTESDAForm: React.FC<PrintableTESDAFormProps> = ({ data, refNo }) 
 
       <div className="grid grid-cols-4 gap-4 mb-4">
          <div className="col-span-3 border border-black">
-            <div className="flex items-center gap-2 border-b border-black p-2 bg-slate-50">
+            <div className="flex items-center gap-2 border-b border-black p-2 bg-white">
                <span className="text-[10px] font-bold uppercase shrink-0">REFERENCE NUMBER :</span>
-               <div className="flex border border-black divide-x divide-black bg-white">
-                  {referenceNumber.map((char, i) => (
-                    <div key={i} className={cn("w-5 h-6 flex items-center justify-center font-bold text-sm", i < 11 ? "bg-slate-200" : "bg-white")}>{char}</div>
-                  ))}
-               </div>
+               <GridBoxes length={17} value={refNumString} boxClassName={getRefBoxColor} />
             </div>
             
             <div className="grid grid-cols-2 text-xs">
@@ -302,28 +482,32 @@ const PrintableTESDAForm: React.FC<PrintableTESDAFormProps> = ({ data, refNo }) 
       <div className="bg-slate-300 border border-black p-1 text-[10px] font-black text-center uppercase tracking-widest mb-2">To be accomplished by the Processing Officer</div>
 
       <div className="border border-black text-xs mb-4">
-         <div className="p-2 border-b border-black flex justify-between items-center">
-            <span className="font-bold">Name of Assessment Center:</span>
-            <span className="font-black uppercase">{schoolInfo.fullName}</span>
+         <div className="p-2 border-b border-black flex justify-between items-center bg-slate-50">
+            <span className="font-bold text-[10px]">Name of Assessment Center:</span>
+            <span className="font-black uppercase text-[11px]">LORENZ INTERNATIONAL SKILLS TRAINING ACADEMY</span>
          </div>
-         <div className="grid grid-cols-2 h-20">
+         <div className="grid grid-cols-2 h-28">
             <div className="border-r border-black p-2 space-y-1">
-               <div className="text-[9px] font-bold uppercase mb-1 text-slate-500 italic underline">Check submitted requirements:</div>
-               <div className="flex items-center gap-2 text-[9px]"><div className="w-3 h-3 border border-black"></div> Accomplished Self-Assessment Guide</div>
-               <div className="flex items-center gap-2 text-[9px]"><div className="w-3 h-3 border border-black"></div> Three (3) pieces colored passport size pictures</div>
+               <div className="text-[9px] font-bold uppercase mb-1 text-slate-600 italic underline">Check submitted requirements:</div>
+               <div className="flex items-center gap-2 text-[9px]"><div className="w-3.5 h-3.5 border border-black shrink-0"></div> Accomplished Self-Assessment Guide</div>
+               <div className="flex items-center gap-2 text-[9px]"><div className="w-3.5 h-3.5 border border-black shrink-0"></div> Three (3) pieces colored passport size pictures</div>
+               <div className="flex items-center gap-2 text-[9px]"><div className="w-3.5 h-3.5 border border-black shrink-0"></div> Transcript of Records / Diploma</div>
             </div>
             <div className="p-2 space-y-1">
-               <div className="text-[9px] font-bold uppercase mb-1 text-slate-500 italic underline">Remarks:</div>
-               <div className="flex items-center gap-2 text-[9px]"><div className="w-3 h-3 border border-black"></div> Bring own Personal Protective Equipment</div>
-               <div className="flex items-center gap-2 text-[9px]"><div className="w-3 h-3 border border-black"></div> Others. Pls. specify _________________</div>
+               <div className="text-[9px] font-bold uppercase mb-1 text-slate-600 italic underline">Remarks:</div>
+               <div className="flex items-center gap-2 text-[9px]"><div className="w-3.5 h-3.5 border border-black shrink-0"></div> Bring own Personal Protective Equipment</div>
+               <div className="flex items-center gap-2 text-[9px]"><div className="w-3.5 h-3.5 border border-black shrink-0"></div> Bring 1 long brown envelope</div>
+               <div className="flex items-center gap-2 text-[9px]"><div className="w-3.5 h-3.5 border border-black shrink-0"></div> Others. Pls. specify _________________</div>
             </div>
          </div>
-         <div className="grid grid-cols-2 border-t border-black bg-slate-50">
-            <div className="border-r border-black p-2">
-               <span className="font-bold text-[10px]">Assessment Date:</span> <span className="font-mono underline ml-4">April 11, 2026</span>
+         <div className="grid grid-cols-2 border-t border-black bg-white divide-x divide-black">
+            <div className="p-2 flex items-center justify-between">
+               <span className="font-bold text-[10px] uppercase">Assessment Date:</span> 
+               <span className="font-black underline text-[12px]">{data.assessmentDate || "APRIL 11, 2026"}</span>
             </div>
-            <div className="p-2 text-right">
-               <span className="font-bold text-[10px]">Assessment Time:</span> <span className="font-mono underline ml-4">8am - 5pm</span>
+            <div className="p-2 flex items-center justify-between">
+               <span className="font-bold text-[10px] uppercase">Assessment Time:</span> 
+               <span className="font-black underline text-[12px]">{data.assessmentTime || "8:00 AM"}</span>
             </div>
          </div>
       </div>

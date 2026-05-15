@@ -61,7 +61,14 @@ export default function CourseDetailPage() {
               </div>
             </div>
             <div className="flex-1 lg:max-w-md w-full">
-              <CourseImageSlider images={course.galleryImages || [course.coverImageUrl]} title={course.title} />
+              <CourseImageSlider
+                images={
+                  (course.galleryImages ?? []).filter(Boolean).length > 0
+                    ? (course.galleryImages ?? []).filter(Boolean)
+                    : ["/logo.png"]
+                }
+                title={course.title}
+              />
             </div>
           </div>
         </div>
@@ -100,9 +107,16 @@ export default function CourseDetailPage() {
                   </AccordionTrigger>
                   <AccordionContent className="text-muted-foreground pt-2 pb-4">
                     <ul className="list-disc pl-5 space-y-2">
-                      {course.coreCompetencies?.map((comp, i) => (
-                        <li key={i}>{comp}</li>
-                      ))}
+                      {(() => {
+                        const explicit = (course as { coreCompetencies?: string[] }).coreCompetencies;
+                        const fallback = (course.shortDescription || course.longDescription || "")
+                          .split(/[,.]/)
+                          .map((s) => s.trim())
+                          .filter((s) => s.length > 8)
+                          .slice(0, 8);
+                        const items = explicit?.length ? explicit : fallback;
+                        return items.map((comp, i) => <li key={i}>{comp}</li>);
+                      })()}
                     </ul>
                   </AccordionContent>
                 </AccordionItem>
@@ -130,7 +144,8 @@ export default function CourseDetailPage() {
                                 {schedule.startTime} - {schedule.endTime} • {schedule.room}
                              </p>
                           </div>
-                          <Link href={`/enroll?course=${course.slug}`}>
+                          {/* 2026-05-13: single application entrypoint */}
+                          <Link href={`/trainee/register?course=${course.slug}`}>
                              <Button variant="outline" className="w-full md:w-auto font-semibold">
                                 Select Date
                              </Button>
@@ -154,7 +169,7 @@ export default function CourseDetailPage() {
                  <p className="text-muted-foreground font-medium">TESDA Accredited</p>
               </div>
               <CardContent className="p-8 space-y-6">
-                <Link href={`/enroll?course=${course.slug}`}>
+                <Link href={`/trainee/register?course=${course.slug}`}>
                   <PrimaryButton size="lg" className="w-full h-14 text-lg group">
                     Enroll now
                     <ArrowRight className="ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
@@ -225,6 +240,7 @@ function CourseImageSlider({ images, title }: { images: string[], title: string 
                 src={withBase(src)} 
                 alt={`${title} - image ${index + 1}`}
                 className="w-full h-full object-cover"
+                crossOrigin="anonymous"
               />
               <div className="absolute inset-0 bg-black/5" />
             </div>

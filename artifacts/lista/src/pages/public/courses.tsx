@@ -1,10 +1,10 @@
 import { useState, useMemo } from "react";
-import { Search, Loader2, CheckCircle, ArrowRight, Award, Users } from "lucide-react";
+import { Search, Loader2, CheckCircle, ArrowRight, Award, Users, Lock } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Link } from "wouter";
 import PrimaryButton from "@/components/primary-button";
 import { useGetCourses } from "@workspace/api-client-react";
-import { courses as mockCourses } from "@/lib/institutional-data";
+import { courses as mockCourses, scholarshipSlots } from "@/lib/institutional-data";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { withBase } from "@/lib/with-base";
@@ -30,6 +30,7 @@ interface CourseItem {
   shortDescription?: string;
   coverImageUrl?: string;
   twspScholarship?: string;
+  isFrozen?: boolean;
 }
 
 function CourseListing({ course }: { course: CourseItem }) {
@@ -40,8 +41,18 @@ function CourseListing({ course }: { course: CourseItem }) {
     <Link href={`/courses/${course.slug}`}>
       <motion.div
         whileHover={{ y: -2 }}
-        className="group cursor-pointer bg-white border border-slate-200 rounded-xl overflow-hidden hover:border-slate-300 hover:shadow-md transition-all duration-200"
+        className={cn(
+          "group relative bg-white border border-slate-200 rounded-xl overflow-hidden transition-all duration-200 h-full cursor-pointer hover:border-slate-300 hover:shadow-md"
+        )}
       >
+        {/* Minimalist Unavailable Indicator */}
+        {course.isFrozen && (
+          <div className="absolute top-2.5 left-2.5 z-20 flex items-center gap-1.5 px-2.5 py-1 bg-white/90 backdrop-blur-sm border border-red-100 rounded-full shadow-sm">
+            <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+            <span className="text-[10px] font-black text-red-600 uppercase tracking-widest">Currently Unavailable</span>
+          </div>
+        )}
+
         {/* Thumbnail */}
         <div className="aspect-[16/10] bg-slate-100 overflow-hidden relative">
           {course.coverImageUrl ? (
@@ -49,6 +60,7 @@ function CourseListing({ course }: { course: CourseItem }) {
               src={withBase(course.coverImageUrl)}
               alt={course.name}
               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              crossOrigin="anonymous"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200">
@@ -108,21 +120,42 @@ export default function CoursesPage() {
   const { data: apiCourses, isLoading } = useGetCourses();
 
   const coursesData = useMemo((): CourseItem[] => {
-    if (apiCourses && Array.isArray(apiCourses) && apiCourses.length > 0) {
-      return apiCourses.map(c => ({
-        id: c.id, slug: c.slug, name: c.name, sector: c.sector,
-        ncLevel: c.ncLevel, description: c.description,
-        shortDescription: c.shortDescription || c.description,
-        coverImageUrl: c.coverImageUrl, twspScholarship: c.twspScholarship,
-      }));
-    }
-    return mockCourses.map(c => ({
-      id: c.id, slug: c.slug, name: c.title, sector: c.category,
-      ncLevel: c.ncLevel, description: c.longDescription,
-      shortDescription: c.shortDescription,
-      coverImageUrl: c.coverImageUrl || (c.galleryImages && c.galleryImages[0]),
-      twspScholarship: c.twsp ? "true" : "false",
-    }));
+    return mockCourses.map(c => {
+      // Find if there's an API override for this course
+      const apiOverride = (apiCourses && Array.isArray(apiCourses)) 
+        ? (apiCourses as any[]).find((ac: any) => ac.slug === c.slug || ac.id === c.id) 
+        : null;
+        
+      const slotInfo = scholarshipSlots.find(s => s.courseSlug === c.slug);
+      
+      if (apiOverride) {
+        return {
+          id: apiOverride.id || c.id,
+          slug: apiOverride.slug || c.slug,
+          name: apiOverride.name || c.title,
+          sector: apiOverride.sector || c.category,
+          ncLevel: apiOverride.ncLevel || c.ncLevel,
+          description: apiOverride.description || c.longDescription,
+          shortDescription: apiOverride.shortDescription || c.shortDescription,
+          coverImageUrl: apiOverride.coverImageUrl || (c.galleryImages && c.galleryImages[0]) || undefined,
+          twspScholarship: apiOverride.twspScholarship ?? (c.twsp ? "true" : "false"),
+          isFrozen: slotInfo ? slotInfo.available <= 0 : true,
+        };
+      }
+
+      return {
+        id: c.id, 
+        slug: c.slug, 
+        name: c.title, 
+        sector: c.category,
+        ncLevel: c.ncLevel, 
+        description: c.longDescription,
+        shortDescription: c.shortDescription,
+        coverImageUrl: (c.galleryImages && c.galleryImages[0]) || undefined,
+        twspScholarship: c.twsp ? "true" : "false",
+        isFrozen: slotInfo ? slotInfo.available <= 0 : true,
+      };
+    });
   }, [apiCourses]);
 
   const categories = useMemo(() => {
@@ -322,7 +355,8 @@ export default function CoursesPage() {
                 Take Assessment
               </PrimaryButton>
             </Link>
-            <Link href="/enroll">
+            {/* 2026-05-13: single application entrypoint */}
+            <Link href="/trainee/register">
               <PrimaryButton variant="ghost" className="h-10 px-6 border border-slate-200 text-slate-700 hover:border-slate-400 text-sm font-semibold">
                 Enroll Now
               </PrimaryButton>

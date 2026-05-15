@@ -69,9 +69,11 @@ export function DocumentUpload({
 
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = lista.storage
-        .from('trainee-documents')
-        .getPublicUrl(filePath);
+      const urlResult = lista.storage.from("trainee-documents").getPublicUrl(filePath);
+      const publicUrl =
+        typeof urlResult === "string"
+          ? urlResult
+          : (urlResult as { data?: { publicUrl?: string } })?.data?.publicUrl ?? "";
 
       setUploadedFile({ name: file.name, url: publicUrl });
       onUploadComplete(publicUrl, file.name);

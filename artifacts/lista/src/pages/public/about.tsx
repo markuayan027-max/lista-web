@@ -61,40 +61,66 @@ export default function AboutPage() {
               </p>
             </div>
             
-            <div className="lg:col-span-7 flex flex-col gap-6">
-               {/* Mission Card */}
-               <div className="group relative overflow-hidden rounded-[2.5rem] bg-white border border-slate-100 p-10 md:p-12 shadow-2xl shadow-slate-200/40 hover:shadow-primary/5 hover:border-primary/20 transition-all duration-700">
-                  {/* Decorative background circle */}
-                  <div className="absolute -top-12 -right-12 w-48 h-48 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-colors" />
-                  
-                  <div className="relative flex flex-col md:flex-row gap-8 items-start">
-                    <div className="shrink-0 w-20 h-20 rounded-3xl bg-primary flex items-center justify-center shadow-xl shadow-primary/20 group-hover:scale-110 transition-transform duration-500">
-                      <Target className="w-10 h-10 text-white" />
-                    </div>
-                    <div className="space-y-4">
-                      <h3 className="text-3xl font-black tracking-tight text-foreground group-hover:text-primary transition-colors">Our Mission</h3>
-                      <p className="text-lg md:text-xl text-muted-foreground leading-relaxed">
-                        "To give everyone the best technical training and education so they can succeed in their careers."
-                      </p>
-                    </div>
-                  </div>
-               </div>
+            <div className="lg:col-span-7">
+               {/* A4 Carousel for Mission & Vision */}
+               <div className="relative group w-full max-w-[595px] mx-auto aspect-[1/1.414] bg-white shadow-[0_35px_60px_-15px_rgba(0,0,0,0.1)] rounded-sm border border-slate-100 overflow-hidden flex flex-col">
+                 {/* Decorative background for the 'A4' sheet */}
+                 <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:24px_24px]" />
+                 <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-bl-full blur-3xl group-hover:bg-primary/10 transition-colors" />
+                 
+                 <Carousel
+                   opts={{
+                     align: "start",
+                     loop: true,
+                   }}
+                   className="flex-1 flex flex-col"
+                 >
+                   <CarouselContent className="flex-1">
+                     {/* Mission Slide */}
+                     <CarouselItem className="h-full">
+                       <div className="h-full flex flex-col items-center justify-center p-12 md:p-20 text-center space-y-12">
+                         <div className="shrink-0 w-24 h-24 rounded-3xl bg-primary flex items-center justify-center shadow-2xl shadow-primary/20 animate-in fade-in zoom-in duration-700">
+                           <Target className="w-12 h-12 text-white" />
+                         </div>
+                         <div className="space-y-8 animate-in slide-in-from-bottom-8 duration-700 delay-100">
+                           <h3 className="text-4xl md:text-5xl font-black tracking-tight text-foreground uppercase">Our Mission</h3>
+                           <div className="w-20 h-1.5 bg-primary mx-auto rounded-full" />
+                           <p className="text-2xl md:text-3xl lg:text-4xl text-muted-foreground leading-tight font-serif italic font-medium px-4">
+                             "To give everyone the best technical training and education so they can succeed in their careers."
+                           </p>
+                         </div>
+                       </div>
+                     </CarouselItem>
 
-               {/* Vision Card */}
-               <div className="group relative overflow-hidden rounded-[2.5rem] bg-slate-50 border border-slate-100 p-10 md:p-12 shadow-xl shadow-slate-200/20 hover:shadow-primary/5 hover:border-primary/20 transition-all duration-700">
-                  <div className="absolute -bottom-12 -left-12 w-48 h-48 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-colors" />
-                  
-                  <div className="relative flex flex-col md:flex-row gap-8 items-start">
-                    <div className="shrink-0 w-20 h-20 rounded-3xl bg-white border border-slate-200 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-500">
-                      <Globe className="w-10 h-10 text-primary" />
-                    </div>
-                    <div className="space-y-4">
-                      <h3 className="text-3xl font-black tracking-tight text-foreground group-hover:text-primary transition-colors">Our Vision</h3>
-                      <p className="text-lg md:text-xl text-muted-foreground leading-relaxed italic">
-                        "To be the best training center where skills are tested fairly and accurately."
-                      </p>
-                    </div>
-                  </div>
+                     {/* Vision Slide */}
+                     <CarouselItem className="h-full">
+                       <div className="h-full flex flex-col items-center justify-center p-12 md:p-20 text-center space-y-12">
+                         <div className="shrink-0 w-24 h-24 rounded-3xl bg-slate-50 border border-slate-200 flex items-center justify-center shadow-xl animate-in fade-in zoom-in duration-700">
+                           <Globe className="w-12 h-12 text-primary" />
+                         </div>
+                         <div className="space-y-8 animate-in slide-in-from-bottom-8 duration-700 delay-100">
+                           <h3 className="text-4xl md:text-5xl font-black tracking-tight text-foreground uppercase">Our Vision</h3>
+                           <div className="w-20 h-1.5 bg-primary mx-auto rounded-full" />
+                           <p className="text-2xl md:text-3xl lg:text-4xl text-muted-foreground leading-tight font-serif italic font-medium px-4">
+                             "To be the best training center where skills are tested fairly and accurately."
+                           </p>
+                         </div>
+                       </div>
+                     </CarouselItem>
+                   </CarouselContent>
+                   
+                   {/* Navigation Dots/Indicator */}
+                   <div className="absolute bottom-12 left-0 right-0 flex justify-center gap-3">
+                     <div className="w-3 h-3 rounded-full bg-primary/20 group-hover:bg-primary/40 transition-colors" />
+                     <div className="w-3 h-3 rounded-full bg-primary" />
+                   </div>
+
+                   <CarouselPrevious className="left-4 opacity-0 group-hover:opacity-100 transition-opacity bg-white/80 backdrop-blur-sm border-slate-200" />
+                   <CarouselNext className="right-4 opacity-0 group-hover:opacity-100 transition-opacity bg-white/80 backdrop-blur-sm border-slate-200" />
+                 </Carousel>
+
+                 {/* A4 Sheet Footer decoration */}
+                 <div className="h-2 w-full bg-slate-50 border-t border-slate-100" />
                </div>
             </div>
           </div>

@@ -20,6 +20,10 @@ ALTER TABLE enrollments ADD COLUMN IF NOT EXISTS year_graduated TEXT;
 ALTER TABLE enrollments ADD COLUMN IF NOT EXISTS employment_type TEXT;
 ALTER TABLE enrollments ADD COLUMN IF NOT EXISTS company_name TEXT;
 ALTER TABLE enrollments ADD COLUMN IF NOT EXISTS work_experience JSONB DEFAULT '[]';
+ALTER TABLE enrollments ADD COLUMN IF NOT EXISTS other_trainings JSONB DEFAULT '[]';
+ALTER TABLE enrollments ADD COLUMN IF NOT EXISTS licensure_exams JSONB DEFAULT '[]';
+ALTER TABLE enrollments ADD COLUMN IF NOT EXISTS competency_assessments JSONB DEFAULT '[]';
+
 ALTER TABLE enrollments ADD COLUMN IF NOT EXISTS enrollment_type TEXT DEFAULT 'New Enrollee';
 ALTER TABLE enrollments ADD COLUMN IF NOT EXISTS consent BOOLEAN DEFAULT FALSE;
 ALTER TABLE enrollments ADD COLUMN IF NOT EXISTS document_status TEXT DEFAULT 'missing';

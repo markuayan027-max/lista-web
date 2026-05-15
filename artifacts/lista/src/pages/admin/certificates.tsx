@@ -24,9 +24,22 @@ const itemVariants = {
   show: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 300, damping: 24 } }
 };
 
+type AdminCertificate = {
+  id: string;
+  userId: string;
+  courseSlug: string;
+  ncLevel: string;
+  status: "issued" | "rejected" | "in_progress";
+  progressStage: "passed";
+  issuedAt: string;
+  fileUrl: string;
+};
+
 export default function AdminCertificatesPage() {
   const { toast } = useToast();
-  const [certificates, setCertificates] = useState(initialCertificates);
+  const [certificates, setCertificates] = useState<AdminCertificate[]>(
+    initialCertificates as AdminCertificate[]
+  );
   
   const [form, setForm] = useState({ userId: "", courseSlug: "" });
   const trainees = users.filter(u => u.role === 'trainee');

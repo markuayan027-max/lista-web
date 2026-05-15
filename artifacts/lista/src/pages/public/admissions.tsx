@@ -33,7 +33,11 @@ const containerVars = {
 
 const itemVars = {
   hidden: { opacity: 0, y: 30 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] },
+  },
 };
 
 const steps = [
@@ -178,7 +182,8 @@ export default function AdmissionsPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.3 }}
             >
-              <Link href="/enroll">
+              {/* 2026-05-13: single application entrypoint */}
+              <Link href="/trainee/register">
                 <PrimaryButton size="lg" className="h-16 px-10 text-lg rounded-none bg-blue-600 hover:bg-blue-700 transition-colors duration-500 group">
                   Begin Application
                   <ArrowRight className="ml-3 h-5 w-5 transition-transform group-hover:translate-x-1" />
@@ -274,14 +279,25 @@ export default function AdmissionsPage() {
             
             {/* Prominent Bisaya Instruction */}
             <motion.div 
-              className="inline-block bg-blue-50 border border-blue-100 px-8 py-4 rounded-2xl"
+              className="flex flex-col gap-4 max-w-2xl mx-auto"
               initial={{ scale: 0.9, opacity: 0 }}
               whileInView={{ scale: 1, opacity: 1 }}
               viewport={{ once: true }}
             >
-              <p className="text-blue-800 font-bold text-lg">
-                ⚠️ Palihog ibutang ang tanang dokumento sa usa ka <span className="underline decoration-blue-300 decoration-2 underline-offset-4">"long brown envelope"</span>.
-              </p>
+              <div className="bg-blue-50 border border-blue-100 px-8 py-4 rounded-2xl">
+                <p className="text-blue-800 font-bold text-lg">
+                  ⚠️ Palihog ibutang ang tanang dokumento sa usa ka <span className="underline decoration-blue-300 decoration-2 underline-offset-4">"long brown envelope"</span>.
+                </p>
+              </div>
+
+              <div className="bg-emerald-50 border border-emerald-100 px-8 py-5 rounded-2xl shadow-sm">
+                <p className="text-emerald-900 font-bold text-lg leading-tight">
+                  Important: Applicants must bring these documents and <span className="text-emerald-600">create an account (filling up the online form)</span> BEFORE proceeding to the main building.
+                </p>
+                <p className="text-emerald-700 font-medium text-sm mt-2 italic">
+                  Pahibalo: Kinahanglan dad-on ang mga dokumento ug maghimo og account (pag-fill up sa form) BAG-O moadto sa main building.
+                </p>
+              </div>
             </motion.div>
           </div>
 
@@ -428,7 +444,7 @@ export default function AdmissionsPage() {
                  Join a community dedicated to technical mastery and career-focused excellence. Slots for the current cohort are limited.
                </p>
                <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
-                 <Link href="/enroll">
+                 <Link href="/trainee/register">
                    <PrimaryButton size="lg" className="h-20 px-16 text-xl font-black rounded-none shadow-2xl shadow-blue-200/50">
                       Enroll Now
                    </PrimaryButton>

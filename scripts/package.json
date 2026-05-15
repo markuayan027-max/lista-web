@@ -6,13 +6,17 @@
   "scripts": {
     "hello": "tsx ./src/hello.ts",
     "seed": "tsx --env-file=../.env ./src/seed.ts",
+    "create-test-user": "tsx --env-file=../.env ./src/create-test-user.ts",
+    "teardown-test-data": "tsx --env-file=../.env ./src/teardown-test-data.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "devDependencies": {
     "@types/node": "catalog:",
     "tsx": "catalog:",
     "@workspace/db": "workspace:*",
+    "@insforge/sdk": "^1.2.5",
     "bcryptjs": "^2.4.3",
-    "@types/bcryptjs": "^2.4.6"
+    "@types/bcryptjs": "^2.4.6",
+    "drizzle-orm": "catalog:"
   }
 }

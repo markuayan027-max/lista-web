@@ -87,6 +87,8 @@ graphify-out/
 .kilocode/
 .cursor/
 .github/
+.vercel
+
 pnpm-lock.yaml
 node_modules/
 dist/
@@ -110,3 +112,4 @@ coverage/
 libpeerconnection.log
 connect.lock
 .sass-cache/
+.vercel

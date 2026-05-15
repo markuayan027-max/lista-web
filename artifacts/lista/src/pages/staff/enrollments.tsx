@@ -50,6 +50,9 @@ export default function StaffEnrollmentsPage() {
   const [selectedEnrollment, setSelectedEnrollment] = useState<any>(null);
 
   const filteredEnrollments = enrollments.filter(e => {
+    // Filter out incomplete 'Ready to Apply' submissions from staff view
+    if (e.status === 'ready_to_apply') return false;
+
     const matchesSearch = e.traineeName.toLowerCase().includes(search.toLowerCase()) || 
                           e.refNo.toLowerCase().includes(search.toLowerCase()) ||
                           e.traineeEmail.toLowerCase().includes(search.toLowerCase());

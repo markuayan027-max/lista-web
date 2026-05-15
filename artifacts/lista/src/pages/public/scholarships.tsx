@@ -47,7 +47,8 @@ export default function ScholarshipsPage() {
   const [, setLocation] = useLocation();
 
   const handleApply = (id: string) => {
-    setLocation(`/enroll?scholarship=${id}`);
+    // 2026-05-13: single application entrypoint
+    setLocation(`/trainee/register?scholarship=${id}`);
   };
 
   return (
@@ -183,7 +184,7 @@ export default function ScholarshipsPage() {
                 <CardFooter className="pt-0 pb-10 px-10 relative z-10">
                   <PrimaryButton 
                     className="w-full group/btn h-14 rounded-2xl bg-slate-900 hover:bg-blue-600 text-white shadow-xl shadow-slate-900/10 hover:shadow-blue-600/20 transition-all duration-300" 
-                    onClick={() => handleApply(scholarship.title)}
+                    onClick={() => handleApply(scholarship.id)}
                   >
                     <span className="font-bold tracking-wide">Secure My Slot</span>
                     <ChevronRight className="w-4 h-4 ml-2 transition-transform group-hover/btn:translate-x-1" />

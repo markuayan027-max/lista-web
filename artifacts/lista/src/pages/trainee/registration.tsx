@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "wouter";
 import { useAuth } from "@/context/auth-context";
+import { cn } from "@/lib/utils";
 import { 
   User, 
   MapPin, 
@@ -30,25 +31,20 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { courses } from "@/lib/institutional-data";
+import { courses, type Enrollment } from "@/lib/institutional-data";
 import { exportSingleTraineeToExcel, exportSingleTraineeToWord } from "@/lib/export-utils";
-import { lista } from "@/lib/insforge";
+import { fetchTraineeEnrollmentByEmail, registerTraineeFromForm } from "@/lib/trainee-enrollment-insforge";
 import { 
   saveLocalProfile, 
   loadLocalProfile, 
-  clearLocalProfile, 
-  calculateProfileCompletion 
+  clearLocalProfile
 } from "@/lib/profile-utils";
-import { useEffect } from "react";
 
 const STEPS = [
   { id: 1, title: "Personal", description: "Identity details", icon: User },
-  { id: 2, title: "Registry", description: "TESDA records", icon: FileCheck },
-  { id: 3, title: "Contact", description: "Reach details", icon: MapPin },
-  { id: 4, title: "Profile", description: "Education & Work", icon: GraduationCap },
-  { id: 5, title: "Program", description: "Course selection", icon: CalendarDays },
-  { id: 6, title: "Materials", description: "Documentation", icon: FileText },
-  { id: 7, title: "Review", description: "Confirmation", icon: CheckCircle2 },
+  { id: 2, title: "Contact", description: "Reach details", icon: MapPin },
+  { id: 3, title: "Profile", description: "Education & Work", icon: GraduationCap },
+  { id: 4, title: "Review", description: "Confirmation", icon: CheckCircle2 },
 ];
 
 export default function TraineeRegistrationPage() {
@@ -60,19 +56,20 @@ export default function TraineeRegistrationPage() {
   const [isFinished, setIsFinished] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<Enrollment>({
     // ── Name ──
     firstName: user?.name?.split(' ')[0] || "",
     middleName: "",
     lastName: user?.name?.split(' ').slice(1).join(' ') || "",
     extensionName: "",
+    traineeName: user?.name || "",
     
     // ── Birth & Identity ──
     dob: "",
     birthPlace: "",
     age: 0,
-    gender: "Male",
-    civilStatus: "Single",
+    gender: "Male" as "Male" | "Female" | "Prefer not to say",
+    civilStatus: "Single" as "Single" | "Married" | "Widowed" | "Separated",
     nationality: "Filipino",
     
     // ── TESDA Identifiers ──
@@ -83,7 +80,7 @@ export default function TraineeRegistrationPage() {
     // ── Classification ──
     learnerClassification: "Student",
     clientType: "TVET Student",
-    qualificationType: "Full Qualification",
+    qualificationType: "Full Qualification" as "Full Qualification" | "COC",
     
     // ── Family ──
     motherMaidenName: "",
@@ -113,7 +110,7 @@ export default function TraineeRegistrationPage() {
     yearGraduated: "",
     
     // ── Employment ──
-    employmentStatus: "Unemployed",
+    employmentStatus: "Unemployed" as "Unemployed" | "Underemployed" | "Employed (seeking skills upgrade)" | "Student",
     employmentType: "",
     companyName: "",
     workExperience: [
@@ -124,138 +121,251 @@ export default function TraineeRegistrationPage() {
     
     // ── Course & Program ──
     courseSlug: "",
-    preferredSchedule: "Full Day (8:00 AM – 5:00 PM)",
-    enrollmentType: "New Enrollee",
-    scholarshipApplication: "Yes, I want to apply for TWSP",
+    preferredSchedule: "Full Day (8:00 AM – 5:00 PM)" as "Morning (8:00 AM – 12:00 PM)" | "Afternoon (1:00 PM – 5:00 PM)" | "Full Day (8:00 AM – 5:00 PM)",
+    enrollmentType: "New Enrollee" as "New Enrollee" | "Re-enrollee" | "Assessment Only (walk-in)",
+    scholarshipApplication: "Yes, I want to apply for TWSP" as "Yes, I want to apply for TWSP" | "No, self-funded enrollment" | "I need more information about scholarships",
     
     // ── Documents ──
     documents: [],
+    documentStatus: 'missing' as 'complete' | 'partial' | 'missing',
     
     // ── Meta ──
+    id: `e-${Math.random().toString(36).substr(2, 9)}`,
     refNo: `LISTA-${new Date().getFullYear()}-${Math.floor(10000 + Math.random() * 90000)}`,
-    traineeName: user?.name || "",
-    status: "pending",
+    status: "ready_to_apply" as Enrollment["status"],
     consent: false,
     createdAt: new Date().toISOString()
   });
 
+  const workExperienceRows: NonNullable<Enrollment["workExperience"]> =
+    formData.workExperience ?? [
+      {
+        company: "",
+        position: "",
+        inclusiveDates: "",
+        monthlySalary: "",
+        appointmentStatus: "",
+        noOfYearsExp: "",
+      },
+      {
+        company: "",
+        position: "",
+        inclusiveDates: "",
+        monthlySalary: "",
+        appointmentStatus: "",
+        noOfYearsExp: "",
+      },
+      {
+        company: "",
+        position: "",
+        inclusiveDates: "",
+        monthlySalary: "",
+        appointmentStatus: "",
+        noOfYearsExp: "",
+      },
+    ];
+
   // ── Persistence & Auto-save ──
   
-  // Load draft on mount
+  // Handle data loading and course parameter from URL
   useEffect(() => {
     const draft = loadLocalProfile();
-    if (draft) {
-      setFormData(prev => ({ ...prev, ...draft }));
-      toast({
-        title: "Draft Restored",
-        description: "We've restored your progress from your last visit.",
-      });
-    }
-    setIsLoaded(true);
-  }, []);
+    const searchParams = new URLSearchParams(window.location.search);
+    const urlCourse = searchParams.get('course');
+    
+    const fetchExistingProfile = async () => {
+      // Step 1: Initialize with defaults from auth
+      const userName = user?.name || "";
+      const nameParts = userName.split(' ');
+      let initialData = { 
+        ...formData,
+        traineeEmail: user?.email || "",
+        firstName: nameParts[0] || "",
+        lastName: nameParts.length > 1 ? nameParts.slice(1).join(' ') : "",
+      };
 
-  // Auto-save whenever formData changes
+      // Step 2: Try to fetch from database if user is logged in
+      if (user?.email) {
+        try {
+          const data = await fetchTraineeEnrollmentByEmail(user.email!);
+          if (data.success && data.data) {
+            const dbData = data.data as unknown as Enrollment;
+            
+            // Check if user has an active enrollment (blocking ones)
+            const status = String(dbData.status).toLowerCase();
+            // We allow 'ready_to_apply' to be resumed/updated
+            if (!["completed", "cancelled", "rejected", "ready_to_apply"].includes(status)) {
+              toast({ title: "Active Enrollment", description: "You already have an active application. Please complete or cancel it first.", variant: "destructive" });
+              setLocation("/trainee/application");
+              return;
+            }
+
+            // Clean up DB data - ONLY merge fields that actually have content
+            const cleanDbData = Object.fromEntries(
+              Object.entries(dbData).filter(([k, v]) => 
+                v !== null && v !== undefined && v !== "" && v !== "null" &&
+                !["id", "status", "createdAt"].includes(k)
+              )
+            );
+
+            initialData = {
+              ...initialData,
+              ...cleanDbData,
+            };
+          }
+        } catch (error) {
+          console.error("Error fetching database profile:", error);
+        }
+      }
+
+      // Step 3: Merge with local draft
+      // We only let draft fields override if they are NOT empty, 
+      // ensuring that a blank draft doesn't wipe out the Profile data fetched from DB.
+      if (draft) {
+        const meaningfulDraft = Object.fromEntries(
+          Object.entries(draft).filter(([_, v]) => v !== "" && v !== null && v !== undefined)
+        );
+        initialData = { ...initialData, ...meaningfulDraft };
+      }
+
+      // Step 4: URL course parameter takes priority
+      if (urlCourse) {
+        initialData.courseSlug = urlCourse;
+      }
+
+      // Step 5: Update state and mark as loaded
+      setFormData(initialData as Enrollment);
+      setIsLoaded(true);
+
+      // Step 6: Smart Step Navigation
+      // Check if Step 1-3 (Personal/Contact/Education) are already satisfied
+      const s1Valid = !!(initialData.firstName && initialData.lastName && initialData.dob && initialData.birthPlace);
+      const s2Valid = !!(initialData.mobileNumber && initialData.homeAddress && initialData.barangay);
+      const s3Valid = !!(initialData.schoolLastAttended && initialData.yearGraduated);
+
+      if (s1Valid && s2Valid && s3Valid) {
+        // If they have a course intent (from URL or saved), go to Step 4 (Program Selection/Confirmation)
+        if (urlCourse || initialData.courseSlug) {
+          setCurrentStep(4);
+        } else {
+          // If no course but profile is done, start at Step 4 anyway
+          setCurrentStep(4);
+        }
+      }
+    };
+
+    fetchExistingProfile();
+  }, [user?.email]);
+
+  // Auto-save whenever formData changes, but ONLY after initial load is complete
   useEffect(() => {
     if (isLoaded) {
       saveLocalProfile(formData);
     }
+    // Expose formData to window for Playwright debugging in test mode
+    if (localStorage.getItem('TEST_MODE') === 'true') {
+      (window as any).formData = formData;
+    }
   }, [formData, isLoaded]);
 
-  const completionPercentage = calculateProfileCompletion(formData);
+  const stepProgress = Math.round((currentStep / STEPS.length) * 100);
 
-  const updateForm = (updates: Partial<typeof formData>) => {
+  const updateForm = useCallback((updates: Partial<typeof formData>) => {
     setFormData(prev => ({ ...prev, ...updates }));
+  }, []);
+
+  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    
+    setFormData(prev => {
+      const next = { ...prev, [name]: value };
+      // Auto-sync traineeName for printable forms
+      if (['firstName', 'middleName', 'lastName'].includes(name)) {
+        next.traineeName = `${next.firstName || ''} ${next.middleName || ''} ${next.lastName || ''}`.trim().replace(/\s+/g, ' ');
+      }
+      return next;
+    });
+  }, []);
+
+  const isStepValid = () => {
+    if (currentStep === 1) {
+      return !!(formData.firstName && formData.lastName && formData.dob && formData.birthPlace && formData.nationality && formData.gender && formData.civilStatus);
+    } else if (currentStep === 2) {
+      return !!(formData.mobileNumber && formData.homeAddress && formData.barangay);
+    } else if (currentStep === 3) {
+      return !!(formData.schoolLastAttended && formData.yearGraduated);
+    }
+    return true;
   };
 
-  const nextStep = () => {
-    if (currentStep < 7) setCurrentStep(prev => prev + 1);
+  const nextStep = async () => {
+    if (!isStepValid()) {
+      let errorMessage = "Please fill in all required fields to continue.";
+      if (currentStep === 1) errorMessage = "Please fill in all identity details.";
+      else if (currentStep === 2) errorMessage = "Please provide contact and complete address.";
+      else if (currentStep === 3) errorMessage = "Please provide your educational background.";
+
+      toast({
+        title: "Required Info Missing",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Auto-save to cloud as "ready_to_apply" once basic profile (Step 1-3) is complete
+    if (currentStep === 3 && user?.email) {
+      try {
+        await registerTraineeFromForm({ ...formData, status: "ready_to_apply" }, user.id);
+        console.info("Profile partially saved to cloud as 'ready_to_apply'");
+      } catch (e) {
+        console.warn("Silent partial save failed:", e);
+      }
+    }
+
+    if (currentStep < 4) setCurrentStep(prev => prev + 1);
   };
 
   const prevStep = () => {
     if (currentStep > 1) setCurrentStep(prev => prev - 1);
   };
 
+  const handleSkipForNow = () => {
+    // Save current progress before skipping
+    saveLocalProfile(formData);
+    completeRegistration();
+    setLocation("/trainee");
+  };
+
   const handleSubmit = async () => {
-    if (!formData.courseSlug) {
-      toast({ title: "Error", description: "Please select a course.", variant: "destructive" });
-      return;
-    }
-    
     setIsSubmitting(true);
     
     try {
-      // Save to LISTA backend - ALL TESDA fields
-      const { error } = await lista
-        .from('enrollments')
-        .insert([{
-          refNo: formData.refNo,
-          firstName: formData.firstName,
-          middleName: formData.middleName,
-          lastName: formData.lastName,
-          extensionName: formData.extensionName,
-          traineeName: `${formData.lastName}, ${formData.firstName} ${formData.middleName}`.trim(),
-          dob: formData.dob || null,
-          birthPlace: formData.birthPlace,
-          age: formData.age,
-          gender: formData.gender,
-          civilStatus: formData.civilStatus,
-          nationality: formData.nationality,
-          uli: formData.uli,
-          voucherNo: formData.voucherNo,
-          psaNo: formData.psaNo,
-          learnerClassification: formData.learnerClassification,
-          clientType: formData.clientType,
-          qualificationType: formData.qualificationType,
-          motherMaidenName: formData.motherMaidenName,
-          fatherName: formData.fatherName,
-          isIP: formData.isIP,
-          indigenousGroup: formData.indigenousGroup,
-          motherTongue: formData.motherTongue,
-          traineeEmail: formData.traineeEmail,
-          contactNumber: formData.contactNumber,
-          telephone: formData.telephone,
-          mobileNumber: formData.mobileNumber,
-          homeAddress: formData.homeAddress,
-          barangay: formData.barangay,
-          district: formData.district,
-          city: formData.city,
-          province: formData.province,
-          region: formData.region,
-          zipCode: formData.zipCode,
-          education: formData.education,
-          schoolLastAttended: formData.schoolLastAttended,
-          yearGraduated: formData.yearGraduated,
-          employmentStatus: formData.employmentStatus,
-          employmentType: formData.employmentType,
-          companyName: formData.companyName,
-          workExperience: formData.workExperience,
-          courseSlug: formData.courseSlug,
-          preferredSchedule: formData.preferredSchedule,
-          enrollmentType: formData.enrollmentType,
-          scholarshipApplication: formData.scholarshipApplication,
-          consent: formData.consent,
-          documentStatus: 'missing',
-          status: 'pending',
-          userId: user?.id
-        }]);
+      // Formalize the status to "ready_to_apply" upon profile completion
+      const submissionData = { ...formData, status: "ready_to_apply" as const };
+      const { success, error } = await registerTraineeFromForm(submissionData, user?.id);
+      if (!success) {
+        throw new Error(error || "Failed to register");
+      }
 
-      if (error) throw error;
-
-      clearLocalProfile();
+      // Ensure data is saved as a permanent pre-filled profile
+      setFormData(submissionData);
+      saveLocalProfile(submissionData);
+      
       completeRegistration();
       setIsFinished(true);
       
       toast({
         title: "Registration Complete!",
-        description: "Your info has been saved to the cloud and is ready for download.",
+        description: "Your info is now saved and pre-filled for future applications.",
       });
     } catch (error: any) {
       toast({
         title: "Cloud Sync Failed",
-        description: "Your registration was NOT saved to the cloud. Please check your Supabase connection.",
+        description: "Your registration was NOT saved to the cloud. Please check your InsForge connection and policies.",
         variant: "destructive"
       });
-      console.error("Supabase Error:", error);
+      console.error("Enrollment sync error:", error);
     } finally {
       setIsSubmitting(false);
     }
@@ -288,37 +398,38 @@ export default function TraineeRegistrationPage() {
             <div className="w-12 h-12 bg-zinc-900 rounded-2xl flex items-center justify-center mx-auto mb-8">
               <CheckCircle2 className="h-6 w-6 text-white" />
             </div>
-            <h1 className="text-3xl font-black text-zinc-900 tracking-tight mb-3 uppercase">Enrollment Recorded</h1>
+            <h1 className="text-3xl font-black text-zinc-900 tracking-tight mb-3 uppercase">Registration Complete</h1>
             <p className="text-zinc-500 text-sm leading-relaxed mb-10 font-medium">
-              Your application for <span className="text-zinc-900 font-bold">{courses.find(c => c.slug === formData.courseSlug)?.title}</span> has been received. 
-              Reference: <code className="bg-zinc-100 px-1.5 py-0.5 rounded text-zinc-900 font-mono text-[11px] font-bold">{formData.refNo}</code>
+              Your profile information has been securely saved and will be used to pre-fill your course applications.
             </p>
-
-            <div className="space-y-3 mb-10">
-              <Button 
-                variant="outline" 
-                className="w-full h-12 gap-3 border-zinc-100 text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50 rounded-xl transition-all font-bold text-[11px] uppercase tracking-widest"
-                onClick={handleDownloadExcel}
-              >
-                <FileSpreadsheet className="h-4 w-4" /> Export Admission Slip (.xlsx)
-              </Button>
-              <Button 
-                variant="outline" 
-                className="w-full h-12 gap-3 border-zinc-100 text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50 rounded-xl transition-all font-bold text-[11px] uppercase tracking-widest"
-                onClick={handleDownloadWord}
-              >
-                <Printer className="h-4 w-4" /> Export Form 1 (.docx)
-              </Button>
-            </div>
 
             <Button 
               className="w-full h-14 bg-zinc-900 text-white hover:bg-zinc-800 rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-xl shadow-zinc-100 transition-all active:scale-[0.98]" 
+              onClick={() => setLocation("/trainee/application")}
+            >
+              Browse Available Courses
+            </Button>
+            
+            <Button 
+              variant="ghost"
+              className="w-full h-14 mt-2 text-zinc-500 hover:text-zinc-900 rounded-2xl font-bold text-[11px] uppercase tracking-widest transition-all" 
               onClick={() => setLocation("/trainee")}
             >
-              Back to Dashboard
+              Go to Dashboard
             </Button>
           </div>
         </motion.div>
+      </div>
+    );
+  }
+
+  if (!isLoaded) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-zinc-100 border-t-zinc-900 rounded-full animate-spin" />
+          <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Loading Enrollment Data...</p>
+        </div>
       </div>
     );
   }
@@ -338,12 +449,12 @@ export default function TraineeRegistrationPage() {
           <div className="mb-8 space-y-1">
             <div className="flex justify-between items-center text-[10px] font-bold text-zinc-400 uppercase tracking-widest px-1">
               <span>Overall Progress</span>
-              <span className="text-zinc-900">{completionPercentage}%</span>
+              <span className="text-zinc-900">{stepProgress}%</span>
             </div>
             <div className="h-1 bg-zinc-100 rounded-full overflow-hidden">
               <motion.div 
                 initial={{ width: 0 }}
-                animate={{ width: `${completionPercentage}%` }}
+                animate={{ width: `${stepProgress}%` }}
                 className="h-full bg-zinc-900 transition-all duration-300 ease-out" 
               />
             </div>
@@ -384,7 +495,7 @@ export default function TraineeRegistrationPage() {
            <Button 
             variant="ghost" 
             className="w-full justify-start text-zinc-400 hover:text-zinc-900 gap-3 text-xs font-semibold"
-            onClick={() => setLocation("/trainee")}
+            onClick={handleSkipForNow}
            >
              <ArrowLeft className="h-4 w-4" /> Save & Exit
            </Button>
@@ -414,10 +525,10 @@ export default function TraineeRegistrationPage() {
                <div className="md:hidden w-32">
                   <div className="flex justify-between text-[10px] font-bold mb-1 uppercase tracking-wider">
                     <span>Progress</span>
-                    <span>{Math.round((currentStep / STEPS.length) * 100)}%</span>
+                    <span>{stepProgress}%</span>
                   </div>
                   <div className="h-1 bg-zinc-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-zinc-900" style={{ width: `${(currentStep / STEPS.length) * 100}%` }} />
+                    <div className="h-full bg-zinc-900" style={{ width: `${stepProgress}%` }} />
                   </div>
                </div>
             </div>
@@ -439,29 +550,32 @@ export default function TraineeRegistrationPage() {
                           <div className="space-y-2">
                             <label className="text-xs font-semibold text-zinc-700">First Name</label>
                             <Input 
-                              className="h-10 border-zinc-200 focus:border-zinc-900 focus:ring-zinc-900 rounded-md"
-                              placeholder="Given name"
-                              value={formData.firstName} 
-                              onChange={e => updateForm({ firstName: e.target.value, traineeName: `${e.target.value} ${formData.middleName} ${formData.lastName}` })} 
-                            />
+                               name="firstName"
+                               className="h-10 border-zinc-200 focus:border-zinc-900 focus:ring-zinc-900 rounded-md"
+                               placeholder="Given name"
+                               value={formData.firstName} 
+                               onChange={handleChange} 
+                             />
                           </div>
                           <div className="space-y-2">
                             <label className="text-xs font-semibold text-zinc-700">Middle Name</label>
                             <Input 
-                              className="h-10 border-zinc-200 focus:border-zinc-900 focus:ring-zinc-900 rounded-md"
-                              placeholder="Optional"
-                              value={formData.middleName} 
-                              onChange={e => updateForm({ middleName: e.target.value, traineeName: `${formData.firstName} ${e.target.value} ${formData.lastName}` })} 
-                            />
+                               name="middleName"
+                               className="h-10 border-zinc-200 focus:border-zinc-900 focus:ring-zinc-900 rounded-md"
+                               placeholder="Optional"
+                               value={formData.middleName} 
+                               onChange={handleChange} 
+                             />
                           </div>
                           <div className="space-y-2">
                             <label className="text-xs font-semibold text-zinc-700">Last Name</label>
                             <Input 
-                              className="h-10 border-zinc-200 focus:border-zinc-900 focus:ring-zinc-900 rounded-md"
-                              placeholder="Surname"
-                              value={formData.lastName} 
-                              onChange={e => updateForm({ lastName: e.target.value, traineeName: `${formData.firstName} ${formData.middleName} ${e.target.value}` })} 
-                            />
+                               name="lastName"
+                               className="h-10 border-zinc-200 focus:border-zinc-900 focus:ring-zinc-900 rounded-md"
+                               placeholder="Surname"
+                               value={formData.lastName} 
+                               onChange={handleChange} 
+                             />
                           </div>
                         </div>
 
@@ -469,24 +583,22 @@ export default function TraineeRegistrationPage() {
                           <div className="space-y-2">
                             <label className="text-xs font-semibold text-zinc-700">Name Extension</label>
                             <Input 
+                              name="extensionName"
                               className="h-10 border-zinc-200 focus:border-zinc-900 focus:ring-zinc-900 rounded-md"
                               placeholder="e.g., Jr., Sr., III" 
                               value={formData.extensionName} 
-                              onChange={e => updateForm({ extensionName: e.target.value })} 
+                              onChange={handleChange} 
                             />
                           </div>
                           <div className="space-y-2">
                             <label className="text-xs font-semibold text-zinc-700">Nationality</label>
-                            <Select value={formData.nationality} onValueChange={val => updateForm({ nationality: val })}>
-                              <SelectTrigger className="h-10 border-zinc-200 focus:ring-zinc-900 rounded-md">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent className="rounded-md">
-                                <SelectItem value="Filipino">Filipino</SelectItem>
-                                <SelectItem value="Dual Citizen">Dual Citizen</SelectItem>
-                                <SelectItem value="Foreign National">Foreign National</SelectItem>
-                              </SelectContent>
-                            </Select>
+                            <Input 
+                              name="nationality"
+                              className="h-10 border-zinc-200 focus:border-zinc-900 focus:ring-zinc-900 rounded-md"
+                              placeholder="e.g., Filipino"
+                              value={formData.nationality} 
+                              onChange={handleChange} 
+                            />
                           </div>
                         </div>
 
@@ -494,10 +606,11 @@ export default function TraineeRegistrationPage() {
                           <div className="space-y-2">
                             <label className="text-xs font-semibold text-zinc-700">Date of Birth</label>
                             <Input 
+                              name="dob"
                               type="date" 
                               className="h-10 border-zinc-200 focus:border-zinc-900 focus:ring-zinc-900 rounded-md"
                               value={formData.dob} 
-                              onChange={e => {
+                              onChange={(e) => {
                                 const dob = e.target.value;
                                 const birthDate = new Date(dob);
                                 const today = new Date();
@@ -565,104 +678,18 @@ export default function TraineeRegistrationPage() {
 
                     {currentStep === 2 && (
                       <div className="space-y-5">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                          <div className="space-y-2">
-                            <label className="text-xs font-semibold text-zinc-700">Unique Learner Identifier (ULI)</label>
-                            <Input 
-                              placeholder="TESDA ULI (if available)" 
-                              className="h-10 font-mono text-sm border-zinc-200 focus:border-zinc-900 rounded-md"
-                              value={formData.uli} 
-                              onChange={e => updateForm({ uli: e.target.value })} 
-                            />
-                            <p className="text-[10px] text-zinc-500">Used for TESDA T2MIS registration</p>
-                          </div>
-                          <div className="space-y-2">
-                            <label className="text-xs font-semibold text-zinc-700">Scholarship Voucher No.</label>
-                            <Input className="h-10 border-zinc-200 rounded-md" placeholder="For TWSP/PESFA Scholars" value={formData.voucherNo} onChange={e => updateForm({ voucherNo: e.target.value })} />
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                          <div className="space-y-2">
-                            <label className="text-xs font-semibold text-zinc-700">Learner Classification</label>
-                            <Select value={formData.learnerClassification} onValueChange={val => updateForm({ learnerClassification: val })}>
-                              <SelectTrigger className="h-10 border-zinc-200 rounded-md"><SelectValue /></SelectTrigger>
-                              <SelectContent className="rounded-md">
-                                <SelectItem value="Student">Student</SelectItem>
-                                <SelectItem value="Out-of-School Youth">Out-of-School Youth</SelectItem>
-                                <SelectItem value="OFW / OFW Dependent">OFW / OFW Dependent</SelectItem>
-                                <SelectItem value="Indigenous People">Indigenous People</SelectItem>
-                                <SelectItem value="PWD">PWD</SelectItem>
-                                <SelectItem value="Solo Parent">Solo Parent</SelectItem>
-                                <SelectItem value="Displaced Worker">Displaced Worker</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div className="space-y-2">
-                            <label className="text-xs font-semibold text-zinc-700">Client Type (TESDA)</label>
-                            <Select value={formData.clientType} onValueChange={val => updateForm({ clientType: val })}>
-                              <SelectTrigger className="h-10 border-zinc-200 rounded-md"><SelectValue /></SelectTrigger>
-                              <SelectContent className="rounded-md">
-                                <SelectItem value="TVET Student">TVET Student</SelectItem>
-                                <SelectItem value="TVET Graduate">TVET Graduate</SelectItem>
-                                <SelectItem value="Industry Worker">Industry Worker</SelectItem>
-                                <SelectItem value="SCEP">SCEP</SelectItem>
-                                <SelectItem value="Community Member">Community Member</SelectItem>
-                                <SelectItem value="OFW">OFW</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-xs font-semibold text-zinc-700">Qualification Type</label>
-                          <Select value={formData.qualificationType} onValueChange={val => updateForm({ qualificationType: val as any })}>
-                            <SelectTrigger className="h-10 border-zinc-200 rounded-md"><SelectValue /></SelectTrigger>
-                            <SelectContent className="rounded-md">
-                              <SelectItem value="Full Qualification">Full Qualification</SelectItem>
-                              <SelectItem value="COC">Certificate of Competency (COC)</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                          <div className="space-y-2">
-                            <label className="text-xs font-semibold text-zinc-700">Father's Full Name</label>
-                            <Input className="h-10 border-zinc-200 rounded-md" value={formData.fatherName} onChange={e => updateForm({ fatherName: e.target.value })} />
-                          </div>
-                          <div className="space-y-2">
-                            <label className="text-xs font-semibold text-zinc-700">Mother's Maiden Name</label>
-                            <Input className="h-10 border-zinc-200 rounded-md" value={formData.motherMaidenName} onChange={e => updateForm({ motherMaidenName: e.target.value })} />
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                          <div className="space-y-2">
-                            <label className="text-xs font-semibold text-zinc-700">Mother Tongue</label>
-                            <Input className="h-10 border-zinc-200 rounded-md" value={formData.motherTongue} onChange={e => updateForm({ motherTongue: e.target.value })} />
-                          </div>
-                          <div className="space-y-2">
-                            <label className="text-xs font-semibold text-zinc-700">PSA Birth Cert No.</label>
-                            <Input className="h-10 border-zinc-200 rounded-md" placeholder="Registry No." value={formData.psaNo} onChange={e => updateForm({ psaNo: e.target.value })} />
-                          </div>
-                          <div className="space-y-2">
-                            <label className="text-xs font-semibold text-zinc-700">Indigenous Group</label>
-                            <Input className="h-10 border-zinc-200 rounded-md" placeholder="e.g., Manobo" value={formData.indigenousGroup} onChange={e => updateForm({ indigenousGroup: e.target.value, isIP: !!e.target.value })} />
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {currentStep === 3 && (
-                      <div className="space-y-5">
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                           <div className="space-y-2">
                             <label className="text-xs font-semibold text-zinc-700">Mobile Number</label>
-                            <Input className="h-10 border-zinc-200 rounded-md" placeholder="09XX-XXX-XXXX" value={formData.mobileNumber} onChange={e => updateForm({ mobileNumber: e.target.value })} />
+                            <Input name="mobileNumber" className="h-10 border-zinc-200 rounded-md" placeholder="09XX-XXX-XXXX" value={formData.mobileNumber} onChange={handleChange} />
                           </div>
                           <div className="space-y-2">
                             <label className="text-xs font-semibold text-zinc-700">Telephone</label>
-                            <Input className="h-10 border-zinc-200 rounded-md" placeholder="(088) XXX-XXXX" value={formData.telephone} onChange={e => updateForm({ telephone: e.target.value })} />
+                            <Input name="telephone" className="h-10 border-zinc-200 rounded-md" placeholder="(088) XXX-XXXX" value={formData.telephone} onChange={handleChange} />
                           </div>
                           <div className="space-y-2">
                             <label className="text-xs font-semibold text-zinc-700">Email</label>
-                            <Input className="h-10 border-zinc-200 rounded-md" type="email" value={formData.traineeEmail} onChange={e => updateForm({ traineeEmail: e.target.value })} />
+                            <Input name="traineeEmail" className="h-10 border-zinc-200 rounded-md" type="email" value={formData.traineeEmail} onChange={handleChange} />
                           </div>
                         </div>
                         <div className="border-t border-zinc-100 pt-5 mt-2">
@@ -670,20 +697,20 @@ export default function TraineeRegistrationPage() {
                           <div className="space-y-5">
                             <div className="space-y-2">
                               <label className="text-xs font-semibold text-zinc-700">House No. / Street / Purok</label>
-                              <Input className="h-10 border-zinc-200 rounded-md" placeholder="e.g., Purok 3, Mahogany Street" value={formData.homeAddress} onChange={e => updateForm({ homeAddress: e.target.value })} />
+                              <Input name="homeAddress" className="h-10 border-zinc-200 rounded-md" placeholder="e.g., Purok 3, Mahogany Street" value={formData.homeAddress} onChange={handleChange} />
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                               <div className="space-y-2">
                                 <label className="text-xs font-semibold text-zinc-700">Barangay</label>
-                                <Input className="h-10 border-zinc-200 rounded-md" placeholder="e.g., Barangay 24-A" value={formData.barangay} onChange={e => updateForm({ barangay: e.target.value })} />
+                                <Input name="barangay" className="h-10 border-zinc-200 rounded-md" placeholder="e.g., Barangay 24-A" value={formData.barangay} onChange={handleChange} />
                               </div>
                               <div className="space-y-2">
                                 <label className="text-xs font-semibold text-zinc-700">District</label>
-                                <Input className="h-10 border-zinc-200 rounded-md" placeholder="e.g., District 1" value={formData.district} onChange={e => updateForm({ district: e.target.value })} />
+                                <Input name="district" className="h-10 border-zinc-200 rounded-md" placeholder="e.g., District 1" value={formData.district} onChange={handleChange} />
                               </div>
                               <div className="space-y-2">
                                 <label className="text-xs font-semibold text-zinc-700">Zip Code</label>
-                                <Input className="h-10 border-zinc-200 rounded-md" value={formData.zipCode} onChange={e => updateForm({ zipCode: e.target.value })} />
+                                <Input name="zipCode" className="h-10 border-zinc-200 rounded-md" value={formData.zipCode} onChange={handleChange} />
                               </div>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -726,7 +753,7 @@ export default function TraineeRegistrationPage() {
                       </div>
                     )}
 
-                    {currentStep === 4 && (
+                    {currentStep === 3 && (
                       <div className="space-y-6">
                         <div>
                           <h4 className="text-sm font-semibold text-zinc-900 mb-4">Educational Background</h4>
@@ -747,12 +774,12 @@ export default function TraineeRegistrationPage() {
                             </div>
                             <div className="space-y-2">
                               <label className="text-xs font-semibold text-zinc-700">Year Graduated</label>
-                              <Input className="h-10 border-zinc-200 rounded-md" placeholder="e.g., 2020" value={formData.yearGraduated} onChange={e => updateForm({ yearGraduated: e.target.value })} />
+                              <Input name="yearGraduated" className="h-10 border-zinc-200 rounded-md" placeholder="e.g., 2020" value={formData.yearGraduated} onChange={handleChange} />
                             </div>
                           </div>
                           <div className="space-y-2 mt-5">
                             <label className="text-xs font-semibold text-zinc-700">School Last Attended</label>
-                            <Input className="h-10 border-zinc-200 rounded-md" placeholder="Complete school name" value={formData.schoolLastAttended} onChange={e => updateForm({ schoolLastAttended: e.target.value })} />
+                            <Input name="schoolLastAttended" className="h-10 border-zinc-200 rounded-md" placeholder="Complete school name" value={formData.schoolLastAttended} onChange={handleChange} />
                           </div>
                         </div>
 
@@ -802,18 +829,18 @@ export default function TraineeRegistrationPage() {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                   <Input 
                                     className="h-9 text-sm bg-white" placeholder="Company Name" 
-                                    value={formData.workExperience[i].company}
+                                    value={workExperienceRows[i].company}
                                     onChange={e => {
-                                      const newExp = [...formData.workExperience];
+                                      const newExp = [...workExperienceRows];
                                       newExp[i] = { ...newExp[i], company: e.target.value };
                                       updateForm({ workExperience: newExp });
                                     }}
                                   />
                                   <Input 
                                     className="h-9 text-sm bg-white" placeholder="Position" 
-                                    value={formData.workExperience[i].position}
+                                    value={workExperienceRows[i].position}
                                     onChange={e => {
-                                      const newExp = [...formData.workExperience];
+                                      const newExp = [...workExperienceRows];
                                       newExp[i] = { ...newExp[i], position: e.target.value };
                                       updateForm({ workExperience: newExp });
                                     }}
@@ -822,36 +849,36 @@ export default function TraineeRegistrationPage() {
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                                   <Input 
                                     className="h-9 text-xs bg-white" placeholder="Dates (e.g., 2020-2022)" 
-                                    value={formData.workExperience[i].inclusiveDates}
+                                    value={workExperienceRows[i].inclusiveDates}
                                     onChange={e => {
-                                      const newExp = [...formData.workExperience];
+                                      const newExp = [...workExperienceRows];
                                       newExp[i] = { ...newExp[i], inclusiveDates: e.target.value };
                                       updateForm({ workExperience: newExp });
                                     }}
                                   />
                                   <Input 
                                     className="h-9 text-xs bg-white" placeholder="Salary" 
-                                    value={formData.workExperience[i].monthlySalary}
+                                    value={workExperienceRows[i].monthlySalary}
                                     onChange={e => {
-                                      const newExp = [...formData.workExperience];
+                                      const newExp = [...workExperienceRows];
                                       newExp[i] = { ...newExp[i], monthlySalary: e.target.value };
                                       updateForm({ workExperience: newExp });
                                     }}
                                   />
                                   <Input 
                                     className="h-9 text-xs bg-white" placeholder="Status" 
-                                    value={formData.workExperience[i].appointmentStatus}
+                                    value={workExperienceRows[i].appointmentStatus}
                                     onChange={e => {
-                                      const newExp = [...formData.workExperience];
+                                      const newExp = [...workExperienceRows];
                                       newExp[i] = { ...newExp[i], appointmentStatus: e.target.value };
                                       updateForm({ workExperience: newExp });
                                     }}
                                   />
                                   <Input 
                                     className="h-9 text-xs bg-white" placeholder="Years" 
-                                    value={formData.workExperience[i].noOfYearsExp}
+                                    value={workExperienceRows[i].noOfYearsExp}
                                     onChange={e => {
-                                      const newExp = [...formData.workExperience];
+                                      const newExp = [...workExperienceRows];
                                       newExp[i] = { ...newExp[i], noOfYearsExp: e.target.value };
                                       updateForm({ workExperience: newExp });
                                     }}
@@ -864,93 +891,7 @@ export default function TraineeRegistrationPage() {
                       </div>
                     )}
 
-                    {currentStep === 5 && (
-                      <div className="space-y-6">
-                        <div className="space-y-2">
-                          <label className="text-xs font-semibold text-zinc-700">Select Course</label>
-                          <Select value={formData.courseSlug} onValueChange={val => updateForm({ courseSlug: val })}>
-                            <SelectTrigger className="h-12 border-zinc-200 rounded-md text-base"><SelectValue placeholder="Choose a program..." /></SelectTrigger>
-                            <SelectContent className="rounded-md">
-                              {courses.map(c => (
-                                <SelectItem key={c.slug} value={c.slug}>{c.title} ({c.ncLevel})</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                          <div className="space-y-2">
-                            <label className="text-xs font-semibold text-zinc-700">Enrollment Type</label>
-                            <Select value={formData.enrollmentType} onValueChange={val => updateForm({ enrollmentType: val as any })}>
-                              <SelectTrigger className="h-10 border-zinc-200 rounded-md"><SelectValue /></SelectTrigger>
-                              <SelectContent className="rounded-md">
-                                <SelectItem value="New Enrollee">New Enrollee</SelectItem>
-                                <SelectItem value="Re-enrollee">Re-enrollee</SelectItem>
-                                <SelectItem value="Assessment Only (walk-in)">Assessment Only (walk-in)</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div className="space-y-2">
-                            <label className="text-xs font-semibold text-zinc-700">Preferred Schedule</label>
-                            <Select value={formData.preferredSchedule} onValueChange={val => updateForm({ preferredSchedule: val as any })}>
-                              <SelectTrigger className="h-10 border-zinc-200 rounded-md"><SelectValue /></SelectTrigger>
-                              <SelectContent className="rounded-md">
-                                <SelectItem value="Morning (8:00 AM – 12:00 PM)">Morning (8am-12pm)</SelectItem>
-                                <SelectItem value="Afternoon (1:00 PM – 5:00 PM)">Afternoon (1pm-5pm)</SelectItem>
-                                <SelectItem value="Full Day (8:00 AM – 5:00 PM)">Full Day (8am-5pm)</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-xs font-semibold text-zinc-700">Scholarship Application (TWSP)</label>
-                          <Select value={formData.scholarshipApplication} onValueChange={val => updateForm({ scholarshipApplication: val as any })}>
-                            <SelectTrigger className="h-10 border-zinc-200 rounded-md"><SelectValue /></SelectTrigger>
-                            <SelectContent className="rounded-md">
-                              <SelectItem value="Yes, I want to apply for TWSP">Yes, apply for TWSP</SelectItem>
-                              <SelectItem value="No, self-funded enrollment">No, self-funded</SelectItem>
-                              <SelectItem value="I need more information about scholarships">I need more information</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                    )}
-
-                    {currentStep === 6 && (
-                      <div className="space-y-12">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          {[
-                            { label: "PSA Birth Certificate", sub: "Required for identity verification" },
-                            { label: "Valid Government ID", sub: "Any official PH-issued identification" },
-                            { label: "2x2 Portrait Photo", sub: "White background, formal attire" },
-                            { label: "Academic Record", sub: "Latest diploma or transcript" }
-                          ].map((doc, idx) => (
-                            <div key={idx} className="group border border-zinc-100 rounded-3xl p-8 hover:bg-zinc-50 transition-all cursor-pointer flex flex-col items-center text-center">
-                              <div className="w-14 h-14 bg-zinc-50 border border-zinc-100 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-white group-hover:scale-105 transition-all shadow-sm">
-                                <Upload className="w-5 h-5 text-zinc-400 group-hover:text-zinc-900" />
-                              </div>
-                              <p className="text-sm font-black text-zinc-900 uppercase tracking-tight">{doc.label}</p>
-                              <p className="text-[11px] text-zinc-400 mt-1 font-bold uppercase tracking-wider">{doc.sub}</p>
-                            </div>
-                          ))}
-                        </div>
-                        
-                        <div className="bg-zinc-50 rounded-3xl p-8 flex flex-col md:flex-row items-center justify-between gap-6">
-                           <div>
-                             <h4 className="text-sm font-black text-zinc-900 uppercase tracking-tight mb-1">Missing some files?</h4>
-                             <p className="text-[13px] text-zinc-500 font-medium">You can securely upload these later from your trainee dashboard.</p>
-                           </div>
-                           <Button 
-                            variant="outline" 
-                            className="bg-white border-zinc-200 text-zinc-900 hover:bg-zinc-50 font-black text-[11px] uppercase tracking-widest px-8 h-12 rounded-xl transition-all active:scale-95"
-                            onClick={nextStep}
-                           >
-                             Skip for now
-                           </Button>
-                        </div>
-                      </div>
-                    )}
-
-                    {currentStep === 7 && (
+                    {currentStep === 4 && (
                       <div className="space-y-6">
                         <div className="border border-zinc-200 rounded-lg overflow-hidden bg-zinc-50">
                           <div className="bg-zinc-100 px-4 py-3 border-b border-zinc-200">
@@ -976,18 +917,6 @@ export default function TraineeRegistrationPage() {
                             <div className="sm:col-span-2">
                               <span className="block text-xs text-zinc-500 mb-1">Address</span>
                               <span className="font-medium text-zinc-900">{formData.homeAddress}, {formData.barangay}, {formData.city}</span>
-                            </div>
-                            <div className="sm:col-span-2 pt-3 border-t border-zinc-200">
-                              <span className="block text-xs text-zinc-500 mb-1">Selected Course</span>
-                              <span className="font-medium text-zinc-900">{courses.find(c => c.slug === formData.courseSlug)?.title || "Not selected"}</span>
-                            </div>
-                            <div>
-                              <span className="block text-xs text-zinc-500 mb-1">Schedule</span>
-                              <span className="font-medium text-zinc-900">{formData.preferredSchedule}</span>
-                            </div>
-                            <div>
-                              <span className="block text-xs text-zinc-500 mb-1">Scholarship</span>
-                              <span className="font-medium text-zinc-900">{formData.scholarshipApplication.includes("Yes") ? "TWSP Applicant" : "Self-funded"}</span>
                             </div>
                           </div>
                         </div>
@@ -1018,9 +947,24 @@ export default function TraineeRegistrationPage() {
                       
                       <div className="flex-1" />
 
-                      {currentStep < 7 ? (
+                      {currentStep > 1 && (
                         <Button 
-                          className="h-14 px-12 bg-zinc-900 text-white hover:bg-zinc-800 rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-xl shadow-zinc-100 transition-all active:scale-[0.98]" 
+                          variant="ghost" 
+                          className="h-14 px-6 text-zinc-500 hover:text-zinc-900 font-bold text-[11px] uppercase tracking-widest rounded-2xl hidden sm:flex" 
+                          onClick={handleSkipForNow}
+                        >
+                          Skip for now
+                        </Button>
+                      )}
+
+                      {currentStep < 4 ? (
+                        <Button 
+                          className={cn(
+                            "h-14 px-12 rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all",
+                            isStepValid() 
+                              ? "bg-zinc-900 text-white hover:bg-zinc-800 shadow-xl shadow-zinc-100 active:scale-[0.98]" 
+                              : "bg-zinc-100 text-zinc-400 cursor-not-allowed opacity-50"
+                          )}
                           onClick={nextStep}
                         >
                           Continue <ArrowRight className="ml-2 h-3.5 w-3.5" />
@@ -1031,7 +975,7 @@ export default function TraineeRegistrationPage() {
                           onClick={handleSubmit}
                           disabled={!formData.consent || isSubmitting}
                         >
-                          {isSubmitting ? "Processing..." : "Submit Application"}
+                          {isSubmitting ? "Processing..." : "Complete Registration"}
                         </Button>
                       )}
                     </div>

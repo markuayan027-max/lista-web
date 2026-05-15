@@ -95,6 +95,16 @@ export default function AssessmentPage() {
 
   // Simple scoring logic based on selected categories
   const getRecommendations = () => {
+    const toCardCourse = (c: (typeof courses)[number]) => ({
+      slug: c.slug,
+      name: c.title,
+      sector: c.category,
+      ncLevel: c.ncLevel,
+      shortDescription: c.shortDescription,
+      coverImageUrl: c.galleryImages?.[0],
+      twspScholarship: c.twsp ? "true" : "false",
+    });
+
     // Count category mentions in answers
     const categoryScores: Record<string, number> = {};
     
@@ -113,7 +123,7 @@ export default function AssessmentPage() {
       .map(entry => entry[0]);
 
     if (topCategories.length === 0) {
-      return courses.slice(0, 3); // Fallback
+      return courses.slice(0, 3).map(toCardCourse); // Fallback
     }
 
     const topCategory = topCategories[0];
@@ -125,7 +135,7 @@ export default function AssessmentPage() {
       recommended.push(...others.slice(0, 3 - recommended.length));
     }
 
-    return recommended.slice(0, 3);
+    return recommended.slice(0, 3).map(toCardCourse);
   };
 
   return (
@@ -202,7 +212,7 @@ export default function AssessmentPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {getRecommendations().map((course) => (
-                  <CourseCard key={course.id} course={course} />
+                  <CourseCard key={course.slug} course={course} hideLockOverlay={true} />
                 ))}
               </div>
 

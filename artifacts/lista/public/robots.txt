@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+
+# Disallow admin and internal areas from being indexed
+Disallow: /admin/
+Disallow: /staff/
+Disallow: /trainee/
+Disallow: /api/
+
+Sitemap: https://lista.dpdns.org/sitemap.xml

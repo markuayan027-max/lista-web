@@ -22,7 +22,7 @@ const item = {
 };
 
 export default function StaffOverviewPage() {
-  const todayDate = new Date("2023-10-15"); // Mock today
+  const todayDate = new Date(); // Current date
   const todaysSessions = schedules.filter(s => isSameDay(parseISO(s.date), todayDate));
   const pendingEnrollments = enrollments.filter(e => e.status === "pending").length;
   const activeTrainees = users.filter(u => u.role === "trainee").length;

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Plus, ChevronLeft, ChevronRight, Clock, MapPin, User as UserIcon } from "lucide-react";
+import { Plus, ChevronLeft, ChevronRight, Clock, MapPin, User as UserIcon, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -15,15 +15,23 @@ import { format, addDays, startOfWeek, isSameDay } from "date-fns";
 export default function StaffSchedulePage() {
   const { toast } = useToast();
   const [schedules, setSchedules] = useState(initialSchedules);
-  const [currentDate, setCurrentDate] = useState(new Date("2023-10-15"));
+  const [courseList, setCourseList] = useState(courses);
+  const [currentDate, setCurrentDate] = useState(new Date());
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isPeriodsDialogOpen, setIsPeriodsDialogOpen] = useState(false);
+
+  const [periodForm, setPeriodForm] = useState({
+    courseSlug: "",
+    startDate: "",
+    endDate: ""
+  });
 
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
   const weekDays = Array.from({ length: 7 }).map((_, i) => addDays(weekStart, i));
 
   const nextWeek = () => setCurrentDate(addDays(currentDate, 7));
   const prevWeek = () => setCurrentDate(addDays(currentDate, -7));
-  const today = () => setCurrentDate(new Date("2023-10-15"));
+  const today = () => setCurrentDate(new Date());
 
   const handleAddSession = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -43,6 +51,32 @@ export default function StaffSchedulePage() {
     toast({
       title: "Session Added",
       description: "New schedule session has been created.",
+    });
+  };
+
+  const handlePeriodUpdate = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const slug = formData.get("course") as string;
+    const start = formData.get("startDate") as string;
+    const end = formData.get("endDate") as string;
+
+    if (!slug || !start || !end) {
+      toast({ title: "Validation Error", description: "All fields are required.", variant: "destructive" });
+      return;
+    }
+
+    setCourseList(
+      (prev) =>
+        prev.map((c) =>
+          c.slug === slug ? { ...c, startDate: start, endDate: end } : c
+        ) as typeof courses
+    );
+    
+    setIsPeriodsDialogOpen(false);
+    toast({ 
+      title: "Course Period Updated", 
+      description: `Schedule limits set for ${courseList.find(c => c.slug === slug)?.title}` 
     });
   };
 
@@ -80,6 +114,65 @@ export default function StaffSchedulePage() {
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
+
+          <Dialog open={isPeriodsDialogOpen} onOpenChange={setIsPeriodsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="h-10 font-bold">
+                <Settings2 className="mr-2 h-4 w-4" /> Course Periods
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Set Course Duration</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handlePeriodUpdate} className="space-y-4 pt-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold">Course</label>
+                  <Select 
+                    name="course" 
+                    required
+                    value={periodForm.courseSlug}
+                    onValueChange={(val) => {
+                      const course = courseList.find(c => c.slug === val);
+                      setPeriodForm({
+                        courseSlug: val,
+                        startDate: course?.startDate || "",
+                        endDate: course?.endDate || ""
+                      });
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a course" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {courseList.map(c => <SelectItem key={c.slug} value={c.slug}>{c.title}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <FormInputField 
+                    label="Start Date" 
+                    name="startDate" 
+                    type="date" 
+                    required 
+                    value={periodForm.startDate}
+                    onChange={(e) => setPeriodForm({...periodForm, startDate: e.target.value})}
+                  />
+                  <FormInputField 
+                    label="End Date" 
+                    name="endDate" 
+                    type="date" 
+                    required 
+                    value={periodForm.endDate}
+                    onChange={(e) => setPeriodForm({...periodForm, endDate: e.target.value})}
+                  />
+                </div>
+                
+                <PrimaryButton type="submit" className="w-full mt-2">Update Period</PrimaryButton>
+              </form>
+            </DialogContent>
+          </Dialog>
           
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
@@ -97,12 +190,12 @@ export default function StaffSchedulePage() {
                       <SelectValue placeholder="Select a course" />
                     </SelectTrigger>
                     <SelectContent>
-                      {courses.map(c => <SelectItem key={c.slug} value={c.slug}>{c.title}</SelectItem>)}
+                      {courseList.map(c => <SelectItem key={c.slug} value={c.slug}>{c.title}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
                 
-                <FormInputField label="Date" name="date" type="date" required defaultValue="2023-10-15" />
+                <FormInputField label="Date" name="date" type="date" required defaultValue={format(new Date(), "yyyy-MM-dd")} />
                 
                 <div className="grid grid-cols-2 gap-4">
                   <FormInputField label="Start Time" name="startTime" type="time" required defaultValue="09:00" />
@@ -126,7 +219,7 @@ export default function StaffSchedulePage() {
       >
         {weekDays.map((day, i) => {
           const daySchedules = schedules.filter(s => isSameDay(new Date(s.date), day));
-          const isTodayDate = isSameDay(day, new Date("2023-10-15")); 
+          const isTodayDate = isSameDay(day, new Date()); 
 
           return (
             <div key={i} className="flex flex-col gap-3">
@@ -140,7 +233,7 @@ export default function StaffSchedulePage() {
               <div className="flex-1 flex flex-col gap-2 min-h-[100px]">
                 {daySchedules.length > 0 ? (
                   daySchedules.map((schedule) => {
-                    const course = courses.find(c => c.slug === schedule.courseSlug);
+                    const course = courseList.find(c => c.slug === schedule.courseSlug);
                     const colorClasses = getCategoryColor(course?.category);
                     
                     return (

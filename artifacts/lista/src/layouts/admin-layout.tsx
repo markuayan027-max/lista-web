@@ -1,11 +1,23 @@
 import { useAuth } from "@/context/auth-context";
 import { useLocation } from "wouter";
 import SidebarAdmin from "@/components/sidebar-admin";
+import { ModernSidebar } from "@/components/modern-sidebar";
 import AvatarInitials from "@/components/avatar-initials";
-import { LogOut, Bell, Menu } from "lucide-react";
+import { LogOut, Bell, Menu, BarChart3, ClipboardList, Users, Calendar, Award, FileUp, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+
+const ADMIN_MENU = [
+  { href: "/admin", label: "Analytics", icon: BarChart3 },
+  { href: "/admin/enrollments", label: "Enrollments", icon: ClipboardList },
+  { href: "/admin/users", label: "Users", icon: Users },
+  { href: "/admin/announcements", label: "Announcements", icon: Bell },
+  { href: "/admin/schedule", label: "Schedule", icon: Calendar },
+  { href: "/admin/certificates", label: "Certificates", icon: Award },
+  { href: "/admin/export", label: "Export", icon: FileUp },
+  { href: "/admin/settings", label: "Settings", icon: Settings },
+];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
@@ -27,7 +39,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     <div className="flex h-screen bg-muted/30 overflow-hidden">
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex h-full shrink-0">
-        <SidebarAdmin />
+        <ModernSidebar menuItems={ADMIN_MENU} roleName="Administrator" logoHref="/admin" />
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
@@ -50,9 +62,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
 
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" className="text-muted-foreground relative">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="text-muted-foreground relative hover:bg-indigo-50 hover:text-indigo-600 rounded-full transition-all"
+              onClick={() => setLocation("/admin/announcements")}
+            >
               <Bell className="h-5 w-5" />
-              <span className="absolute top-2 right-2 h-2 w-2 bg-primary rounded-full border-2 border-white" />
+              <span className="absolute top-2.5 right-2.5 h-2 w-2 bg-indigo-600 rounded-full border-2 border-white" />
             </Button>
             
             <DropdownMenu>

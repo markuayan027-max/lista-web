@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Plus, Calendar as CalendarIcon, Clock, MapPin, User, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Calendar as CalendarIcon, Clock, MapPin, User, ChevronLeft, ChevronRight, Settings2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -28,20 +28,33 @@ const itemVariants = {
 export default function AdminSchedulePage() {
   const { toast } = useToast();
   const [schedules, setSchedules] = useState(initialSchedules);
+  const [courseList, setCourseList] = useState(courses);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isPeriodsDialogOpen, setIsPeriodsDialogOpen] = useState(false);
   const [view, setView] = useState("week"); // week is functional
   
-  // Mock current week start
-  const currentWeekStart = new Date(2023, 9, 15); // Oct 15, 2023 to match mock data
-  const weekDays = Array.from({ length: 5 }).map((_, i) => addDays(currentWeekStart, i));
+  const [currentDate, setCurrentDate] = useState(new Date());
+  
+  // Current week start
+  const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
+  const weekDays = Array.from({ length: 5 }).map((_, i) => addDays(weekStart, i));
+
+  const nextWeek = () => setCurrentDate(addDays(currentDate, 7));
+  const prevWeek = () => setCurrentDate(addDays(currentDate, -7));
 
   const [form, setForm] = useState({
     courseSlug: "",
-    date: format(currentWeekStart, "yyyy-MM-dd"),
+    date: format(new Date(), "yyyy-MM-dd"),
     startTime: "09:00",
     endTime: "12:00",
     trainer: "",
     room: ""
+  });
+
+  const [periodForm, setPeriodForm] = useState({
+    courseSlug: "",
+    startDate: "",
+    endDate: ""
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -59,6 +72,29 @@ export default function AdminSchedulePage() {
     setSchedules([...schedules, newSession]);
     setIsDialogOpen(false);
     toast({ title: "Session Scheduled", description: "The new session has been added to the calendar." });
+  };
+
+  const handlePeriodUpdate = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!periodForm.courseSlug || !periodForm.startDate || !periodForm.endDate) {
+      toast({ title: "Validation Error", description: "All fields are required.", variant: "destructive" });
+      return;
+    }
+
+    setCourseList(
+      (prev) =>
+        prev.map((c) =>
+          c.slug === periodForm.courseSlug
+            ? { ...c, startDate: periodForm.startDate, endDate: periodForm.endDate }
+            : c
+        ) as typeof courses
+    );
+    
+    setIsPeriodsDialogOpen(false);
+    toast({ 
+      title: "Course Period Updated", 
+      description: `Schedule limits set for ${courseList.find(c => c.slug === periodForm.courseSlug)?.title}` 
+    });
   };
 
   const getCourseColor = (slug: string) => {
@@ -106,10 +142,73 @@ export default function AdminSchedulePage() {
               Month
             </Button>
           </div>
+
+          <Dialog open={isPeriodsDialogOpen} onOpenChange={setIsPeriodsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="gap-2 h-10">
+                <Settings2 className="h-4 w-4" />
+                Course Periods
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[450px]">
+              <form onSubmit={handlePeriodUpdate}>
+                <DialogHeader>
+                  <DialogTitle>Set Course Duration</DialogTitle>
+                  <DialogDescription>Define when a specific course batch starts and stops.</DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid gap-1.5">
+                    <label className="text-sm font-semibold tracking-tight">Course</label>
+                    <Select 
+                      value={periodForm.courseSlug} 
+                      onValueChange={(val) => {
+                        const course = courseList.find(c => c.slug === val);
+                        setPeriodForm({
+                          courseSlug: val,
+                          startDate: course?.startDate || "",
+                          endDate: course?.endDate || ""
+                        });
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select course" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {courseList.map(c => (
+                          <SelectItem key={c.slug} value={c.slug}>{c.title}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormInputField
+                      label="Start Date"
+                      type="date"
+                      value={periodForm.startDate}
+                      onChange={(e) => setPeriodForm({...periodForm, startDate: e.target.value})}
+                      required
+                    />
+                    <FormInputField
+                      label="End Date"
+                      type="date"
+                      value={periodForm.endDate}
+                      onChange={(e) => setPeriodForm({...periodForm, endDate: e.target.value})}
+                      required
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button type="button" variant="outline" onClick={() => setIsPeriodsDialogOpen(false)}>Cancel</Button>
+                  <PrimaryButton type="submit">Update Period</PrimaryButton>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
           
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <PrimaryButton className="gap-2">
+              <PrimaryButton className="gap-2 h-10">
                 <Plus className="h-4 w-4" />
                 New Session
               </PrimaryButton>
@@ -128,7 +227,7 @@ export default function AdminSchedulePage() {
                         <SelectValue placeholder="Select course" />
                       </SelectTrigger>
                       <SelectContent>
-                        {courses.map(c => (
+                        {courseList.map(c => (
                           <SelectItem key={c.slug} value={c.slug}>{c.title}</SelectItem>
                         ))}
                       </SelectContent>
@@ -191,11 +290,11 @@ export default function AdminSchedulePage() {
         <Card className="border-card-border shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between py-4 border-b border-card-border">
             <div className="flex items-center gap-4">
-              <Button variant="outline" size="icon" className="h-8 w-8">
+              <Button variant="outline" size="icon" className="h-8 w-8" onClick={prevWeek}>
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <h2 className="text-sm font-bold">Oct 15 - Oct 19, 2023</h2>
-              <Button variant="outline" size="icon" className="h-8 w-8">
+              <h2 className="text-sm font-bold">{format(weekStart, "MMM dd")} - {format(addDays(weekStart, 4), "MMM dd, yyyy")}</h2>
+              <Button variant="outline" size="icon" className="h-8 w-8" onClick={nextWeek}>
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
@@ -214,7 +313,7 @@ export default function AdminSchedulePage() {
                     </div>
                     <div className="flex-1 p-2 space-y-2 bg-muted/5">
                       {daySchedules.map(session => {
-                        const course = courses.find(c => c.slug === session.courseSlug);
+                        const course = courseList.find(c => c.slug === session.courseSlug);
                         return (
                           <div 
                             key={session.id} 

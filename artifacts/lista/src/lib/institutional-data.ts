@@ -1,3 +1,18 @@
+import { addDays } from "date-fns";
+
+const today = new Date();
+
+/**
+ * Formats a date to YYYY-MM-DD string
+ */
+function formatDate(date: Date): string {
+  return date.toISOString().split('T')[0];
+}
+
+// ============================================================================
+// UTILS & CORE TYPES
+// ============================================================================
+
 export type UserRole = 'trainee' | 'staff' | 'admin';
 
 export interface User {
@@ -103,6 +118,10 @@ export const leadership = [
   }
 ];
 
+// ============================================================================
+// COMPLIANCE & MISSION
+// ============================================================================
+
 export const accreditations = [
   { id: "ac1", code: "TESDA", name: "Technical Education and Skills Development Authority", role: "Primary Regulatory Body" },
   { id: "ac2", code: "CHED", name: "Commission on Higher Education", role: "Recognized Higher Education Partner" },
@@ -181,6 +200,10 @@ export const officialDocuments = [
   }
 ];
 
+// ============================================================================
+// EVENTS & MILESTONES
+// ============================================================================
+
 export const events = [
   {
     id: "ev1",
@@ -191,7 +214,6 @@ export const events = [
     location: "Arturo S. Lugod Memorial Gym, Gingoog City",
     partners: ["TESDA Region X", "DSWD – Assistance to Individuals in Crisis Situations (AICS)", "Office of the Speaker of the House"],
     description: "On March 24, 2024, LISTA held its 19th Commencement Exercises at the Arturo S. Lugod Memorial Gym. The event doubled as a payout ceremony where over 800 TESDA TWSP scholars each received ₱3,000 in financial assistance through the DSWD AICS program. Local government officials and a representative from the Office of the Speaker of the House graced the occasion alongside School President Maggie Gudella Z. Tse.",
-
   },
   {
     id: "ev2",
@@ -213,12 +235,11 @@ export const events = [
     location: "LISTA Training Farm, Sitio Civoleg, Lunotan, Gingoog City",
     partners: ["ATI Regional Training Center X (ATI-RTC X)"],
     description: "In June 2024, LISTA's training farm in Lunotan became the venue for a five-day Training of Trainers on Rabbitry Production as an Enterprise — organized by ATI-RTC X. Twenty participants from Bukidnon, Misamis Oriental, and Misamis Occidental underwent intensive training on rabbit breeds, feeding, management, and meat processing.",
-
   },
 ];
 
 // ============================================================================
-// COURSES (7 TESDA-Accredited Programs)
+// COURSES (Accredited Programs)
 // ============================================================================
 
 export const courses = [
@@ -317,6 +338,8 @@ export const courses = [
     twsp: true,
     tags: ["Business", "TWSP"],
     durationHours: 292,
+    startDate: formatDate(new Date()),
+    endDate: formatDate(addDays(new Date(), 45)),
     shortDescription: "Advanced recording and management of financial transactions.",
     longDescription: "Equips students with the competency to perform bookkeeping functions including journalizing and posting transactions.",
     galleryImages: ["https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&q=80&w=800"],
@@ -376,7 +399,7 @@ export const courses = [
     durationHours: 218,
     shortDescription: "Essential skills for household management and care.",
     longDescription: "Covers cleaning, laundry, cooking, and child/elderly care for domestic environments.",
-    galleryImages: ["https://images.unsplash.com/photo-1581578731548-c64695ce6958?auto=format&fit=crop&q=80&w=800"],
+    galleryImages: ["https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&q=80&w=800"],
   },
   {
     id: "c12",
@@ -567,7 +590,6 @@ export const users: User[] = [
 // ENROLLMENTS
 // ============================================================================
 
-// ── Document type for trainee file vault ──
 export interface TraineeDocument {
   id: string;
   type: 'psa_birth_cert' | 'valid_id' | 'passport_photo' | 'diploma' | 'barangay_cert' | 'voter_cert' | 'other';
@@ -581,7 +603,6 @@ export interface TraineeDocument {
   verifiedAt?: string;
 }
 
-// ── Work experience entry (for CACO-07-F21 Section 3) ──
 export interface WorkExperience {
   company: string;
   position: string;
@@ -591,7 +612,32 @@ export interface WorkExperience {
   noOfYearsExp: string;
 }
 
-// ── Training history entry ──
+export interface OtherTraining {
+  title: string;
+  venue: string;
+  inclusiveDates: string;
+  noOfHours: string;
+  conductedBy: string;
+}
+
+export interface LicensureExam {
+  title: string;
+  yearTaken: string;
+  examinationVenue: string;
+  rating: string;
+  remarks: string;
+  expiryDate: string;
+}
+
+export interface CompetencyAssessment {
+  title: string;
+  qualificationLevel: string;
+  industrySector: string;
+  certificateNumber: string;
+  dateOfIssuance: string;
+  expirationDate: string;
+}
+
 export interface TrainingHistoryEntry {
   id: string;
   courseSlug: string;
@@ -608,84 +654,71 @@ export interface Enrollment {
   id: string;
   refNo: string;
   userId?: string;
-
-  // ── Name (expanded for TESDA compliance) ──
   firstName: string;
   middleName: string;
   lastName: string;
-  extensionName?: string;           // Jr., Sr., III, etc.
-  traineeName: string;              // Computed: lastName, firstName middleName extensionName
-
-  // ── Birth & Identity ──
+  extensionName?: string;
+  traineeName: string;
   dob: string;
   birthPlace: string;
-  age?: number;                     // Auto-computed from DOB
+  age?: number;
   gender: "Male" | "Female" | "Prefer not to say";
   civilStatus: "Single" | "Married" | "Widowed" | "Separated";
   nationality: string;
-
-  // ── TESDA Identifiers ──
-  uli?: string;                     // TESDA Unique Learner Identifier
+  uli?: string;
   voucherNo?: string;
   psaNo?: string;
-
-  // ── Classification ──
   learnerClassification: string;
-  clientType: string;               // TVET Student, Industry Worker, Community Member, etc.
+  clientType: string;
   qualificationType: 'Full Qualification' | 'COC';
-
-  // ── Family ──
   motherMaidenName: string;
   fatherName: string;
   isIP: boolean;
   indigenousGroup?: string;
   motherTongue: string;
-
-  // ── Contact ──
   traineeEmail: string;
   contactNumber: string;
-  telephone?: string;               // Landline
-  mobileNumber?: string;            // Secondary mobile
-
-  // ── Address (granular for TESDA forms) ──
-  homeAddress: string;              // House No., Street, Purok
+  telephone?: string;
+  mobileNumber?: string;
+  homeAddress: string;
   barangay: string;
   district?: string;
   city: string;
   province: string;
-  region: string;                   // e.g., "Region X — Northern Mindanao"
+  region: string;
   zipCode: string;
-
-  // ── Education ──
   education: string;
   schoolLastAttended?: string;
   yearGraduated?: string;
-
-  // ── Employment (expanded for TWSP & MIS 03-01) ──
   employmentStatus: "Unemployed" | "Underemployed" | "Employed (seeking skills upgrade)" | "Student";
-  employmentType?: string;          // Casual, Contractual, Permanent, Self-Employed, etc.
-  companyName?: string;             // If employed
+  employmentType?: string;
+  companyName?: string;
   workExperience?: WorkExperience[];
-
-  // ── Course & Program ──
+  otherTrainings?: OtherTraining[];
+  licensureExams?: LicensureExam[];
+  competencyAssessments?: CompetencyAssessment[];
   courseSlug: string;
   preferredSchedule: "Morning (8:00 AM – 12:00 PM)" | "Afternoon (1:00 PM – 5:00 PM)" | "Full Day (8:00 AM – 5:00 PM)";
   enrollmentType: "New Enrollee" | "Re-enrollee" | "Assessment Only (walk-in)";
   scholarshipApplication: "Yes, I want to apply for TWSP" | "No, self-funded enrollment" | "I need more information about scholarships";
-
-  // ── Documents & Compliance ──
   documents?: TraineeDocument[];
   documentStatus: 'complete' | 'partial' | 'missing';
-
-  // ── Training History (multi-course tracking) ──
-  previousEnrollments?: string[];   // IDs of past enrollment records
+  previousEnrollments?: string[];
   trainingHistory?: TrainingHistoryEntry[];
-
-  // ── Meta ──
   heardFrom?: string;
   notes?: string;
   consent: boolean;
-  status: "pending" | "confirmed" | "rejected" | "waitlisted";
+  status:
+    | "pending"
+    | "confirmed"
+    | "rejected"
+    | "waitlisted"
+    | "review"
+    | "interview"
+    | "enrolled"
+    | "cancelled"
+    | "completed"
+    | "ready_to_apply";
   createdAt: string;
   staffNotes?: { note: string; addedBy: string; addedAt: string }[];
 }
@@ -737,6 +770,52 @@ export const enrollments: Enrollment[] = [
     status: "confirmed",
     createdAt: "2024-03-01T08:32:00Z",
   },
+  {
+    id: "e2",
+    refNo: "LISTA-2024-00002",
+    userId: "u7",
+    firstName: "Jose",
+    middleName: "Protacio",
+    lastName: "Rizal",
+    extensionName: "",
+    traineeName: "Rizal, Jose Protacio",
+    dob: "1990-06-19",
+    birthPlace: "Calamba, Laguna",
+    age: 34,
+    gender: "Male",
+    civilStatus: "Single",
+    nationality: "Filipino",
+    uli: "",
+    psaNo: "",
+    learnerClassification: "Student",
+    clientType: "TVET Student",
+    qualificationType: "Full Qualification",
+    motherMaidenName: "Realonda",
+    fatherName: "Francisco Mercado",
+    isIP: false,
+    motherTongue: "Tagalog",
+    traineeEmail: "jose.rizal@email.com",
+    contactNumber: "0918-765-4321",
+    homeAddress: "Poblacion",
+    barangay: "Barangay 1",
+    city: "Gingoog City",
+    province: "Misamis Oriental",
+    region: "Region X — Northern Mindanao",
+    zipCode: "9014",
+    education: "College Graduate",
+    schoolLastAttended: "University of Santo Tomas",
+    yearGraduated: "2012",
+    employmentStatus: "Employed (seeking skills upgrade)",
+    courseSlug: "driving-nc-ii",
+    preferredSchedule: "Afternoon (1:00 PM – 5:00 PM)",
+    enrollmentType: "New Enrollee",
+    scholarshipApplication: "No, self-funded enrollment",
+    documentStatus: "complete",
+    heardFrom: "Website",
+    consent: true,
+    status: "confirmed",
+    createdAt: "2024-04-10T10:15:00Z",
+  },
 ];
 
 // ============================================================================
@@ -744,10 +823,12 @@ export const enrollments: Enrollment[] = [
 // ============================================================================
 
 export const schedules = [
-  { id: "s1", courseSlug: "computer-systems-servicing-nc-ii", date: "2024-11-16", startTime: "08:00", endTime: "17:00", trainer: "Oseas G. Jesto, Jr.", room: "Assessment Room 1" },
-  { id: "s2", courseSlug: "computer-systems-servicing-nc-ii", date: "2024-11-17", startTime: "08:00", endTime: "17:00", trainer: "Oseas G. Jesto, Jr.", room: "Assessment Room 1" },
-  { id: "s3", courseSlug: "computer-systems-servicing-nc-ii", date: "2024-11-19", startTime: "08:00", endTime: "17:00", trainer: "Oseas G. Jesto, Jr.", room: "Assessment Room 1" },
-  { id: "s4", courseSlug: "computer-systems-servicing-nc-ii", date: "2024-11-20", startTime: "08:00", endTime: "17:00", trainer: "Oseas G. Jesto, Jr.", room: "Assessment Room 1" },
+  { id: "s1", courseSlug: "computer-systems-servicing-nc-ii", date: formatDate(addDays(today, 1)), startTime: "08:00", endTime: "17:00", trainer: "Oseas G. Jesto, Jr.", room: "Assessment Room 1" },
+  { id: "s2", courseSlug: "computer-systems-servicing-nc-ii", date: formatDate(addDays(today, 2)), startTime: "08:00", endTime: "17:00", trainer: "Oseas G. Jesto, Jr.", room: "Assessment Room 1" },
+  { id: "s3", courseSlug: "computer-systems-servicing-nc-ii", date: formatDate(addDays(today, 4)), startTime: "08:00", endTime: "17:00", trainer: "Oseas G. Jesto, Jr.", room: "Assessment Room 1" },
+  { id: "s4", courseSlug: "computer-systems-servicing-nc-ii", date: formatDate(addDays(today, 5)), startTime: "08:00", endTime: "17:00", trainer: "Oseas G. Jesto, Jr.", room: "Assessment Room 1" },
+  { id: "s5", courseSlug: "bookkeeping-nc-iii", date: formatDate(today), startTime: "09:00", endTime: "12:00", trainer: "Joseph Espiritu", room: "Lab 2" },
+  { id: "s6", courseSlug: "bookkeeping-nc-iii", date: formatDate(addDays(today, 2)), startTime: "13:00", endTime: "17:00", trainer: "Joseph Espiritu", room: "Lab 2" },
 ];
 
 // ============================================================================
@@ -782,7 +863,7 @@ export const announcements = [
 ];
 
 // ============================================================================
-// FAQs
+// FAQS
 // ============================================================================
 
 export const faqs = [
@@ -896,7 +977,7 @@ export interface Post {
   excerpt: string;
   content: string;
   date: string;
-  category: "Announcement" | "Event" | "Achievement";
+  category: "Announcement" | "Event" | "Achievement" | "Community" | "Training" | "Admissions";
   imageUrl: string;
   author: string;
   sourceUrl?: string;
@@ -921,7 +1002,6 @@ export const posts: Post[] = [
     date: "2024-10-28",
     category: "Announcement",
     imageUrl: "/news-scholarship.png",
-
     author: "Admissions Office",
   },
   {
@@ -954,7 +1034,6 @@ export const posts: Post[] = [
     date: "2024-09-15",
     category: "Announcement",
     imageUrl: "https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?auto=format&fit=crop&q=80&w=800",
-
     author: "Driving School Office",
   },
   {
@@ -965,7 +1044,6 @@ export const posts: Post[] = [
     date: "2024-08-20",
     category: "Announcement",
     imageUrl: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&q=80&w=800",
-
     author: "Admissions Office",
   },
   {
@@ -976,7 +1054,6 @@ export const posts: Post[] = [
     date: "2024-06-15",
     category: "Achievement",
     imageUrl: "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=800",
-
     author: "Administration",
   },
   {
@@ -987,263 +1064,6 @@ export const posts: Post[] = [
     date: "2024-05-10",
     category: "Announcement",
     imageUrl: "https://images.unsplash.com/photo-1568667256549-094345857637?auto=format&fit=crop&q=80&w=800",
-
     author: "Admissions Office",
-  },
-  {
-    id: "p10",
-    title: "Bookkeeping NC III — Another Batch of Successful Graduates",
-    excerpt: "LISTA congratulates the latest graduates of the Bookkeeping NC III program, now ready to serve as professional bookkeepers.",
-    content: `Lorenz International Skills Training Academy (LISTA) is proud to celebrate the successful completion of another batch of Bookkeeping NC III trainees. These graduates are now equipped with the knowledge and skills to perform bookkeeping operations, prepare financial reports, and handle payroll — all in compliance with Philippine Accounting Standards.\n\nBookkeeping NC III graduates can pursue careers as:\n• Junior Bookkeeper\n• Accounting Clerk\n• Payroll Assistant\n• Office Administrator\n\nCongratulations to our newest graduates! May your careers flourish as you put your skills to work for the betterment of your families and community.`,
-    date: "2024-04-30",
-    category: "Achievement",
-    imageUrl: "https://images.unsplash.com/photo-1554224154-26032ffc0d07?auto=format&fit=crop&q=80&w=800",
-
-    author: "Academic Office",
-  },
-  {
-    id: "p16",
-    title: "A Glimpse into Sustainable Farming at LISTA Farm",
-    excerpt: "Experience the beauty of agriculture at our training farm in Sitio Civoleg, where sustainable practices meet hands-on learning.",
-    content: `Lorenz International Skills Training Academy (LISTA) is more than just a classroom. Our training farm in Sitio Civoleg, Lunotan, Gingoog City, serves as a living laboratory for our Agricultural Crops Production scholars. Here, students learn the importance of organic soil preparation, water conservation, and integrated pest management.
-
-We believe that by teaching sustainable farming techniques, we are not only providing skills but also ensuring food security for the next generation. Thank you to our hardworking farm staff and students for keeping our 'green heart' beating!`,
-    date: "2023-12-05",
-    category: "Achievement",
-    imageUrl: "https://images.unsplash.com/photo-1592982537447-6f2a6a0c7c18?auto=format&fit=crop&q=80&w=800",
-
-    author: "Farm Management Office"
-  },
-  {
-    id: "p17",
-    title: "Secure Your Future — Enrollment for Batch 2025 is Open",
-    excerpt: "Don't wait! Enrollment for our 2025 technical-vocational programs is now ongoing. Visit us to reserve your slot.",
-    content: `New year, new skills! LISTA is now accepting enrollees for our first quarter batches of 2025. Whether you're looking to start a career in ICT, Agriculture, or Automotive, we have the right program for you.
-
-Qualifications with Open Slots:
-• Computer Systems Servicing NC II
-• Driving NC II (Manual/Automatic)
-• Electrical Installation & Maintenance NC II
-• Agricultural Crops Production NC I/II
-
-Visit our office at FJY Bldg., Gingoog City, or call 09051095284 for immediate assistance. Your journey to professional certification starts here!`,
-    date: "2024-11-15",
-    category: "Announcement",
-    imageUrl: "https://images.unsplash.com/photo-1523240715181-014911d2fd01?auto=format&fit=crop&q=80&w=800",
-
-    author: "Admissions Office"
-  },
-  {
-    id: "p18",
-    title: "Scan & Apply: New QR Code for Scholarship Applications",
-    excerpt: "We've made it easier! Scan our new QR code to access the online scholarship application form for TESDA programs.",
-    content: `In our effort to streamline the application process, LISTA has launched an online registration portal for all TESDA scholarship programs. Simply scan the QR code posted at our office or on our official Facebook page to fill out the application form from your mobile device.
-
-This initiative aims to reduce waiting times and ensure that all interested applicants can easily submit their details for screening. For those who prefer manual registration, our office remains open Monday to Saturday.`,
-    date: "2024-02-01",
-    category: "Announcement",
-    imageUrl: "https://images.unsplash.com/photo-1595079676339-1534802ad6cf?auto=format&fit=crop&q=80&w=800",
-
-    author: "MIS Department"
-  },
-  {
-    id: "p19",
-    title: "Speaker Martin Romualdez Commends LISTA Scholars",
-    excerpt: "The Office of the Speaker of the House recognizes the hard work of LISTA's 800+ scholars during the 2024 Commencement.",
-    content: `We are deeply honored to have received recognition from Speaker Martin Romualdez during our 19th Commencement Exercises. The Speaker, through his representative, commended the resilience and dedication of our 800+ scholars who successfully completed their technical training under the TWSP program.
-
-This high-level support reinforces the importance of technical-vocational education in the national development agenda. We are grateful for the Speaker's commitment to empowering the youth of Gingoog City through education and financial assistance.`,
-    date: "2024-03-24",
-    category: "Achievement",
-    imageUrl: "https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&q=80&w=800",
-    sourceUrl: "https://x.com/SpeakerMartinPH/status/1771033688551419911",
-    author: "Administration"
-  },
-  {
-    id: "p20",
-    title: "Highlights from the HydroLeaf Farm Visit",
-    excerpt: "Our Agriculture scholars recently visited HydroLeaf Farm for a specialized workshop on modern hydroponics and urban farming.",
-    content: `Practical exposure is key to our training philosophy. Our latest batch of Agricultural Crops Production scholars spent a productive day at the HydroLeaf Farm in Gingoog City. The visit focused on modern hydroponic systems, nutrient management, and climate-resilient crop production.
-
-Seeing these innovative technologies in action inspires our students to modernize their own farming practices. Special thanks to the HydroLeaf team for sharing their expertise and hosting our scholars!`,
-    date: "2024-03-18",
-    category: "Event",
-    imageUrl: "https://images.unsplash.com/photo-1558449028-b53a39d100fc?auto=format&fit=crop&q=80&w=800",
-    sourceUrl: "https://www.instagram.com/p/DHPbJQDpNoA/",
-    author: "Department of Agriculture"
-  },
-  {
-    id: "p21",
-    title: "EIM NC II Terminal Report — Documenting Excellence",
-    excerpt: "A comprehensive look at the successes and challenges of the Electrical Installation & Maintenance NC II program.",
-    content: `The Academic Office has released the Terminal Report for the Electrical Installation & Maintenance (EIM) NC II Batch of 2023. The report highlights a 98% passing rate in the National Assessment and successful industry placements for over 80% of the graduates.\n\nThis documentation serves as a blueprint for improving our future training cycles and maintaining our status as a premier EIM training provider in Misamis Oriental. The report is available for review by our partners and stakeholders at the LISTA main office.`,
-    date: "2023-08-15",
-    category: "Achievement",
-    imageUrl: "https://images.unsplash.com/photo-1581092160562-40aa08e78837?auto=format&fit=crop&q=80&w=800",
-    sourceUrl: "https://www.coursehero.com/file/55670269/EIM-NC-II-Terminal-Report-82019docx/",
-    author: "Academic Office"
-  },
-  {
-    id: "p22",
-    title: "Fast-Track Your Career: Enroll in Driving NC II Today!",
-    excerpt: "Get your professional driver's license faster with LISTA's intensive Driving NC II program. New slots open for 2024!",
-    content: `Lorenz ISTA Driving School is officially accepting new students for our Practical Driving Course (PDC). Whether you're a beginner or looking to upgrade your license, our certified instructors are here to guide you through every step.\n\nImmediate Slots Available for:\n• Driving NC II (Manual/Automatic)\n• Comprehensive Road Safety Seminar\n\nCall our hotline at 0935-856-4298 or 09051095284 to reserve your slot. Don't wait — empower yourself with a skill that opens doors!`,
-    date: "2024-04-12",
-    category: "Announcement",
-    imageUrl: "https://images.unsplash.com/photo-1549890762-0a3f8933ad76?auto=format&fit=crop&q=80&w=800",
-
-    author: "Driving School Office"
-  },
-  {
-    id: "p23",
-    title: "LISTA Training Centers — Expanding Our Reach",
-    excerpt: "From our main building to our vocational training farms, LISTA continues to expand to better serve Gingoog City.",
-    content: `We are excited to share that our training facilities are undergoing continuous upgrades to provide the best possible learning environment for our scholars. From our ICT laboratories at the FJY Bldg to our sprawling Agricultural Training Farm, we are investing in the infrastructure that will build the future of our students.\n\nThank you to our partners and the local government for their unwavering support in our expansion projects. Together, we are building a more skilled and competitive Gingoog City!`,
-    date: "2023-09-20",
-    category: "Announcement",
-    imageUrl: "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=800",
-
-    author: "Operations Department"
-  },
-  {
-    id: "p24",
-    title: "Investing in Future Farmers — Agriculture NC I Slots",
-    excerpt: "Join our latest batch of Agricultural Crops Production scholars and start your journey toward sustainable farming.",
-    content: `The demand for skilled agricultural professionals is higher than ever. At LISTA, we are committed to providing the youth of Gingoog City with the technical expertise needed to thrive in the modern agricultural sector.\n\nOur Agriculture NC I/II programs cover everything from soil health to post-harvest management. Join us and become part of a community that values hard work, innovation, and sustainability. Visit our office today for more details on current scholarship slots!`,
-    date: "2023-07-10",
-    category: "Announcement",
-    imageUrl: "https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?auto=format&fit=crop&q=80&w=800",
-
-    author: "Admissions Office"
-  },
-  {
-    id: "p25",
-    title: "Life at LISTA — Explore Our Photo Gallery",
-    excerpt: "See our scholars in action! Explore our collection of photos and videos showcasing life, learning, and success at LISTA.",
-    content: `Want to see what it's like to be a LISTA scholar? Our official Facebook photo gallery is packed with thousands of moments showcasing our training sessions, graduation ceremonies, farm visits, and community events.\n\nFrom the intensity of our driving courses to the joy of our commencement exercises, these photos tell the story of LISTA's mission in action. Click the link below to visit our full media archive and see why thousands of students choose LISTA for their technical education.`,
-    date: "2026-01-01",
-    category: "Announcement",
-    imageUrl: "https://images.unsplash.com/photo-1529333166437-7750a6dd5a70?auto=format&fit=crop&q=80&w=800",
-
-    author: "Public Relations Office"
-  },
-  {
-    id: "p26",
-    title: "LISTA Hosts Training of Trainers on Rabbitry Production",
-    excerpt: "Continuing our mission to provide industry-driven services, LISTA successfully hosted a comprehensive Training of Trainers (TOT) focused on Rabbitry Production as a viable enterprise.",
-    content: `In June 2024, Lorenz International Skills Training Academy (LISTA) hosted and participated in a specialized Training of Trainers (TOT) on Rabbitry Production as an Enterprise. This program was conducted in collaboration with the Department of Agriculture (DA) and the Agricultural Training Institute (ATI).\n\nThe training aimed to equip trainers with the knowledge and skills necessary to promote rabbitry as a sustainable and profitable agricultural business. Topics included rabbit breeding, housing management, nutrition, and market integration.\n\nThis initiative highlights LISTA's commitment to advancing agricultural enterprise and providing industry-driven skills training to its community.`,
-    date: "2024-06-15",
-    category: "Event",
-    imageUrl: "https://images.unsplash.com/photo-1585110396000-c9ffd4e4b308?auto=format&fit=crop&q=80&w=800",
-
-    author: "Farm Management Office",
-  },
-  {
-    id: "p27",
-    title: "2026 Competency Assessment Audit — Maintaining Excellence",
-    excerpt: "LISTA successfully completed its 2026 Competency Assessment Center audit, ensuring the highest standards for technical certification.",
-    content: `We are pleased to announce that the LISTA Competency Assessment Center has successfully passed its 2026 institutional audit. This rigorous process ensures that our assessment facilities, equipment, and certified assessors continue to meet the highest national standards set by TESDA.\n\nAs a leading assessment center in Gingoog City, we remain dedicated to providing fair, accurate, and efficient competency evaluations for all technical-vocational graduates. Thank you to our assessment team for their dedication to quality and integrity.`,
-    date: "2026-05-01",
-    category: "Achievement",
-    imageUrl: "https://images.unsplash.com/photo-1454165833762-0165c069501a?auto=format&fit=crop&q=80&w=800",
-
-    author: "Compliance Office",
-  },
-  {
-    id: "p28",
-    title: "A Decade of Integration: Celebrating 10 Years of Excellence",
-    excerpt: "Reflecting on ten years of providing technical-vocational education and empowering the youth of Gingoog City.",
-    content: `Lorenz International Skills Training Academy celebrates a decade of service to the community. Over the past ten years, we have integrated technical skills with character development, helping thousands of graduates find meaningful employment and start successful businesses.\n\nFrom our humble beginnings as a driving school to our current status as a multi-qualification institution, our mission remains the same: to provide accessible, high-quality training that changes lives. Thank you to all our partners, staff, and students who have been part of this journey!`,
-    date: "2024-01-10",
-    category: "Achievement",
-    imageUrl: "https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&fit=crop&q=80&w=800",
-
-    author: "Administration",
-  },
-  {
-    id: "p29",
-    title: "Empowering Women through Sustainable Agriculture",
-    excerpt: "In celebration of National Women's Month, LISTA facilitated capability training programs empowering women through urban gardening and composting.",
-    content: `In March 2024, in partnership with the City Agriculture Office and the Local Government Unit, LISTA hosted a specialized capability training for women. The program focused on Urban Gardening, Composting, and Seedling Care.\n\nThis initiative aimed to provide local women with sustainable skills that can be applied both at home and as a potential livelihood enterprise. Participants engaged in hands-on activities at our Lunotan Agricultural Training Farm, learning modern techniques to improve food security and environmental sustainability.\n\nLISTA continues to support gender empowerment through accessible technical-vocational education.`,
-    date: "2024-03-22",
-    category: "Community",
-    imageUrl: "https://images.unsplash.com/photo-1590650153855-d9e808231d41?auto=format&fit=crop&q=80&w=800",
-    sourceUrl: "https://ati2.da.gov.ph/ati-10/content/article/vic-thor-palarca/empowering-women-through-capability-training-recap-national-womens",
-    author: "Community Relations",
-  },
-  {
-    id: "p30",
-    title: "Practical Driving Course: Mastering the Road with Confidence",
-    excerpt: "Our latest batch of PDC students has successfully completed their hands-on training, demonstrating excellence in road safety and vehicle handling.",
-    content: `At Lorenz International Skills Training Academy (LISTA), we take pride in our comprehensive Practical Driving Course (PDC). Our recent graduates have shown exceptional dedication to mastering the art of safe driving.\n\nUnder the guidance of our expert instructors, students learned defensive driving techniques, traffic rules, and advanced vehicle maneuvers. This hands-on training ensures that our scholars are not only licensed but are responsible and confident drivers ready for the road.\n\nCongratulations to all our successful PDC students! Your journey to a safer road starts here.`,
-    date: "2024-05-05",
-    category: "Training",
-    imageUrl: "https://images.unsplash.com/photo-1449965072333-66e2bd0d6442?auto=format&fit=crop&q=80&w=800",
-
-    author: "Driving School Dept",
-  },
-  {
-    id: "p31",
-    title: "Bookkeeping NC III Success: Excellence in Financial Management",
-    excerpt: "Celebrating the high passing rate of our Bookkeeping NC III scholars in their recent national competency assessment.",
-    content: `We are thrilled to announce the outstanding performance of our Bookkeeping NC III scholars. After months of intensive training in financial statements, ledgers, and taxation, our students have successfully passed their TESDA National Competency Assessment.\n\nThis achievement reflects the quality of instruction and the hard work of our scholars. As certified bookkeepers, they are now equipped with the technical skills to manage financial records for businesses and government agencies.\n\nLISTA remains committed to producing globally competitive professionals in the field of business and finance.`,
-    date: "2024-04-18",
-    category: "Achievement",
-    imageUrl: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&q=80&w=800",
-
-    author: "Business Dept",
-  },
-  {
-    id: "p32",
-    title: "Celebrating the Legacy of Our Founder: Lorenzo Tamparong",
-    excerpt: "A tribute to the vision and leadership of Lorenzo Tamparong, the heart and soul behind LISTA's mission.",
-    content: `Lorenz International Skills Training Academy (LISTA) is built on the foundation of service and excellence laid by our founder, Lorenzo Tamparong. His vision was to create an institution that provides not just skills, but hope and opportunity to the youth of Gingoog City.\n\nToday, we continue his legacy by maintaining the highest standards of technical-vocational education and community service. Every graduate, every scholarship, and every success story is a testament to the enduring impact of his leadership.\n\nWe celebrate his life and work as we continue to move forward with the same passion and dedication that he instilled in this academy.`,
-    date: "2024-02-14",
-    category: "Announcement",
-    imageUrl: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&q=80&w=800",
-
-    author: "Administration",
-  },
-  {
-    id: "p33",
-    title: "TWSP Scholarship Slots Now Open for 2024",
-    excerpt: "Take the first step towards a brighter future with our fully-funded TESDA scholarship slots for various technical courses.",
-    content: `Lorenz International Skills Training Academy is pleased to announce that application for the Training for Work Scholarship Program (TWSP) is now open! We are offering scholarship slots for Housekeeping NC II, Driving NC II, and Computer Systems Servicing NC II.\n\nQualified applicants will receive free training and a daily allowance. This is a great opportunity for unemployed individuals and career shifters to gain industry-recognized certifications and improve their employability. Visit our office today or scan the QR code in our official Facebook post to apply!`,
-    date: "2024-01-25",
-    category: "Admissions",
-    imageUrl: "https://images.unsplash.com/photo-1546410531-bb4caa6b424d?auto=format&fit=crop&q=80&w=800",
-
-    author: "Scholarship Office",
-  },
-  {
-    id: "p34",
-    title: "Start Your Driving Journey: Enrollment Open at Lorenz ISTA",
-    excerpt: "Join the most trusted driving school in Gingoog City. Enroll now for our Practical Driving Course and become a safe, responsible driver.",
-    content: `Are you ready to get behind the wheel? Lorenz ISTA Driving School is now accepting enrollees for our 15-hour Practical Driving Course (PDC). Our program is designed to equip you with the skills and confidence needed to navigate the roads safely.\n\nWe offer flexible schedules, modern vehicles, and expert instructors who are dedicated to your success. Whether you're a beginner or looking to upgrade your license, we have the right program for you. Enroll today and experience the Lorenz standard of driving excellence!`,
-    date: "2024-06-01",
-    category: "Training",
-    imageUrl: "https://images.unsplash.com/photo-1596484552934-22ff611681a9?auto=format&fit=crop&q=80&w=800",
-
-    author: "Driving School",
-  },
-  {
-    id: "p35",
-    title: "Assessment Center Now Accepting National Certification Applications",
-    excerpt: "Get certified and upgrade your career! Our Competency Assessment Center is open for NC I, II, and III evaluations.",
-    content: `Boost your professional credentials by becoming a TESDA-certified professional. The Lorenz International Competency Assessment Center is currently accepting applications for national certification in various qualifications, including Bookkeeping, CSS, and Driving.\n\nOur facility is equipped with industry-standard tools and assessed by certified evaluators to ensure a fair and rigorous evaluation process. Don't let your skills go unrecognized — apply for assessment today and open doors to better job opportunities!`,
-    date: "2024-05-10",
-    category: "Admissions",
-    imageUrl: "https://images.unsplash.com/photo-1586281380117-5a60ae2050cc?auto=format&fit=crop&q=80&w=800",
-
-    author: "Assessment Center",
-  },
-];
-
-export const analyticsTrend = [
-  { month: "Nov 2024", enrollments: 42 },
-  { month: "Dec 2024", enrollments: 38 },
-  { month: "Jan 2025", enrollments: 51 },
-  { month: "Feb 2025", enrollments: 67 },
-  { month: "Mar 2025", enrollments: 72 },
-  { month: "Apr 2025", enrollments: 89 },
+  }
 ];

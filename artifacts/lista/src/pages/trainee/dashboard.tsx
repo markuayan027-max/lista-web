@@ -1,6 +1,7 @@
+import { useState, useEffect } from "react";
 import { useAuth } from "@/context/auth-context";
 import { Link } from "wouter";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { 
   BookOpen, 
   FileText, 
@@ -11,20 +12,20 @@ import {
   MapPin,
   User as UserIcon,
   HelpCircle,
-  ExternalLink,
-  Trophy,
-  Star,
-  TrendingUp,
-  AlertCircle
+  AlertCircle,
+  Download
 } from "lucide-react";
 import StatCard from "@/components/stat-card";
-import StatusBadge from "@/components/status-badge";
 import AnnouncementCard from "@/components/announcement-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { courses, enrollments, schedules, announcements, certificates } from "@/lib/institutional-data";
+import { courses, schedules, announcements, certificates } from "@/lib/institutional-data";
+import type { Enrollment } from "@/lib/institutional-data";
 import { format } from "date-fns";
 import { calculateProfileCompletion, loadLocalProfile } from "@/lib/profile-utils";
+import PrintModal from "@/components/print-modal";
+import { updateTraineeEnrollmentByEmail, fetchTraineeEnrollmentByEmail } from "@/lib/trainee-enrollment-insforge";
+import { useToast } from "@/hooks/use-toast";
 
 const container = {
   hidden: { opacity: 0 },
@@ -41,22 +42,88 @@ const item = {
 
 export default function TraineeDashboardPage() {
   const { user } = useAuth();
+  const { toast } = useToast();
+  const [printTarget, setPrintTarget] = useState<any>(null);
+  const [isCancelling, setIsCancelling] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   
-  const myEnrollment = enrollments.find(e => e.traineeEmail === user?.email) || enrollments[0];
-  const myCourse = courses.find(c => c.slug === myEnrollment.courseSlug);
-  const mySchedules = schedules.filter(s => s.courseSlug === myCourse?.slug).slice(0, 3);
-  const myCerts = certificates.filter(c => c.userId === user?.id);
-  const recentAnnouncements = announcements
-    .filter(a => a.targetRole === "all" || a.targetRole === "trainee")
-    .slice(0, 3);
-    
+  const [userEnrollment, setUserEnrollment] = useState<Enrollment | null>(null);
+
+  useEffect(() => {
+    if (user?.email) {
+      fetchTraineeEnrollmentByEmail(user.email).then(res => {
+        if (res.success && res.data) {
+          setUserEnrollment(res.data as unknown as Enrollment);
+        }
+      });
+    }
+  }, [user?.email, refreshTrigger]);
+
   // Real profile completion check
   const draft = loadLocalProfile();
-  const completionPercentage = calculateProfileCompletion(draft || myEnrollment);
+  
+  // Use user's real enrollment if it exists, otherwise use draft
+  const myEnrollment = userEnrollment || draft;
+  
+  const handleCancelApplication = async () => {
+    if (!user?.email) return;
+    if (confirm("Are you sure you want to cancel your application? This action cannot be undone.")) {
+      setIsCancelling(true);
+      try {
+        const res = await updateTraineeEnrollmentByEmail(user.email, { status: "cancelled" });
+      if (res.success) {
+        toast({ title: "Application Cancelled", description: "Your application has been successfully cancelled." });
+        // Manually update local state for immediate feedback
+        setUserEnrollment(prev => prev ? { ...prev, status: "cancelled" } : null);
+        setRefreshTrigger(prev => prev + 1);
+      } else {
+        console.error("Cancellation failed:", res.error);
+        toast({ 
+          title: "Cancellation Failed", 
+          description: res.error || "The system could not process the cancellation. Please contact support.", 
+          variant: "destructive" 
+        });
+      }
+      } catch (err) {
+        toast({ title: "Error", description: "An unexpected error occurred.", variant: "destructive" });
+      } finally {
+        setIsCancelling(false);
+      }
+    }
+  };
+  
+  // Use draft for percentage if it's more complete than real enrollment
+  const draftPercentage = calculateProfileCompletion(draft);
+  const enrollmentPercentage = calculateProfileCompletion(userEnrollment);
+  const completionPercentage = Math.max(draftPercentage, enrollmentPercentage);
+  
   const profileIncomplete = completionPercentage < 100;
+  const displayPercentage = completionPercentage;
+
+  const myCourse = myEnrollment?.courseSlug ? courses.find(c => c.slug === myEnrollment.courseSlug) : null;
+  const mySchedules = myCourse ? schedules.filter(s => s.courseSlug === myCourse.slug).slice(0, 3) : [];
+  const recentAnnouncements = announcements
+    .filter(a => a.targetRole === "all" || a.targetRole === "trainee");
+
 
   return (
     <div className="space-y-8">
+      {/* Print modal */}
+      <AnimatePresence>
+        {printTarget && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <PrintModal
+              enrollment={printTarget}
+              onClose={() => setPrintTarget(null)}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <motion.div 
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -68,24 +135,54 @@ export default function TraineeDashboardPage() {
         </div>
       </motion.div>
 
-      {profileIncomplete && (
+      {(!myEnrollment || myEnrollment.status === "ready_to_apply") && (
         <motion.div 
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="bg-amber-50 border border-amber-200 p-6 rounded-[2rem] flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-blue-50 border-l-4 border-l-blue-500 border-y border-r border-blue-100 p-5 flex flex-col md:flex-row items-center justify-between gap-6 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.04)] group"
         >
-          <div className="flex items-center gap-4 text-center md:text-left">
-            <div className="w-12 h-12 bg-amber-100 rounded-2xl flex items-center justify-center text-amber-600 shrink-0">
-              <AlertCircle className="w-6 h-6" />
+          <div className="flex items-center gap-5 text-center md:text-left">
+            <div className="relative shrink-0">
+              <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-blue-600 shadow-sm border border-blue-100">
+                <BookOpen className="w-6 h-6 stroke-[2.5px]" />
+              </div>
             </div>
-            <div>
-              <p className="font-black text-amber-900 uppercase tracking-widest text-xs mb-1">Incomplete Profile ({completionPercentage}%)</p>
-              <p className="text-sm text-amber-700 font-medium leading-relaxed max-w-xl">
-                Some TESDA-required fields are still missing. Complete them now to enable **Instant Admission Slips** for your next enrollment.
+            <div className="space-y-0.5">
+              <h3 className="font-bold text-blue-900 text-sm uppercase tracking-wider">Course Application Required</h3>
+              <p className="text-[13px] text-blue-700 font-medium leading-relaxed max-w-xl">
+                You haven't submitted an official course application yet. Please browse available courses and submit your application.
               </p>
             </div>
           </div>
-          <Link href="/trainee/profile" className="w-full md:w-auto bg-amber-500 hover:bg-amber-600 text-white px-8 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-amber-500/20 text-center">
+          <Link href="/trainee/application" className="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg text-[11px] font-black uppercase tracking-widest transition-all shadow-md active:scale-[0.98] text-center">
+            View Courses
+          </Link>
+        </motion.div>
+      )}
+
+      {profileIncomplete && (
+        <motion.div 
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white border-l-4 border-l-amber-500 border-y border-r border-gray-100 p-5 flex flex-col md:flex-row items-center justify-between gap-6 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.04)] group"
+        >
+          <div className="flex items-center gap-5 text-center md:text-left">
+            <div className="relative shrink-0">
+              <div className="w-12 h-12 bg-amber-50 rounded-full flex items-center justify-center text-amber-600">
+                <AlertCircle className="w-6 h-6 stroke-[2.5px]" />
+              </div>
+              <div className="absolute -top-1 -right-1 bg-amber-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full border-2 border-white">
+                {displayPercentage}%
+              </div>
+            </div>
+            <div className="space-y-0.5">
+              <h3 className="font-bold text-gray-900 text-sm uppercase tracking-wider">{displayPercentage}% Profile Action Required</h3>
+              <p className="text-[13px] text-gray-500 font-medium leading-relaxed max-w-xl">
+                Some TESDA-required fields are still missing. Complete them now to enable <span className="text-gray-900 font-bold">Instant Admission Slips</span> for your next enrollment.
+              </p>
+            </div>
+          </div>
+          <Link href="/trainee/profile" className="w-full md:w-auto bg-primary hover:bg-primary/90 text-white px-6 py-2.5 rounded-lg text-[11px] font-black uppercase tracking-widest transition-all shadow-md active:scale-[0.98]">
             Complete Profile
           </Link>
         </motion.div>
@@ -95,7 +192,7 @@ export default function TraineeDashboardPage() {
         variants={container}
         initial="hidden"
         animate="show"
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
+        className="grid grid-cols-1 md:grid-cols-2 gap-4"
       >
         <motion.div variants={item}>
           <StatCard
@@ -108,45 +205,10 @@ export default function TraineeDashboardPage() {
         <motion.div variants={item}>
           <StatCard
             label="Application Status"
-            value={<StatusBadge status={myEnrollment.status as any} className="mt-1" />}
+            value={myEnrollment?.status === "ready_to_apply" ? "Ready to Apply" : (myEnrollment?.status || "Pending")}
             icon={FileText}
             className="h-full"
           />
-        </motion.div>
-        <motion.div variants={item} className="md:col-span-1">
-          <Card className="h-full border-primary/20 bg-gradient-to-br from-primary-indigo to-primary-electric text-white overflow-hidden relative group">
-            <Trophy className="absolute top-2 right-2 h-16 w-16 text-white/10 -rotate-12 transition-transform group-hover:scale-110" />
-            <CardHeader className="pb-2">
-              <CardTitle className="text-xs font-black uppercase tracking-widest text-white/70">Current Rank</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-black">#12</div>
-              <div className="text-[10px] font-bold text-white/80 uppercase mt-1">Global Standings</div>
-              <div className="mt-4 flex items-center gap-2">
-                <div className="flex-1 h-1.5 bg-white/20 rounded-full overflow-hidden">
-                  <div className="h-full bg-accent-gold w-[85%]" />
-                </div>
-                <span className="text-[10px] font-black tracking-tighter">85%</span>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-        <motion.div variants={item}>
-          <Card className="h-full border-accent-gold/20 bg-white overflow-hidden relative">
-            <Star className="absolute top-2 right-2 h-12 w-12 text-accent-gold/5" />
-            <CardHeader className="pb-2">
-              <CardTitle className="text-xs font-black uppercase tracking-widest text-slate-400">Total Points</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-2">
-                <div className="text-3xl font-black text-slate-900">2,450</div>
-                <div className="bg-accent-gold/10 text-accent-gold text-[10px] font-black px-1.5 py-0.5 rounded-md">RP</div>
-              </div>
-              <p className="text-[10px] font-bold text-emerald-600 mt-1 flex items-center gap-1">
-                <TrendingUp className="h-3 w-3" /> +150 this week
-              </p>
-            </CardContent>
-          </Card>
         </motion.div>
       </motion.div>
 
@@ -155,7 +217,7 @@ export default function TraineeDashboardPage() {
           variants={container}
           initial="hidden"
           animate="show"
-          className="lg:col-span-2 space-y-8"
+          className="lg:col-span-2 flex flex-col gap-8"
         >
           {/* Application Status Card */}
           <motion.div variants={item}>
@@ -164,46 +226,113 @@ export default function TraineeDashboardPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <CardTitle className="text-lg">Application Timeline</CardTitle>
-                    <CardDescription>Ref: {myEnrollment.refNo}</CardDescription>
+                    <CardDescription>
+                      {myEnrollment ? `Ref: ${myEnrollment.refNo}` : "No active application"}
+                    </CardDescription>
                   </div>
-                  <Button variant="outline" size="sm" asChild>
-                    <Link href="/trainee/application">View Details</Link>
-                  </Button>
+                  {myEnrollment && !['cancelled', 'completed', 'rejected'].includes(myEnrollment?.status?.toLowerCase() || '') ? (
+                    <div className="flex gap-2">
+                      {!['enrolled', 'confirmed'].includes(myEnrollment?.status?.toLowerCase() || '') && (
+                        <Button 
+                          variant="destructive" 
+                          size="sm" 
+                          onClick={handleCancelApplication} 
+                          disabled={isCancelling}
+                          className="hidden sm:flex bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 border-none"
+                        >
+                          {isCancelling ? "Cancelling..." : "Cancel Application"}
+                        </Button>
+                      )}
+                      <Button variant="outline" size="sm" onClick={() => setPrintTarget(myEnrollment)} className="hidden sm:flex">
+                        <Download className="w-4 h-4 mr-2" /> Download Form
+                      </Button>
+                      <Button variant="outline" size="sm" asChild>
+                        <Link href="/trainee/application">View Details</Link>
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button size="sm" asChild>
+                      <Link href="/trainee/application">Apply Now</Link>
+                    </Button>
+                  )}
                 </div>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center justify-between relative">
                   <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-muted rounded-full" />
-                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1/2 h-1 bg-primary rounded-full" />
                   
-                  {['Submitted', 'Review', 'Interview', 'Enrolled'].map((step, i) => (
-                    <div key={step} className="relative flex flex-col items-center gap-2 bg-card px-2 z-10">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${
-                        i < 2 ? 'bg-primary border-primary text-primary-foreground' : 
-                        i === 2 ? 'bg-background border-primary text-primary' : 
-                        'bg-background border-muted text-muted-foreground'
-                      }`}>
-                        {i + 1}
-                      </div>
-                      <span className="text-xs font-semibold">{step}</span>
-                    </div>
-                  ))}
+                  {(() => {
+                    const statusLower = myEnrollment?.status?.toLowerCase() || '';
+                    
+                    if (statusLower === 'ready_to_apply') {
+                      return (
+                        <div className="w-full flex flex-col items-center gap-4 py-4 bg-blue-50/50 rounded-xl border border-blue-100">
+                          <div className="text-blue-700 font-bold text-sm">Profile Complete! You are ready to apply.</div>
+                          <Button size="sm" asChild className="bg-blue-600 hover:bg-blue-700">
+                            <Link href="/trainee/application">Select a Course Now</Link>
+                          </Button>
+                        </div>
+                      );
+                    }
+                    if (statusLower === 'completed') {
+                      return <div className="w-full text-center text-emerald-600 font-semibold py-2 bg-emerald-50 rounded-lg">Course Completed</div>;
+                    }
+                    if (statusLower === 'cancelled') {
+                      return <div className="w-full text-center text-red-600 font-semibold py-2 bg-red-50 rounded-lg">Application Cancelled</div>;
+                    }
+                    if (statusLower === 'rejected') {
+                      return <div className="w-full text-center text-red-600 font-semibold py-2 bg-red-50 rounded-lg">Application Rejected</div>;
+                    }
+
+                    const steps = ['Submitted', 'Review', 'Interview', 'Enrolled'];
+                    
+                    let currentStepIndex = 0; // Default to 0 for no active app
+                    if (statusLower === 'pending' || statusLower === 'submitted') currentStepIndex = 1;
+                    else if (statusLower === 'review') currentStepIndex = 2;
+                    else if (statusLower === 'interview') currentStepIndex = 3;
+                    else if (statusLower === 'approved' || statusLower === 'enrolled') currentStepIndex = 4;
+                    
+                    const progressWidth = currentStepIndex === 0 ? "0%" : `${((currentStepIndex - 1) / (steps.length - 1)) * 100}%`;
+
+                    return (
+                      <>
+                        <div className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-primary rounded-full transition-all duration-500" style={{ width: progressWidth }} />
+                        {steps.map((step, i) => {
+                          const isCompleted = i < currentStepIndex;
+                          const isCurrent = i === currentStepIndex - 1 || (currentStepIndex === 0 && i === 0);
+                          
+                          return (
+                            <div key={step} className="relative flex flex-col items-center gap-2 bg-card px-2 z-10">
+                              <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 transition-colors ${
+                                isCompleted ? 'bg-primary border-primary text-primary-foreground' : 
+                                isCurrent && currentStepIndex > 0 ? 'bg-background border-primary text-primary' : 
+                                'bg-background border-muted text-muted-foreground'
+                              }`}>
+                                {i + 1}
+                              </div>
+                              <span className="text-xs font-semibold">{step}</span>
+                            </div>
+                          );
+                        })}
+                      </>
+                    );
+                  })()}
                 </div>
               </CardContent>
             </Card>
           </motion.div>
 
           {/* Upcoming Sessions */}
-          <motion.div variants={item}>
-            <Card className="border-card-border shadow-sm">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <motion.div variants={item} className="flex-1 flex flex-col">
+            <Card className="border-card-border shadow-sm flex-1 flex flex-col">
+              <CardHeader className="flex flex-row items-center justify-between pb-2 shrink-0">
                 <CardTitle className="text-lg">Upcoming Sessions</CardTitle>
                 <Button variant="ghost" size="sm" asChild>
                   <Link href="/trainee/schedule">Full Schedule <ChevronRight className="ml-1 h-4 w-4" /></Link>
                 </Button>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
+              <CardContent className="flex-1 flex flex-col">
+                <div className="space-y-4 flex-1 flex flex-col justify-center">
                   {mySchedules.length > 0 ? mySchedules.map((schedule, i) => (
                     <div key={i} className="flex gap-4 p-4 rounded-xl bg-muted/30 border border-card-border">
                       <div className="flex flex-col items-center justify-center w-16 h-16 rounded-lg bg-primary/5 text-primary shrink-0">
@@ -262,7 +391,7 @@ export default function TraineeDashboardPage() {
                 <Link href="/trainee/announcements">View All</Link>
               </Button>
             </div>
-            <div className="space-y-4">
+            <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 no-scrollbar">
               {recentAnnouncements.map(announcement => (
                 <AnnouncementCard key={announcement.id} announcement={announcement} />
               ))}

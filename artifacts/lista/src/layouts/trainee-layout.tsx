@@ -1,12 +1,21 @@
 import { useAuth } from "@/context/auth-context";
 import { useLocation, Redirect } from "wouter";
 import SidebarTrainee from "@/components/sidebar-trainee";
+import { ModernSidebar } from "@/components/modern-sidebar";
 import BottomNavTrainee from "@/components/bottom-nav-trainee";
 import AvatarInitials from "@/components/avatar-initials";
-import { LogOut, Bell, Menu } from "lucide-react";
+import { LogOut, Bell, Menu, Home, ClipboardList, Calendar, Award, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+
+const TRAINEE_MENU = [
+  { href: "/trainee", label: "Dashboard", icon: Home },
+  { href: "/trainee/application", label: "Courses", icon: BookOpen },
+  { href: "/trainee/tracking", label: "My Applications", icon: ClipboardList },
+  { href: "/trainee/schedule", label: "Schedule", icon: Calendar },
+  { href: "/trainee/certificate", label: "Certificates", icon: Award },
+];
 
 export default function TraineeLayout({ children }: { children: React.ReactNode }) {
   const { user, logout, isRegistered } = useAuth();
@@ -25,7 +34,7 @@ export default function TraineeLayout({ children }: { children: React.ReactNode 
     <div className="flex h-screen bg-muted/30 overflow-hidden">
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex h-full shrink-0">
-        <SidebarTrainee />
+        <ModernSidebar menuItems={TRAINEE_MENU} roleName="Trainee" logoHref="/trainee" />
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
@@ -48,9 +57,14 @@ export default function TraineeLayout({ children }: { children: React.ReactNode 
           </div>
 
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" className="text-muted-foreground relative">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="text-muted-foreground relative hover:bg-indigo-50 hover:text-indigo-600 rounded-full transition-all"
+              onClick={() => setLocation("/trainee/announcements")}
+            >
               <Bell className="h-5 w-5" />
-              <span className="absolute top-2 right-2 h-2 w-2 bg-primary rounded-full border-2 border-white" />
+              <span className="absolute top-2.5 right-2.5 h-2 w-2 bg-indigo-600 rounded-full border-2 border-white" />
             </Button>
             
             <DropdownMenu>

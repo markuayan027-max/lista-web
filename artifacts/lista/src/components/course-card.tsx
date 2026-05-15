@@ -2,8 +2,9 @@ import { Link } from "wouter";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { withBase } from "@/lib/with-base";
-import { BookOpen, ArrowRight, CheckCircle2 } from "lucide-react";
+import { BookOpen, ArrowRight, CheckCircle2, Lock } from "lucide-react";
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 
 interface Course {
   slug: string;
@@ -13,21 +14,48 @@ interface Course {
   shortDescription?: string;
   coverImageUrl?: string;
   twspScholarship?: string;
+  isFrozen?: boolean;
 }
 
 interface CourseCardProps {
   course: Course;
-  rankingPoints?: number;
+  hideLockOverlay?: boolean;
 }
 
-export default function CourseCard({ course }: CourseCardProps) {
+export default function CourseCard({ course, hideLockOverlay = false }: CourseCardProps) {
   const [imageError, setImageError] = useState(false);
+
+  const canNavigate = !course.isFrozen || hideLockOverlay;
 
   return (
     <div className="h-full">
-      <Link href={`/courses/${course.slug}`} className="block h-full">
-        <div className="cursor-pointer h-full">
-          <Card className="group overflow-hidden bg-white border border-slate-200 hover:border-slate-400 shadow-sm hover:shadow-md transition-all h-full flex flex-col rounded-xl">
+      <Link href={canNavigate ? `/courses/${course.slug}` : "#"} className={cn("block h-full", !canNavigate && "cursor-not-allowed")}>
+        <div className="h-full">
+          <Card className={cn(
+            "group overflow-hidden bg-white border border-slate-200 transition-all h-full flex flex-col rounded-xl relative",
+            (course.isFrozen && !hideLockOverlay)
+              ? "opacity-80 grayscale-[0.5] border-slate-100 shadow-none" 
+              : "hover:border-slate-400 shadow-sm hover:shadow-md cursor-pointer"
+          )}>
+            
+            {/* Frozen Overlay */}
+            {course.isFrozen && !hideLockOverlay && (
+              <div className="absolute inset-0 bg-white/40 backdrop-blur-[2px] z-20 flex flex-col items-center justify-center p-6 text-center">
+                <div className="w-12 h-12 bg-slate-900 text-white rounded-2xl flex items-center justify-center mb-3 shadow-lg">
+                  <Lock className="w-5 h-5" />
+                </div>
+                <p className="text-slate-900 font-black uppercase tracking-widest text-[10px]">Slots Filled</p>
+                <p className="text-slate-500 text-[10px] font-bold mt-1 px-4 leading-tight">This course is currently frozen. Check back later.</p>
+              </div>
+            )}
+
+            {/* Minimalist Unavailable Indicator (for public view) */}
+            {course.isFrozen && hideLockOverlay && (
+              <div className="absolute top-3 left-3 z-30 flex items-center gap-1.5 px-2.5 py-1 bg-white/90 backdrop-blur-sm border border-red-100 rounded-full shadow-sm">
+                <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                <span className="text-[10px] font-black text-red-600 uppercase tracking-widest">Unavailable</span>
+              </div>
+            )}
             
             <div className="relative w-full aspect-[16/10] bg-slate-100 flex items-center justify-center border-b border-slate-200 overflow-hidden shrink-0">
               {course.coverImageUrl && !imageError ? (
@@ -35,6 +63,7 @@ export default function CourseCard({ course }: CourseCardProps) {
                   src={withBase(course.coverImageUrl)}
                   alt={course.name}
                   className="h-full w-full object-cover"
+                  crossOrigin="anonymous"
                   onError={() => setImageError(true)}
                 />
               ) : (
@@ -73,9 +102,16 @@ export default function CourseCard({ course }: CourseCardProps) {
                   </>
                 )}
               </div>
-              <span className="text-sm font-semibold text-slate-900 flex items-center gap-1 group-hover:gap-2 transition-all">
-                View Details <ArrowRight className="w-4 h-4" />
-              </span>
+              {!course.isFrozen && (
+                <span className="text-sm font-semibold text-slate-900 flex items-center gap-1 group-hover:gap-2 transition-all">
+                  View Details <ArrowRight className="w-4 h-4" />
+                </span>
+              )}
+              {course.isFrozen && (
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                  Waitlisted <Lock className="w-3 h-3" />
+                </span>
+              )}
             </CardFooter>
           </Card>
         </div>

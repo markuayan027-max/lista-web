@@ -2,15 +2,27 @@
   "name": "workspace",
   "version": "0.0.0",
   "license": "MIT",
+  "packageManager": "pnpm@9.15.4",
   "scripts": {
+    "cleanup": "powershell -ExecutionPolicy Bypass -File ./scripts/cleanup-ports.ps1",
+    "vercel": "vercel",
+    "vercel:pull": "vercel pull",
+    "vercel:preview": "vercel deploy",
+    "vercel:production": "vercel deploy --prod",
     "build": "pnpm run typecheck && pnpm -r --if-present run build",
-    "dev": "pnpm -r --filter @workspace/api-server --filter @workspace/lista --parallel run dev",
+    "dev": "pnpm run cleanup && pnpm -r --filter @workspace/api-server --filter @workspace/lista --parallel run dev",
     "typecheck:libs": "tsc --build",
-    "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck"
+    "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck",
+    "serve-frontend-static": "pnpm run build --filter @workspace/lista && http-server ./artifacts/lista/dist/public -p 5173"
   },
   "private": true,
   "devDependencies": {
+    "@axe-core/playwright": "^4.11.3",
+    "@faker-js/faker": "^10.4.0",
+    "@playwright/test": "^1.60.0",
+    "http-server": "^14.1.1",
+    "prettier": "^3.8.1",
     "typescript": "~5.9.2",
-    "prettier": "^3.8.1"
+    "vercel": "^53.4.0"
   }
 }
