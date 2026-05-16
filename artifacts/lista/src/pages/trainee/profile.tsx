@@ -949,7 +949,7 @@ export default function TraineeProfilePage() {
               <div className="mb-4">
                 <h3 className="text-xs font-semibold text-zinc-900 flex items-center justify-between gap-1.5 mb-1">
                   <span className="flex items-center gap-1.5"><Clock className="h-3.5 w-3.5 text-zinc-500" /> Application Status</span>
-                  {existing && !["enrolled", "confirmed", "completed", "cancelled", "rejected"].includes(existing.status.toLowerCase()) && (
+                  {existing && !["ready_to_apply", "enrolled", "confirmed", "completed", "cancelled", "rejected"].includes(existing.status.toLowerCase()) && (
                     <Button 
                       variant="ghost" 
                       size="sm" 

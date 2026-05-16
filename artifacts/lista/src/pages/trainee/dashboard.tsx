@@ -227,10 +227,10 @@ export default function TraineeDashboardPage() {
                   <div>
                     <CardTitle className="text-lg">Application Timeline</CardTitle>
                     <CardDescription>
-                      {myEnrollment ? `Ref: ${myEnrollment.refNo}` : "No active application"}
+                      {myEnrollment && myEnrollment.status?.toLowerCase() !== 'ready_to_apply' ? `Ref: ${myEnrollment.refNo}` : "No active application"}
                     </CardDescription>
                   </div>
-                  {myEnrollment && !['cancelled', 'completed', 'rejected'].includes(myEnrollment?.status?.toLowerCase() || '') ? (
+                  {myEnrollment && !['ready_to_apply', 'cancelled', 'completed', 'rejected'].includes(myEnrollment?.status?.toLowerCase() || '') ? (
                     <div className="flex gap-2">
                       {!['enrolled', 'confirmed'].includes(myEnrollment?.status?.toLowerCase() || '') && (
                         <Button 
