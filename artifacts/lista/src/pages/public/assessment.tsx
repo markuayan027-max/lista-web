@@ -151,18 +151,11 @@ export default function AssessmentPage() {
               exit={{ opacity: 0, y: -20 }}
               className="bg-white rounded-3xl p-10 md:p-16 text-center border border-card-border shadow-sm"
             >
-              <style>{`
-                @keyframes float3d {
-                  0%, 100% { transform: translateY(0px) rotate(-2deg); }
-                  50% { transform: translateY(-12px) rotate(2deg); }
-                }
-                .icon-float { animation: float3d 3.5s ease-in-out infinite; }
-              `}</style>
               <div className="mx-auto mb-10 w-full max-w-lg aspect-[3/4] flex items-center justify-center overflow-hidden rounded-2xl">
                 <img
                   src="/assessment promotional image.png"
                   alt="Find Your Path"
-                  className="icon-float w-full h-full object-contain drop-shadow-2xl"
+                  className="w-full h-full object-contain drop-shadow-2xl"
                 />
               </div>
               <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-6">Find Your Path</h1>
