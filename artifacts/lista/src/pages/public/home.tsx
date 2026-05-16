@@ -124,11 +124,12 @@ export default function HomePage() {
       ncLevel: "Paid Course",
       description: "Master essential computer skills for modern teaching and administrative work. Perfect for fulfilling professional development requirements. Estimated Fee: ₱2,500.",
       shortDescription: "Master essential computer skills for modern teaching and administrative work. Estimated Fee: ₱2,500.",
-      coverImageUrl: "/hero.png",
+      coverImageUrl: "https://images.unsplash.com/photo-1531297484001-80022131f5a1?auto=format&fit=crop&q=80&w=800",
       twspScholarship: "false",
     };
 
-    return [paidCourse, ...courses];
+    // Merge paid course at the front, then all others; cap at 8 for homepage
+    return [paidCourse, ...courses].slice(0, 8);
   }, [apiCourses]);
 
   const testimonials = useMemo(() => {
@@ -486,6 +487,7 @@ export default function HomePage() {
                   <CourseCard course={course} hideLockOverlay={true} />
                 </motion.div>
               ))}
+
             </motion.div>
           </div>
         </div>
