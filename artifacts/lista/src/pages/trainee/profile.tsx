@@ -984,10 +984,10 @@ export default function TraineeProfilePage() {
               <div className="absolute left-[13px] top-2 bottom-3 w-px bg-zinc-100" />
               
               {[
-                { id: "submitted", label: "Submitted", sub: "Application received", icon: CheckCircle, active: true },
-                { id: "review", label: "In Review", sub: "Verification in progress", icon: Search, active: existing?.status === "review" || existing?.status === "interview" || existing?.status === "enrolled" },
-                { id: "interview", label: "Interview", sub: "Technical assessment", icon: UserCheck, active: existing?.status === "interview" || existing?.status === "enrolled" },
-                { id: "enrolled", label: "Enrolled", sub: "Admission complete", icon: EnrolledIcon, active: existing?.status === "enrolled" }
+                { id: "submitted", label: "Submitted", sub: "Application received", icon: CheckCircle, active: !!existing && !["ready_to_apply"].includes(existing?.status?.toLowerCase()) },
+                { id: "review", label: "In Review", sub: "Verification in progress", icon: Search, active: !!existing && ["review", "interview", "enrolled", "completed", "confirmed"].includes(existing?.status?.toLowerCase()) },
+                { id: "interview", label: "Interview", sub: "Technical assessment", icon: UserCheck, active: !!existing && ["interview", "enrolled", "completed", "confirmed"].includes(existing?.status?.toLowerCase()) },
+                { id: "enrolled", label: "Enrolled", sub: "Admission complete", icon: EnrolledIcon, active: !!existing && ["enrolled", "completed", "confirmed"].includes(existing?.status?.toLowerCase()) }
               ].map((step) => (
                 <div key={step.id} className="relative flex gap-3 pb-4 last:pb-0">
                   <div className={cn(
