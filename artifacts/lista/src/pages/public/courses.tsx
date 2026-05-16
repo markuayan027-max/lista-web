@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Search, Loader2, CheckCircle, ArrowRight, Award, Users, Lock } from "lucide-react";
+import { Search, Loader2, CheckCircle, ArrowRight, Award, Users, Lock, Image as ImageIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Link } from "wouter";
 import PrimaryButton from "@/components/primary-button";
@@ -36,6 +36,8 @@ interface CourseItem {
 function CourseListing({ course }: { course: CourseItem }) {
   const pricing = coursePricing[course.slug] ?? {};
   const isScholarship = course.twspScholarship === "true";
+  const [imgError, setImgError] = useState(false);
+  const [imgLoaded, setImgLoaded] = useState(false);
 
   return (
     <Link href={`/courses/${course.slug}`}>
@@ -55,13 +57,27 @@ function CourseListing({ course }: { course: CourseItem }) {
 
         {/* Thumbnail */}
         <div className="aspect-[16/10] bg-slate-100 overflow-hidden relative">
-          {course.coverImageUrl ? (
-            <img
-              src={withBase(course.coverImageUrl)}
-              alt={course.name}
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-              crossOrigin="anonymous"
-            />
+          {course.coverImageUrl && !imgError ? (
+            <>
+              {!imgLoaded && (
+                <div className="absolute inset-0 flex items-center justify-center bg-slate-100 animate-pulse">
+                  <ImageIcon className="w-8 h-8 text-slate-300" />
+                </div>
+              )}
+              <img
+                src={withBase(course.coverImageUrl)}
+                alt={course.name}
+                loading="lazy"
+                decoding="async"
+                onLoad={() => setImgLoaded(true)}
+                onError={() => setImgError(true)}
+                className={cn(
+                  "w-full h-full object-cover transition-all duration-500 group-hover:scale-105",
+                  imgLoaded ? "opacity-100" : "opacity-0"
+                )}
+                crossOrigin="anonymous"
+              />
+            </>
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200">
               <Award className="w-10 h-10 text-slate-300" strokeWidth={1} />

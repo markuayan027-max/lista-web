@@ -224,13 +224,15 @@ export default function HomePage() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
             >
-              <div className="relative aspect-[4/3] lg:aspect-[16/10] rounded-2xl overflow-hidden shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)]">
+              <div className="relative aspect-[4/3] lg:aspect-[16/10] rounded-2xl overflow-hidden shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)] bg-slate-100">
                 <img 
                   src="/hero.png"
                   alt="LISTA Students and Facilities" 
                   className="w-full h-full object-cover"
+                  fetchPriority="high"
+                  decoding="async"
                 />
-                <div className="absolute inset-0 bg-blue-900/10 mix-blend-multiply" />
+                <div className="absolute inset-0 bg-blue-900/10 mix-blend-multiply pointer-events-none" />
                 
                 {/* Floating Badge */}
                 <div className="absolute top-6 right-6 md:top-8 md:right-8 bg-white/90 backdrop-blur-md px-4 py-3 rounded-xl shadow-sm border border-white/60 flex items-center gap-3 transition-transform hover:-translate-y-1">

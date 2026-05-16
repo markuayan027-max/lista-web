@@ -276,7 +276,7 @@ export const courses: Course[] = [
     durationDays: 38,
     shortDescription: "Foundational training in crop cultivation and farm maintenance.",
     longDescription: "Covers the basic skills required to support nursery work, horticultural and agronomic crop production, and irrigation maintenance.",
-    galleryImages: ["https://images.unsplash.com/photo-1595841696677-54897f28bc12?auto=format&fit=crop&q=80&w=800"],
+    galleryImages: ["https://images.unsplash.com/photo-1592982537447-6f2a6a0c5c10?auto=format&fit=crop&q=80&w=800"],
     isAvailable: true,
   },
   {
@@ -320,7 +320,7 @@ export const courses: Course[] = [
     durationHours: 300,
     shortDescription: "Management of ruminant animals like cattle and goats.",
     longDescription: "Focuses on the care, breeding, and production of ruminant livestock.",
-    galleryImages: ["https://images.unsplash.com/photo-1543161041-86e582885971?auto=format&fit=crop&q=80&w=800"],
+    galleryImages: ["https://images.unsplash.com/photo-1527153857715-3908f2bae5e8?auto=format&fit=crop&q=80&w=800"],
   },
   {
     id: "c5",
@@ -348,7 +348,7 @@ export const courses: Course[] = [
     durationHours: 150,
     shortDescription: "Professional nail care and spa services.",
     longDescription: "Develops specialized skills in manicure, pedicure, and hand/foot spa treatments.",
-    galleryImages: ["https://images.unsplash.com/photo-1604654894610-df490c81726a?auto=format&fit=crop&q=80&w=800"],
+    galleryImages: ["https://images.unsplash.com/photo-1519014816548-bf5fe059e98b?auto=format&fit=crop&q=80&w=800"],
   },
   {
     id: "c7",
