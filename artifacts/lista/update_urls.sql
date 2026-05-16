@@ -1,0 +1,5 @@
+UPDATE public.courses SET cover_image_url = 'https://2r6c3q25.ap-southeast.insforge.app/storage/v1/object/public/public/graduate-bookkeeper.png' WHERE slug = 'bookkeeping-nc-iii';
+UPDATE public.courses SET cover_image_url = 'https://2r6c3q25.ap-southeast.insforge.app/storage/v1/object/public/public/graduate-electrician.png' WHERE slug = 'electrical-installation-maintenance-nc-ii';
+UPDATE public.courses SET cover_image_url = 'https://2r6c3q25.ap-southeast.insforge.app/storage/v1/object/public/public/graduate-it-support.png' WHERE slug = 'computer-systems-servicing-nc-ii';
+UPDATE public.courses SET cover_image_url = 'https://2r6c3q25.ap-southeast.insforge.app/storage/v1/object/public/public/course-ui-ux.png' WHERE slug = 'visual-graphic-design-nc-iii';
+UPDATE public.announcements SET body = 'Scholarship slots for Bookkeeping NC III, Driving NC II & Agricultural Crops Production NC I under Training for Work Scholarship Program (TWSP) with training benefits. Enroll now - limited slots only. First come, First served.', target = 'all' WHERE title = 'TWSP Scholarship Slots Available!';
