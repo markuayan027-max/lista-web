@@ -38,6 +38,8 @@ export const lista = {
     from: (table: string) => client.database.from(table),
   },
   storage: client.storage,
+  /** Manually set access token for localStorage persistence */
+  setAccessToken: (token: string | null) => client.setAccessToken(token),
 };
 
 // Named legacy export so existing imports that destructure { insforge } still compile

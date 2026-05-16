@@ -29,6 +29,8 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const baseUrl = import.meta.env.VITE_INSFORGE_URL || "https://2r6c3q25.ap-southeast.insforge.app";
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -70,6 +72,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const initAuth = async () => {
       try {
+        const storedStr = localStorage.getItem("lista_session");
+        if (storedStr) {
+          const session = JSON.parse(storedStr);
+          lista.setAccessToken(session.accessToken);
+          
+          const mapped = mapInsForgeUser(session.user);
+          setUser(mapped);
+          if (mapped) {
+            setIsRegistered(localStorage.getItem(`reg_${mapped.id}`) === "true");
+          }
+          
+          setIsInitializing(false); // Instant load UI!
+
+          // Verify session in background
+          const res = await fetch(`${baseUrl}/api/auth/sessions/current`, {
+            headers: { 'Authorization': `Bearer ${session.accessToken}` }
+          });
+
+          if (!res.ok) {
+            // Try refresh
+            const refreshRes = await fetch(`${baseUrl}/api/auth/refresh?client_type=mobile`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ refresh_token: session.refreshToken })
+            });
+
+            if (refreshRes.ok) {
+              const refreshData = await refreshRes.json();
+              localStorage.setItem("lista_session", JSON.stringify(refreshData));
+              lista.setAccessToken(refreshData.accessToken);
+              const refreshedMapped = mapInsForgeUser(refreshData.user);
+              setUser(refreshedMapped);
+              if (refreshedMapped) {
+                setIsRegistered(localStorage.getItem(`reg_${refreshedMapped.id}`) === "true");
+              }
+            } else {
+              throw new Error("Session expired");
+            }
+          }
+          return;
+        }
+
+        // Fallback to SDK cookies if no local storage
         const { data, error } = await lista.auth.getCurrentUser();
         if (!error && data?.user) {
           const mapped = mapInsForgeUser(data.user);
@@ -82,6 +127,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       } catch (err) {
         console.error("[AuthProvider] Session restore failed:", err);
+        localStorage.removeItem("lista_session");
+        lista.setAccessToken(null);
+        setUser(null);
       } finally {
         setIsInitializing(false);
       }
@@ -92,13 +140,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // ── Auth methods ─────────────────────────────────────────────────────────
 
   const login = async (email: string, password: string) => {
-    const { data, error } = await lista.auth.signInWithPassword({
-      email,
-      password,
+    const res = await fetch(`${baseUrl}/api/auth/sessions?client_type=mobile`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
     });
-    if (error) throw error;
-    // SDK returns CreateSessionResponse; user lives at data.user
-    const rawUser = (data as any)?.user ?? null;
+    
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.message || "Invalid login credentials");
+    }
+    
+    const data = await res.json();
+    localStorage.setItem("lista_session", JSON.stringify(data));
+    lista.setAccessToken(data.accessToken);
+
+    const rawUser = data?.user ?? null;
     if (rawUser) {
       const mapped = mapInsForgeUser(rawUser);
       setUser(mapped);
@@ -119,9 +176,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const verifyEmail = async (email: string, otp: string) => {
-    const { data, error } = await lista.auth.verifyEmail({ email, otp });
-    if (error) throw error;
-    const rawUser = (data as any)?.user ?? null;
+    const res = await fetch(`${baseUrl}/api/auth/email/verify?client_type=mobile`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, otp })
+    });
+
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.message || "Invalid verification code");
+    }
+
+    const data = await res.json();
+    localStorage.setItem("lista_session", JSON.stringify(data));
+    lista.setAccessToken(data.accessToken);
+
+    const rawUser = data?.user ?? null;
     if (rawUser) {
       const mapped = mapInsForgeUser(rawUser);
       setUser(mapped);
@@ -146,6 +216,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     await lista.auth.signOut();
+    localStorage.removeItem("lista_session");
+    lista.setAccessToken(null);
     setUser(null);
     setIsRegistered(false);
   };
