@@ -4,8 +4,10 @@ import {
   Home, ClipboardList, Calendar, Award, Bell, HelpCircle,
   Search, Settings, ChevronsUpDown, Sidebar as SidebarIcon
 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/context/auth-context";
 import AvatarInitials from "@/components/avatar-initials";
+import { loadProfilePic } from "@/lib/profile-utils";
 
 const MAIN_MENU = [
   { href: "/trainee", label: "Dashboard", icon: Home },
@@ -22,6 +24,15 @@ const PREFERENCES_MENU = [
 export default function SidebarTrainee() {
   const [location] = useLocation();
   const { user } = useAuth();
+  const [profilePic, setProfilePic] = useState<string | null>(null);
+
+  useEffect(() => {
+    setProfilePic(loadProfilePic());
+    // Re-sync when the page gains focus (e.g. user uploaded on another tab)
+    const onFocus = () => setProfilePic(loadProfilePic());
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, []);
 
   return (
     <div className="flex flex-col h-full w-[260px] bg-[#F7F7F9] border-r border-zinc-200/60 font-sans">
@@ -115,7 +126,7 @@ export default function SidebarTrainee() {
       {/* User Profile Footer */}
       <div className="p-3 border-t border-zinc-200/60 shrink-0 bg-[#F7F7F9]">
         <button className="w-full flex items-center gap-3 p-2 hover:bg-zinc-200/50 rounded-lg transition-colors text-left group">
-          <AvatarInitials name={user?.name || "Trainee"} size="sm" className="shadow-sm border border-zinc-200/50" />
+          <AvatarInitials name={user?.name || "Trainee"} src={profilePic} size="sm" className="shadow-sm border border-zinc-200/50" />
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-zinc-900 truncate">{user?.name || "Trainee User"}</p>
             <p className="text-[11px] text-zinc-500 truncate">Free account</p>

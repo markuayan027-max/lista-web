@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { Target, ArrowRight, RefreshCw } from "lucide-react";
+import { ArrowRight, RefreshCw } from "lucide-react";
 import PrimaryButton from "@/components/primary-button";
 import CourseCard from "@/components/course-card";
 import { Progress } from "@/components/ui/progress";
@@ -151,8 +151,19 @@ export default function AssessmentPage() {
               exit={{ opacity: 0, y: -20 }}
               className="bg-white rounded-3xl p-10 md:p-16 text-center border border-card-border shadow-sm"
             >
-              <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-8 text-primary">
-                <Target className="w-10 h-10" />
+              <style>{`
+                @keyframes float3d {
+                  0%, 100% { transform: translateY(0px) rotate(-2deg); }
+                  50% { transform: translateY(-12px) rotate(2deg); }
+                }
+                .icon-float { animation: float3d 3.5s ease-in-out infinite; }
+              `}</style>
+              <div className="mx-auto mb-8 w-32 h-32 flex items-center justify-center">
+                <img
+                  src="/assessment-icon.png"
+                  alt="Find Your Path"
+                  className="icon-float w-28 h-28 object-contain drop-shadow-2xl"
+                />
               </div>
               <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-6">Find Your Path</h1>
               <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-xl mx-auto">
@@ -203,8 +214,12 @@ export default function AssessmentPage() {
               className="space-y-12"
             >
               <div className="text-center space-y-6">
-                <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-emerald-100 text-emerald-600 mb-2">
-                  <Target className="w-10 h-10" />
+                <div className="mx-auto mb-2 w-24 h-24 flex items-center justify-center">
+                  <img
+                    src="/assessment-icon.png"
+                    alt="Results"
+                    className="icon-float w-20 h-20 object-contain drop-shadow-xl"
+                  />
                 </div>
                 <h1 className="text-4xl font-extrabold tracking-tight">Your Recommendations</h1>
                 <p className="text-xl text-muted-foreground">Based on your answers, these programs are the best fit for your goals.</p>

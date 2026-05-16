@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 const PALETTE = [
@@ -12,11 +13,15 @@ const PALETTE = [
 
 interface AvatarInitialsProps {
   name: string;
+  /** Optional image URL (e.g. base64 from localStorage). Shows image; falls back to initials on error. */
+  src?: string | null;
   size?: "sm" | "md" | "lg";
   className?: string;
 }
 
-export default function AvatarInitials({ name, size = "md", className }: AvatarInitialsProps) {
+export default function AvatarInitials({ name, src, size = "md", className }: AvatarInitialsProps) {
+  const [imgError, setImgError] = useState(false);
+
   const initials = name
     .split(" ")
     .map((n) => n[0])
@@ -32,6 +37,25 @@ export default function AvatarInitials({ name, size = "md", className }: AvatarI
     md: "h-10 w-10 text-sm",
     lg: "h-12 w-12 text-base",
   };
+
+  if (src && !imgError) {
+    return (
+      <div
+        className={cn(
+          "flex items-center justify-center rounded-full overflow-hidden",
+          sizeClasses[size],
+          className
+        )}
+      >
+        <img
+          src={src}
+          alt={name}
+          className="w-full h-full object-cover"
+          onError={() => setImgError(true)}
+        />
+      </div>
+    );
+  }
 
   return (
     <div

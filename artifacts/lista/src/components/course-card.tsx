@@ -82,7 +82,7 @@ export default function CourseCard({ course, hideLockOverlay = false }: CourseCa
 
             <CardContent className="p-6 flex-grow flex flex-col">
               <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">
-                NC Level {course.ncLevel}
+                {course.ncLevel}
               </div>
               
               <h3 className="text-lg font-bold text-slate-900 mb-3 line-clamp-2 min-h-[3.5rem]">

@@ -28,6 +28,7 @@ export const REQUIRED_TESDA_FIELDS: (keyof Enrollment)[] = [
 ];
 
 const LOCAL_STORAGE_KEY = "lista_trainee_profile_draft";
+const PROFILE_PIC_KEY = "lista_trainee_profile_pic";
 
 /**
  * Calculates the percentage of completion for the profile based on TESDA requirements.
@@ -75,4 +76,34 @@ export function loadLocalProfile(): Partial<Enrollment> | null {
  */
 export function clearLocalProfile(): void {
   localStorage.removeItem(LOCAL_STORAGE_KEY);
+}
+
+/**
+ * Saves the profile picture (base64 data URL) to local storage.
+ */
+export function saveProfilePic(dataUrl: string): void {
+  try {
+    localStorage.setItem(PROFILE_PIC_KEY, dataUrl);
+  } catch (error) {
+    console.error("Failed to save profile picture:", error);
+  }
+}
+
+/**
+ * Loads the saved profile picture from local storage.
+ * Returns null if none is saved.
+ */
+export function loadProfilePic(): string | null {
+  try {
+    return localStorage.getItem(PROFILE_PIC_KEY);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Clears the saved profile picture from local storage.
+ */
+export function clearProfilePic(): void {
+  localStorage.removeItem(PROFILE_PIC_KEY);
 }

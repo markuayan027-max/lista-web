@@ -353,10 +353,10 @@ export default function TraineeEnrollPage() {
                           <Select value={formData.courseSlug} onValueChange={val => updateForm({ courseSlug: val })}>
                             <SelectTrigger className="h-12 border-zinc-200 rounded-md text-base"><SelectValue placeholder="Choose a program..." /></SelectTrigger>
                             <SelectContent className="rounded-md">
-                              {courses.map(c => (
-                                <SelectItem key={c.slug} value={c.slug}>{c.title} ({c.ncLevel})</SelectItem>
-                              ))}
-                            </SelectContent>
+                            {courses.filter(c => c.isAvailable !== false).map(c => (
+                              <SelectItem key={c.slug} value={c.slug}>{c.title} ({c.ncLevel})</SelectItem>
+                            ))}
+                          </SelectContent>
                           </Select>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">

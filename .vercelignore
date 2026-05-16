@@ -1,0 +1,11 @@
+**/node_modules/
+**/dist/
+**/build/
+.next/
+coverage/
+playwright-report/
+test-results/
+.git/
+.trae/
+AI_App_Builder/
+AI_App_Builder_Backups/

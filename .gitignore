@@ -113,3 +113,6 @@ libpeerconnection.log
 connect.lock
 .sass-cache/
 .vercel
+
+AI_App_Builder/
+AI_App_Builder_Backups/

@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/auth-context";
-import { motion, AnimatePresence } from "framer-motion";
 import {
   Search,
   Bell,
@@ -61,31 +60,25 @@ export function ModernSidebar({
   };
 
   return (
-    <motion.div 
-      initial={false}
-      animate={{ 
-        width: isCollapsed ? 80 : 260,
-      }}
-      transition={{ type: "spring", stiffness: 350, damping: 35 }}
-      className="h-screen bg-white border-r border-gray-100 flex flex-col fixed md:relative z-50 font-sans select-none hidden md:flex"
+    <div 
+      className={cn(
+        "h-screen bg-white border-r border-gray-100 flex flex-col fixed md:relative z-50 font-sans select-none hidden md:flex transition-all duration-300 ease-in-out",
+        isCollapsed ? "w-[80px]" : "w-[260px]"
+      )}
     >
       {/* Header - Minimal Pinterest Style with Consistent Toggle Position */}
-      <div className="h-20 flex items-center px-4 shrink-0 group/header">
-        <div className={cn("flex items-center gap-3 flex-1 min-w-0", isCollapsed && "justify-center")}>
+      <div className="h-20 flex items-center px-4 shrink-0 group/header overflow-hidden">
+        <div className={cn("flex items-center flex-1 min-w-0 transition-all duration-300", isCollapsed ? "justify-center" : "gap-3")}>
           <div className="relative h-10 w-10 shrink-0 flex items-center justify-center">
             {/* Logo - only visible when NOT hovering while collapsed, or always when expanded */}
-            <motion.div 
-              animate={{ 
-                opacity: (isCollapsed) ? 1 : 1,
-                scale: isCollapsed ? 0.9 : 1 
-              }}
+            <div 
               className={cn(
                 "h-10 w-10 flex items-center justify-center cursor-pointer transition-all duration-300",
-                isCollapsed && "group-hover/header:invisible group-hover/header:opacity-0 group-hover/header:scale-75"
+                isCollapsed && "scale-90 group-hover/header:opacity-0 group-hover/header:scale-75"
               )}
             >
               <img src="/logo.webp" alt="L" className="h-7 w-auto object-contain" />
-            </motion.div>
+            </div>
 
             {/* Expand Button - shows on hover when collapsed */}
             {isCollapsed && (
@@ -99,29 +92,26 @@ export function ModernSidebar({
             )}
           </div>
 
-          <AnimatePresence>
-            {!isCollapsed && (
-              <motion.span 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="font-bold text-gray-900 text-[18px] tracking-tight"
-              >
-                LISTA
-              </motion.span>
+          <span 
+            className={cn(
+              "font-bold text-gray-900 text-[18px] tracking-tight whitespace-nowrap overflow-hidden transition-all duration-300",
+              isCollapsed ? "w-0 min-w-0 opacity-0" : "max-w-[100px] opacity-100"
             )}
-          </AnimatePresence>
+          >
+            LISTA
+          </span>
         </div>
         
-        {!isCollapsed && (
-          <button 
-            onClick={() => setIsCollapsed(true)}
-            className="p-2 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-all"
-            title="Collapse Sidebar"
-          >
-            <PanelLeftClose className="h-5 w-5" />
-          </button>
-        )}
+        <button 
+          onClick={() => setIsCollapsed(true)}
+          className={cn(
+            "p-2 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-all duration-300 shrink-0",
+            isCollapsed ? "w-0 opacity-0 p-0 overflow-hidden" : "w-9 opacity-100"
+          )}
+          title="Collapse Sidebar"
+        >
+          <PanelLeftClose className="h-5 w-5" />
+        </button>
       </div>
 
       <div className="flex-1 flex flex-col py-4 overflow-y-auto no-scrollbar">
@@ -139,10 +129,7 @@ export function ModernSidebar({
           </div>
 
           {/* Horizontal Separator */}
-          <div className={cn(
-            "h-px bg-gray-100 transition-all duration-300",
-            isCollapsed ? "mx-4" : "mx-4"
-          )} />
+          <div className="h-px bg-gray-100 transition-all duration-300 mx-4" />
 
           {/* Navigation Menu */}
 
@@ -165,28 +152,23 @@ export function ModernSidebar({
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button className={cn(
-              "w-full flex items-center gap-3 p-2 rounded-full hover:bg-gray-100 transition-all text-left group",
-              isCollapsed && "justify-center px-0"
+              "w-full flex items-center p-2 rounded-full hover:bg-gray-100 transition-all duration-300 text-left group overflow-hidden",
+              isCollapsed ? "justify-center px-0" : "gap-3"
             )}>
-              <Avatar className="h-9 w-9 border border-gray-100 shrink-0">
+              <Avatar className="h-9 w-9 border border-gray-100 shrink-0 transition-all duration-300">
                 <AvatarFallback className="bg-gray-50 text-gray-600 text-xs font-bold">
                   {user?.name?.[0] || 'U'}
                 </AvatarFallback>
               </Avatar>
-              <AnimatePresence>
-                {!isCollapsed && (
-                  <motion.div
-                    key="user-info"
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -10 }}
-                    className="flex-1 min-w-0"
-                  >
-                    <p className="text-sm font-semibold text-gray-900 truncate">{user?.name || 'User'}</p>
-                    <p className="text-[11px] text-gray-500 font-medium truncate uppercase tracking-wider">{roleName}</p>
-                  </motion.div>
+              <div
+                className={cn(
+                  "flex-1 min-w-0 transition-all duration-300 overflow-hidden whitespace-nowrap",
+                  isCollapsed ? "w-0 min-w-0 opacity-0" : "max-w-[150px] opacity-100"
                 )}
-              </AnimatePresence>
+              >
+                <p className="text-sm font-semibold text-gray-900 truncate">{user?.name || 'User'}</p>
+                <p className="text-[11px] text-gray-500 font-medium truncate uppercase tracking-wider">{roleName}</p>
+              </div>
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align={isCollapsed ? "center" : "end"} side={isCollapsed ? "right" : "top"} className="w-56 mb-2 rounded-2xl p-1.5 shadow-xl border-gray-100">
@@ -202,7 +184,7 @@ export function ModernSidebar({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-    </motion.div>
+    </div>
   );
 }
 
@@ -224,50 +206,40 @@ function SidebarItem({
   const content = (
     <div
       className={cn(
-        "group flex items-center rounded-full transition-all duration-200 relative",
+        "group flex items-center rounded-full transition-all duration-300 relative overflow-hidden",
         active
           ? "bg-gray-900 text-white font-semibold"
           : "text-gray-600 hover:bg-gray-100 font-medium",
-        isCollapsed ? "h-12 w-12 justify-center" : "h-11 px-4 gap-3"
+        isCollapsed ? "h-12 w-12 justify-center mx-auto" : "h-11 px-4 gap-3"
       )}
     >
       <Icon className={cn(
-        "shrink-0 transition-colors", 
+        "shrink-0 transition-colors duration-300", 
         active ? "text-white" : "text-gray-600",
         "h-[20px] w-[22px]"
       )} />
       
-      <AnimatePresence mode="wait" initial={false}>
-        {!isCollapsed && (
-          <motion.span 
-            key="label"
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -10 }}
-            transition={{ duration: 0.15 }}
-            className="flex-1 truncate text-[14.5px]"
-          >
-            {label}
-          </motion.span>
+      <div 
+        className={cn(
+          "flex items-center justify-between transition-all duration-300 overflow-hidden whitespace-nowrap",
+          isCollapsed ? "w-0 min-w-0 opacity-0" : "max-w-[200px] opacity-100 flex-1"
         )}
-      </AnimatePresence>
-      
-      <AnimatePresence>
-        {!isCollapsed && badge && (
-          <motion.span 
-            key="badge"
-            initial={{ opacity: 0, scale: 0.5 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.5 }}
+      >
+        <span className="truncate text-[14.5px]">
+          {label}
+        </span>
+        
+        {badge && (
+          <span 
             className={cn(
-              "text-[10px] font-bold px-2 py-0.5 rounded-full",
+              "text-[10px] font-bold px-2 py-0.5 rounded-full ml-2 shrink-0 transition-colors duration-300",
               active ? "bg-white/20 text-white" : "bg-gray-100 text-gray-500"
             )}
           >
             {badge}
-          </motion.span>
+          </span>
         )}
-      </AnimatePresence>
+      </div>
     </div>
   );
 

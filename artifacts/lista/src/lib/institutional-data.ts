@@ -242,7 +242,27 @@ export const events = [
 // COURSES (Accredited Programs)
 // ============================================================================
 
-export const courses = [
+export interface Course {
+  id: string;
+  slug: string;
+  title: string;
+  ncLevel: string;
+  category: string;
+  level: string;
+  twsp: boolean;
+  tags: string[];
+  durationHours: number;
+  durationDays?: number;
+  startDate?: string;
+  endDate?: string;
+  shortDescription: string;
+  longDescription: string;
+  trainer?: string;
+  galleryImages: string[];
+  isAvailable?: boolean;
+}
+
+export const courses: Course[] = [
   {
     id: "c1",
     slug: "agricultural-crops-production-nc-i",
@@ -256,7 +276,8 @@ export const courses = [
     durationDays: 38,
     shortDescription: "Foundational training in crop cultivation and farm maintenance.",
     longDescription: "Covers the basic skills required to support nursery work, horticultural and agronomic crop production, and irrigation maintenance.",
-    galleryImages: ["/agriculture-training.png"],
+    galleryImages: ["https://images.unsplash.com/photo-1595841696677-54897f28bc12?auto=format&fit=crop&q=80&w=800"],
+    isAvailable: true,
   },
   {
     id: "c2",
@@ -270,7 +291,8 @@ export const courses = [
     durationHours: 336,
     shortDescription: "Intermediate crop production and post-harvest management.",
     longDescription: "Builds upon foundational agricultural skills, focusing on nursery management, systematic planting, crop maintenance, and post-harvest handling.",
-    galleryImages: ["https://images.unsplash.com/photo-1464226184884-fa280b87c399?auto=format&fit=crop&q=80&w=800"],
+    galleryImages: ["https://images.unsplash.com/photo-1625246333195-78d9c38ad449?auto=format&fit=crop&q=80&w=800"],
+    isAvailable: false,
   },
   {
     id: "c3",
@@ -284,7 +306,7 @@ export const courses = [
     durationHours: 300,
     shortDescription: "Training in poultry and chicken production management.",
     longDescription: "Covers competencies required for raising poultry and producing chicken for meat or eggs.",
-    galleryImages: ["https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?auto=format&fit=crop&q=80&w=800"],
+    galleryImages: ["https://images.unsplash.com/photo-1516467508483-a7212febe31a?auto=format&fit=crop&q=80&w=800"],
   },
   {
     id: "c4",
@@ -298,7 +320,7 @@ export const courses = [
     durationHours: 300,
     shortDescription: "Management of ruminant animals like cattle and goats.",
     longDescription: "Focuses on the care, breeding, and production of ruminant livestock.",
-    galleryImages: ["https://images.unsplash.com/photo-1516467508483-a7212febe31a?auto=format&fit=crop&q=80&w=800"],
+    galleryImages: ["https://images.unsplash.com/photo-1543161041-86e582885971?auto=format&fit=crop&q=80&w=800"],
   },
   {
     id: "c5",
@@ -312,7 +334,7 @@ export const courses = [
     durationHours: 300,
     shortDescription: "Professional swine raising and management.",
     longDescription: "Covers pig production, feeding, health management, and housing.",
-    galleryImages: ["https://images.unsplash.com/photo-1516467508483-a7212febe31a?auto=format&fit=crop&q=80&w=800"],
+    galleryImages: ["https://images.unsplash.com/photo-1594142404563-64cccaf5a10f?auto=format&fit=crop&q=80&w=800"],
   },
   {
     id: "c6",
@@ -326,7 +348,7 @@ export const courses = [
     durationHours: 150,
     shortDescription: "Professional nail care and spa services.",
     longDescription: "Develops specialized skills in manicure, pedicure, and hand/foot spa treatments.",
-    galleryImages: ["/course-beauty-care.png"],
+    galleryImages: ["https://images.unsplash.com/photo-1604654894610-df490c81726a?auto=format&fit=crop&q=80&w=800"],
   },
   {
     id: "c7",
@@ -342,7 +364,7 @@ export const courses = [
     endDate: formatDate(addDays(new Date(), 45)),
     shortDescription: "Advanced recording and management of financial transactions.",
     longDescription: "Equips students with the competency to perform bookkeeping functions including journalizing and posting transactions.",
-    galleryImages: ["https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&q=80&w=800"],
+    galleryImages: ["https://images.unsplash.com/photo-1450101499163-c8848c66ca85?auto=format&fit=crop&q=80&w=800"],
   },
   {
     id: "c8",
@@ -356,7 +378,7 @@ export const courses = [
     durationHours: 141,
     shortDescription: "Baking and pastry arts for commercial service.",
     longDescription: "Covers the preparation and production of bakery products, pastry products, cakes, and desserts.",
-    galleryImages: ["https://images.unsplash.com/photo-1555507036-ab1f4038808a?auto=format&fit=crop&q=80&w=800"],
+    galleryImages: ["https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&q=80&w=800"],
   },
   {
     id: "c9",
@@ -486,7 +508,7 @@ export const courses = [
     durationHours: 160,
     shortDescription: "Operation and maintenance of hydraulic excavators.",
     longDescription: "Focuses on the safe operation and preventive maintenance of hydraulic excavator equipment.",
-    galleryImages: ["https://images.unsplash.com/photo-1586191582151-f703550259b1?auto=format&fit=crop&q=80&w=800"],
+    galleryImages: ["https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&q=80&w=800"],
   },
   {
     id: "c18",
@@ -518,17 +540,17 @@ export const courses = [
   },
   {
     id: "c20",
-    slug: "smaw-nc-i",
-    title: "Shielded Metal Arc Welding (SMAW)",
-    ncLevel: "NC I",
-    category: "Metals/Engineering",
-    level: "NC I",
-    twsp: true,
-    tags: ["Welding", "Engineering", "TWSP"],
-    durationHours: 268,
-    shortDescription: "Foundational arc welding for mild steel.",
-    longDescription: "Covers basic welding techniques and safety for shielded metal arc welding.",
-    galleryImages: ["https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?auto=format&fit=crop&q=80&w=800"],
+    slug: "basic-computer-literacy",
+    title: "Basic Computer Literacy (BCL)",
+    ncLevel: "Short Course",
+    category: "ICT",
+    level: "Beginner",
+    twsp: false,
+    tags: ["ICT", "Computers", "BCL"],
+    durationHours: 40,
+    shortDescription: "Fundamental computer skills for everyday use.",
+    longDescription: "Covers basic computer operations, word processing, spreadsheets, and internet essentials. Estimated Fee: ₱2,500.",
+    galleryImages: ["https://images.unsplash.com/photo-1531297484001-80022131f5a1?auto=format&fit=crop&q=80&w=800"],
   },
   {
     id: "c21",

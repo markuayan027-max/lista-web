@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useState, memo, useCallback } from "react";
+import { useEffect, useMemo, useState, memo, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   User, Mail, MapPin, BookOpen, Calendar,
-  Download, FileSpreadsheet, FileText, Pencil, ShieldCheck, CreditCard, GraduationCap,
+  Download, FileSpreadsheet, FileText, ShieldCheck, CreditCard, GraduationCap,
   Globe, Hash, ArrowUpRight,
-  Clock, CheckCircle, Search, Upload, UserCheck, GraduationCap as EnrolledIcon
+  Clock, CheckCircle, Search, Upload, UserCheck, GraduationCap as EnrolledIcon, Camera, Pencil
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -28,7 +28,7 @@ import { exportSingleTraineeToExcel, exportSingleTraineeToWord } from "@/lib/exp
 import StatusBadge from "@/components/status-badge";
 import { cn } from "@/lib/utils";
 import { fetchTraineeEnrollmentByEmail, updateTraineeEnrollmentByEmail } from "@/lib/trainee-enrollment-insforge";
-import { loadLocalProfile, saveLocalProfile, calculateProfileCompletion, clearLocalProfile } from "@/lib/profile-utils";
+import { loadLocalProfile, saveLocalProfile, calculateProfileCompletion, clearLocalProfile, saveProfilePic, loadProfilePic } from "@/lib/profile-utils";
 
 const container = {
   hidden: { opacity: 0 },
@@ -125,6 +125,46 @@ export default function TraineeProfilePage() {
 
   const [form, setForm] = useState<Partial<EditableEnrollment>>({});
 
+  // ── Profile picture ──────────────────────────────────────────────────────
+  const [profilePic, setProfilePic] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setProfilePic(loadProfilePic());
+  }, []);
+
+  const handleAvatarChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const maxBytes = 5 * 1024 * 1024; // 5 MB raw limit
+    if (file.size > maxBytes) {
+      toast({ title: "File too large", description: "Please choose an image smaller than 5 MB.", variant: "destructive" });
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const original = ev.target?.result as string;
+      // Compress to ≤200 KB JPEG via canvas
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const MAX = 400; // px — enough for a circular avatar
+        const scale = Math.min(1, MAX / Math.max(img.width, img.height));
+        canvas.width = img.width * scale;
+        canvas.height = img.height * scale;
+        canvas.getContext("2d")?.drawImage(img, 0, 0, canvas.width, canvas.height);
+        const compressed = canvas.toDataURL("image/jpeg", 0.75);
+        setProfilePic(compressed);
+        saveProfilePic(compressed);
+        toast({ title: "Photo updated", description: "Your profile picture has been saved." });
+      };
+      img.src = original;
+    };
+    reader.readAsDataURL(file);
+    // Reset input so the same file can be chosen again
+    e.target.value = "";
+  }, [toast]);
+
   useEffect(() => {
     if (!user?.email) {
       return;
@@ -206,9 +246,14 @@ export default function TraineeProfilePage() {
     setIsSaving(true);
     try {
       // Ensure age is a number before sending if it exists
-      const payload = { ...form };
+      const payload: Partial<Enrollment> = { ...form } as Partial<Enrollment>;
       if (payload.age !== undefined && typeof payload.age === 'string') {
         payload.age = parseInt(payload.age, 10) || 0;
+      }
+
+      // If user selected a new course while status was cancelled or rejected, reset to pending
+      if (payload.courseSlug && existing && (existing.status === "cancelled" || existing.status === "rejected")) {
+        payload.status = "pending";
       }
       
       const data = await updateTraineeEnrollmentByEmail(user.email, payload);
@@ -265,15 +310,46 @@ export default function TraineeProfilePage() {
         className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-6"
       >
         <div className="flex items-center gap-4">
+          {/* ── Avatar (always clickable to upload) ── */}
           <div className="relative shrink-0">
-            <div className="w-16 h-16 rounded-full bg-zinc-100 flex items-center justify-center text-zinc-800 border border-zinc-200">
-              <span className="text-xl font-semibold">{user?.name?.charAt(0) || "U"}</span>
-            </div>
-            {isEditing && (
-              <button className="absolute bottom-0 right-0 w-6 h-6 bg-white rounded-full border border-zinc-200 shadow-sm flex items-center justify-center hover:bg-zinc-50 transition-colors">
-                <Pencil className="h-3 w-3 text-zinc-600" />
-              </button>
-            )}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleAvatarChange}
+            />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="group relative w-16 h-16 rounded-full overflow-hidden border-2 border-zinc-200 hover:border-blue-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 transition-all shadow-sm"
+              title="Click to change profile photo"
+            >
+              {profilePic ? (
+                <img
+                  src={profilePic}
+                  alt="Profile"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-zinc-100 flex items-center justify-center text-zinc-800">
+                  <span className="text-xl font-semibold">{user?.name?.charAt(0) || "U"}</span>
+                </div>
+              )}
+              {/* Hover overlay */}
+              <span className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <Camera className="h-5 w-5 text-white" />
+              </span>
+            </button>
+            {/* Persistent pencil badge */}
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="absolute bottom-0 right-0 w-5 h-5 bg-white rounded-full border border-zinc-200 shadow-sm flex items-center justify-center hover:bg-blue-50 hover:border-blue-300 transition-colors"
+              title="Change photo"
+            >
+              <Camera className="h-2.5 w-2.5 text-zinc-600" />
+            </button>
           </div>
           <div className="space-y-1">
             <div className="flex items-center gap-2">
@@ -398,10 +474,13 @@ export default function TraineeProfilePage() {
                           <MemoizedInfoRow label="First Name" value={form.firstName || ""} icon={User} fieldKey="firstName" isEditing={isEditing} inputValue={form.firstName || ""} onChange={handleChange} />
                           <MemoizedInfoRow label="Middle Name" value={form.middleName || ""} icon={User} fieldKey="middleName" isEditing={isEditing} inputValue={form.middleName || ""} onChange={handleChange} />
                           <MemoizedInfoRow label="Last Name" value={form.lastName || ""} icon={User} fieldKey="lastName" isEditing={isEditing} inputValue={form.lastName || ""} onChange={handleChange} />
+                          <MemoizedInfoRow label="Name Extension" value={form.extensionName || ""} icon={User} fieldKey="extensionName" isEditing={isEditing} inputValue={form.extensionName || ""} onChange={handleChange} />
                         </>
                       ) : (
-                        <MemoizedInfoRow label="Full Name" value={`${form.firstName || ""} ${form.middleName || ""} ${form.lastName || ""}`.trim()} icon={User} className="md:col-span-2 xl:col-span-3" isEditing={isEditing} inputValue="" onChange={handleChange} />
+                        <MemoizedInfoRow label="Full Name" value={`${form.firstName || ""} ${form.middleName || ""} ${form.lastName || ""} ${form.extensionName || ""}`.trim()} icon={User} className="md:col-span-2 xl:col-span-3" isEditing={isEditing} inputValue="" onChange={handleChange} />
                       )}
+                      <MemoizedInfoRow label="Date of Birth" value={form.dob || ""} icon={Calendar} fieldKey="dob" isEditing={isEditing} inputValue={form.dob || ""} onChange={handleChange} />
+                      <MemoizedInfoRow label="Birth Place" value={form.birthPlace || ""} icon={MapPin} fieldKey="birthPlace" isEditing={isEditing} inputValue={form.birthPlace || ""} onChange={handleChange} />
                       <MemoizedInfoRow 
                         label="Civil Status" 
                         value={form.civilStatus || ""} 
@@ -679,7 +758,80 @@ export default function TraineeProfilePage() {
 
               {activeTab === "program" && (
                 <motion.div variants={item} className="space-y-6">
-                  {course ? (
+                  {isEditing ? (
+                    <div className="space-y-4 bg-white p-5 rounded-xl border border-zinc-200">
+                      <div className="space-y-2">
+                        <label className="text-sm font-semibold text-zinc-900 flex items-center gap-1.5">
+                          <BookOpen className="h-4 w-4 text-zinc-500" /> Select Program
+                        </label>
+                        <Select value={form.courseSlug || "none"} onValueChange={(val) => handleChange("courseSlug", val === "none" ? "" : val)}>
+                          <SelectTrigger className="w-full h-10 bg-zinc-50 border-zinc-200">
+                            <SelectValue placeholder="Select a program to enroll in..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none" className="text-zinc-500 italic">No program selected</SelectItem>
+                            {courses.filter(c => c.isAvailable !== false).map((c) => (
+                              <SelectItem key={c.slug} value={c.slug}>
+                                {c.title} ({c.ncLevel})
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-4 border-t border-zinc-100">
+                        <div className="space-y-4">
+                          <div className="space-y-2">
+                            <label className="text-xs font-semibold text-zinc-700 flex items-center gap-1.5">
+                              <Calendar className="h-3.5 w-3.5 text-zinc-500" /> Preferred Schedule
+                            </label>
+                            <Select value={form.preferredSchedule || ""} onValueChange={(val) => handleChange("preferredSchedule", val)}>
+                              <SelectTrigger className="h-9 text-sm font-medium border-zinc-200 bg-zinc-50">
+                                <SelectValue placeholder="Select schedule" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {[
+                                  "Morning (8:00 AM – 12:00 PM)",
+                                  "Afternoon (1:00 PM – 5:00 PM)",
+                                  "Full Day (8:00 AM – 5:00 PM)",
+                                ].map((s) => (
+                                  <SelectItem key={s} value={s}>{s}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-xs font-semibold text-zinc-700 flex items-center gap-1.5">
+                              <CreditCard className="h-3.5 w-3.5 text-zinc-500" /> Scholarship Status
+                            </label>
+                            <Select value={form.scholarshipApplication || ""} onValueChange={(val) => handleChange("scholarshipApplication", val)}>
+                              <SelectTrigger className="h-9 text-sm font-medium border-zinc-200 bg-zinc-50">
+                                <SelectValue placeholder="Select scholarship" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {[
+                                  "Yes, I want to apply for TWSP",
+                                  "No, self-funded enrollment",
+                                  "I need more information about scholarships",
+                                ].map((s) => (
+                                  <SelectItem key={s} value={s}>{s}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-xs font-semibold text-zinc-700">Trainee Notes</label>
+                          <Textarea 
+                            value={form.notes || ""} 
+                            onChange={e => handleChange("notes", e.target.value)} 
+                            className="min-h-[116px] text-sm bg-zinc-50 border-zinc-200" 
+                            placeholder="Add any additional notes here..."
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ) : course ? (
                     <div className="rounded-xl border border-zinc-200 overflow-hidden bg-white">
                       <div className="bg-zinc-50 p-5 border-b border-zinc-200">
                         <div className="space-y-3">
@@ -709,62 +861,20 @@ export default function TraineeProfilePage() {
                             <p className="text-xs font-medium text-zinc-500 flex items-center gap-1.5">
                               <Calendar className="h-3.5 w-3.5" /> Preferred Schedule
                             </p>
-                            {isEditing ? (
-                              <Select value={form.preferredSchedule || ""} onValueChange={(val) => handleChange("preferredSchedule", val)}>
-                                <SelectTrigger className="h-8 text-sm font-medium border-zinc-200 bg-zinc-50 focus:bg-white focus:ring-1 focus:ring-zinc-900 transition-colors">
-                                  <SelectValue placeholder="Select schedule" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {[
-                                    "Morning (8:00 AM – 12:00 PM)",
-                                    "Afternoon (1:00 PM – 5:00 PM)",
-                                    "Full Day (8:00 AM – 5:00 PM)",
-                                  ].map((s) => (
-                                    <SelectItem key={s} value={s}>
-                                      {s}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            ) : (
-                              <p className="text-sm font-semibold text-zinc-900">{form.preferredSchedule || "Not specified"}</p>
-                            )}
+                            <p className="text-sm font-semibold text-zinc-900">{form.preferredSchedule || "Not specified"}</p>
                           </div>
                           <div className="space-y-1">
                             <p className="text-xs font-medium text-zinc-500 flex items-center gap-1.5">
                               <CreditCard className="h-3.5 w-3.5" /> Scholarship Status
                             </p>
-                            {isEditing ? (
-                              <Select value={form.scholarshipApplication || ""} onValueChange={(val) => handleChange("scholarshipApplication", val)}>
-                                <SelectTrigger className="h-8 text-sm font-medium border-zinc-200 bg-zinc-50 focus:bg-white focus:ring-1 focus:ring-zinc-900 transition-colors">
-                                  <SelectValue placeholder="Select scholarship" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {[
-                                    "Yes, I want to apply for TWSP",
-                                    "No, self-funded enrollment",
-                                    "I need more information about scholarships",
-                                  ].map((s) => (
-                                    <SelectItem key={s} value={s}>
-                                      {s}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            ) : (
-                              <p className="text-sm font-semibold text-zinc-900">{form.scholarshipApplication || "Not specified"}</p>
-                            )}
+                            <p className="text-sm font-semibold text-zinc-900">{form.scholarshipApplication || "Not specified"}</p>
                           </div>
                         </div>
                         <div className="space-y-1">
                           <p className="text-xs font-medium text-zinc-500">Trainee Notes</p>
-                          {isEditing ? (
-                            <Textarea value={form.notes || ""} onChange={e => handleChange("notes", e.target.value)} className="min-h-[80px] text-sm" />
-                          ) : (
-                            <p className="text-sm text-zinc-600 p-3 bg-zinc-50 rounded-md border border-zinc-100">
-                              {form.notes || "No additional notes provided for this enrollment."}
-                            </p>
-                          )}
+                          <p className="text-sm text-zinc-600 p-3 bg-zinc-50 rounded-md border border-zinc-100">
+                            {form.notes || "No additional notes provided for this enrollment."}
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -836,34 +946,39 @@ export default function TraineeProfilePage() {
             animate={{ opacity: 1, x: 0 }}
             className="bg-white rounded-xl border border-zinc-200 p-4"
           >
-              <h3 className="text-xs font-semibold text-zinc-900 flex items-center justify-between gap-1.5 mb-4">
-                <span className="flex items-center gap-1.5"><Clock className="h-3.5 w-3.5 text-zinc-500" /> Application Status</span>
-                {existing && !["enrolled", "confirmed", "completed", "cancelled", "rejected"].includes(existing.status.toLowerCase()) && (
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="h-6 text-[10px] text-red-600 hover:text-red-700 hover:bg-red-50 p-0"
-                    onClick={async () => {
-                      if (confirm("Are you sure you want to cancel your application? This action cannot be undone.")) {
-                        try {
-                          const res = await updateTraineeEnrollmentByEmail(user!.email!, { status: "cancelled" });
-                          if (res.success) {
-                            setExisting(prev => prev ? { ...prev, status: "cancelled" } : null);
-                            setForm(prev => prev ? { ...prev, status: "cancelled" } : {});
-                            toast({ title: "Application Cancelled", description: "Your application has been successfully cancelled." });
-                          } else {
-                            toast({ title: "Cancellation Failed", description: res.error || "Unknown error", variant: "destructive" });
+              <div className="mb-4">
+                <h3 className="text-xs font-semibold text-zinc-900 flex items-center justify-between gap-1.5 mb-1">
+                  <span className="flex items-center gap-1.5"><Clock className="h-3.5 w-3.5 text-zinc-500" /> Application Status</span>
+                  {existing && !["enrolled", "confirmed", "completed", "cancelled", "rejected"].includes(existing.status.toLowerCase()) && (
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-6 text-[10px] text-red-600 hover:text-red-700 hover:bg-red-50 p-0"
+                      onClick={async () => {
+                        if (confirm("Are you sure you want to cancel your application? This action cannot be undone.")) {
+                          try {
+                            const res = await updateTraineeEnrollmentByEmail(user!.email!, { status: "cancelled", courseSlug: "" });
+                            if (res.success) {
+                              setExisting(prev => prev ? { ...prev, status: "cancelled", courseSlug: "" } : null);
+                              setForm(prev => prev ? { ...prev, status: "cancelled", courseSlug: "" } : {});
+                              toast({ title: "Application Cancelled", description: "Your application has been successfully cancelled. You can now select a new program." });
+                            } else {
+                              toast({ title: "Cancellation Failed", description: res.error || "Unknown error", variant: "destructive" });
+                            }
+                          } catch (err) {
+                            toast({ title: "Error", description: "Network error occurred.", variant: "destructive" });
                           }
-                        } catch (err) {
-                          toast({ title: "Error", description: "Network error occurred.", variant: "destructive" });
                         }
-                      }
-                    }}
-                  >
-                    Cancel
-                  </Button>
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  )}
+                </h3>
+                {existing?.refNo && (
+                  <p className="text-[10px] font-mono text-zinc-500 pl-5">Ref: {existing.refNo}</p>
                 )}
-              </h3>
+              </div>
 
             <div className="space-y-0 relative pl-1">
               <div className="absolute left-[13px] top-2 bottom-3 w-px bg-zinc-100" />
