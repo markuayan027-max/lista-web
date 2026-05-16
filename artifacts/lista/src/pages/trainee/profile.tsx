@@ -354,7 +354,7 @@ export default function TraineeProfilePage() {
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-bold tracking-tight text-zinc-900">
-                {isEditing ? "Edit Profile" : `${user?.name?.split(' ')[0]}'s Profile`}
+                {isEditing ? "Edit Profile" : `${form.firstName || user?.name?.split(' ')[0]}'s Profile`}
               </h1>
               {!isEditing && (
                 <StatusBadge
