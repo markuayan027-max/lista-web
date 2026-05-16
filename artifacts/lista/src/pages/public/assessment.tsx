@@ -158,7 +158,7 @@ export default function AssessmentPage() {
                 }
                 .icon-float { animation: float3d 3.5s ease-in-out infinite; }
               `}</style>
-              <div className="mx-auto mb-8 w-64 h-80 flex items-center justify-center overflow-hidden rounded-2xl">
+              <div className="mx-auto mb-10 w-full max-w-lg aspect-[3/4] flex items-center justify-center overflow-hidden rounded-2xl">
                 <img
                   src="/assessment promotional image.png"
                   alt="Find Your Path"
