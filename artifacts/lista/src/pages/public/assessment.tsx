@@ -160,7 +160,7 @@ export default function AssessmentPage() {
               `}</style>
               <div className="mx-auto mb-8 w-32 h-32 flex items-center justify-center">
                 <img
-                  src="/assessment-icon.png"
+                  src="/assessment promotional image.png"
                   alt="Find Your Path"
                   className="icon-float w-28 h-28 object-contain drop-shadow-2xl"
                 />

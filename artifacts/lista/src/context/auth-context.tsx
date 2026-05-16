@@ -40,9 +40,9 @@ function mapInsForgeUser(insUser: any): User | null {
   if (!insUser) return null;
   const email: string = insUser.email || "";
 
-  // Priority: role stored in app_metadata (set by admin)
+  // Priority: role stored in metadata (set by admin)
   let role: UserRole = "trainee";
-  const appRole = insUser.app_metadata?.role as string | undefined;
+  const appRole = insUser.metadata?.role as string | undefined;
   if (appRole === "admin" || appRole === "staff") {
     role = appRole;
   }
@@ -217,6 +217,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     await lista.auth.signOut();
     localStorage.removeItem("lista_session");
+    localStorage.removeItem("lista_trainee_profile_draft");
+    localStorage.removeItem("lista_trainee_profile_pic");
     lista.setAccessToken(null);
     setUser(null);
     setIsRegistered(false);

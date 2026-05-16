@@ -95,13 +95,15 @@ function Protected({
     if (localStorage.getItem('TEST_MODE') === 'true') {
       return <Layout>{children}</Layout>;
     }
-    return (
-      <div className="flex h-screen flex-col items-center justify-center space-y-4">
-        <h1 className="text-2xl font-bold">Unauthorized</h1>
-        <p>You do not have permission to access this page.</p>
-        <button onClick={() => setLocation("/")} className="text-primary hover:underline">Return Home</button>
-      </div>
-    );
+    
+    // Redirect based on their actual role instead of showing a dead-end
+    if (user.role === "admin") {
+      return <Redirect to="/admin" />;
+    } else if (user.role === "staff") {
+      return <Redirect to="/staff" />;
+    } else {
+      return <Redirect to="/trainee" />;
+    }
   }
 
   return <Layout>{children}</Layout>;
