@@ -7,6 +7,7 @@
  */
 
 import type { Enrollment } from "@/lib/institutional-data";
+import { authHeaders } from "@/lib/auth-token";
 import { lista } from "@/lib/insforge";
 
 const ENROLLMENTS = "enrollments";
@@ -286,11 +287,23 @@ export async function registerTraineeFromForm(
   return { success: true };
 }
 
+/** Trainees may only set these statuses on their own enrollment. */
+const TRAINEE_ALLOWED_STATUSES = new Set(["cancelled", "ready_to_apply", "pending"]);
+
+function sanitizeTraineeSelfServicePatch(form: Partial<Enrollment>): Partial<Enrollment> {
+  if (form.status === undefined) return form;
+  const s = String(form.status).toLowerCase() as Enrollment["status"];
+  if (TRAINEE_ALLOWED_STATUSES.has(s)) return form;
+  const { status: _removed, ...rest } = form;
+  return rest;
+}
+
 export async function updateTraineeEnrollmentByEmail(
   email: string,
   form: Partial<Enrollment>,
 ): Promise<{ success: boolean; error?: string }> {
-  const patch = buildUpdateSnakePatch(form);
+  const safeForm = sanitizeTraineeSelfServicePatch(form);
+  const patch = buildUpdateSnakePatch(safeForm);
   if (Object.keys(patch).length === 0) {
     return { success: true };
   }
@@ -306,7 +319,7 @@ export async function updateTraineeEnrollmentByEmail(
   console.warn("[InsForge] Update failed, trying Express API fallback...", error);
   try {
     // Normalize status to Title Case for Express API validation if present
-    const normalizedForm = { ...form };
+    const normalizedForm = { ...safeForm };
     if (normalizedForm.status) {
       const s = String(normalizedForm.status).toLowerCase();
       normalizedForm.status = (s.charAt(0).toUpperCase() + s.slice(1)) as any;
@@ -314,7 +327,7 @@ export async function updateTraineeEnrollmentByEmail(
 
     const response = await fetch(`/api/trainees/profile?email=${encodeURIComponent(email)}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...authHeaders() },
       body: JSON.stringify(normalizedForm),
     });
     

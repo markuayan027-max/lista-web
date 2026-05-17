@@ -136,10 +136,7 @@ test.describe("Enrollment E2E (InsForge enrollments)", () => {
     await page.goto("/trainee/register");
     await page.waitForSelector('[data-testid="auth-loading"]', { state: "hidden", timeout: 30000 });
 
-    await page.getByRole("button", { name: /Continue/i }).click();
-    await expect(
-      page.getByText("Required Info Missing", { exact: true }).first()
-    ).toBeVisible();
+    await expect(page.getByRole("button", { name: /Continue/i })).toBeDisabled();
   });
 
   test("resilience: draft first name survives reload", async ({ page }) => {

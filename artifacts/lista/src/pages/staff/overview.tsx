@@ -5,8 +5,16 @@ import { Button } from "@/components/ui/button";
 import StatCard from "@/components/stat-card";
 import EnrollmentCard from "@/components/enrollment-card";
 import { CalendarDays, Users, Award, FileText, Plus, Bell, ChevronRight } from "lucide-react";
-import { schedules, enrollments, users, certificates } from "@/lib/institutional-data";
+import { useDerivedCertificates, useEnrollments, useSchedules, useUsers } from "@/hooks/use-lista-data";
+import {
+  computePeriodTrend,
+  countInLastDays,
+  countSchedulesInWeek,
+  countUsersWithRoleInWindow,
+  isFormalEnrollment,
+} from "@/lib/analytics-utils";
 import { isSameDay, parseISO } from "date-fns";
+import { useMemo } from "react";
 
 const container = {
   hidden: { opacity: 0 },
@@ -22,11 +30,38 @@ const item = {
 };
 
 export default function StaffOverviewPage() {
-  const todayDate = new Date(); // Current date
-  const todaysSessions = schedules.filter(s => isSameDay(parseISO(s.date), todayDate));
-  const pendingEnrollments = enrollments.filter(e => e.status === "pending").length;
-  const activeTrainees = users.filter(u => u.role === "trainee").length;
-  
+  const { data: schedules = [] } = useSchedules();
+  const { data: enrollments = [] } = useEnrollments();
+  const { data: users = [] } = useUsers();
+  const { data: certificates = [] } = useDerivedCertificates();
+  const todayDate = new Date();
+  const todaysSessions = schedules.filter((s) => isSameDay(parseISO(s.date), todayDate));
+  const formalEnrollments = useMemo(
+    () => enrollments.filter(isFormalEnrollment),
+    [enrollments],
+  );
+  const pendingEnrollments = formalEnrollments.filter((e) => e.status === "pending").length;
+  const activeTrainees = users.filter((u) => u.role === "trainee").length;
+
+  const sessionsTrend = useMemo(() => {
+    const thisWeek = countSchedulesInWeek(schedules, 0);
+    const lastWeek = countSchedulesInWeek(schedules, 1);
+    return computePeriodTrend(thisWeek, lastWeek);
+  }, [schedules]);
+
+  const traineesTrend = useMemo(() => {
+    const last30 = countUsersWithRoleInWindow(users, "trainee", 0, 30);
+    const prev30 = countUsersWithRoleInWindow(users, "trainee", 30, 60);
+    return computePeriodTrend(last30, prev30);
+  }, [users]);
+
+  const pendingTrend = useMemo(() => {
+    const pending = formalEnrollments.filter((e) => e.status === "pending");
+    const last30 = countInLastDays(pending, 30);
+    const prev30 = countInLastDays(pending, 60) - last30;
+    return computePeriodTrend(last30, prev30);
+  }, [formalEnrollments]);
+
   return (
     <div className="space-y-8">
       <motion.div 
@@ -48,7 +83,7 @@ export default function StaffOverviewPage() {
             label="Today's Sessions"
             value={todaysSessions.length.toString()}
             icon={CalendarDays}
-            trend={{ value: 12, isPositive: true }}
+            trend={sessionsTrend}
           />
         </motion.div>
         <motion.div variants={item}>
@@ -58,6 +93,7 @@ export default function StaffOverviewPage() {
             icon={FileText}
             className="border-amber-200"
             accent="bg-amber-100 text-amber-700"
+            trend={pendingTrend}
           />
         </motion.div>
         <motion.div variants={item}>
@@ -65,7 +101,7 @@ export default function StaffOverviewPage() {
             label="Active Trainees"
             value={activeTrainees.toString()}
             icon={Users}
-            trend={{ value: 5, isPositive: true }}
+            trend={traineesTrend}
           />
         </motion.div>
         <motion.div variants={item}>

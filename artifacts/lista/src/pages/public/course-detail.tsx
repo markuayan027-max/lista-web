@@ -1,5 +1,5 @@
 import { useParams, Link } from "wouter";
-import { courses, schedules } from "@/lib/institutional-data";
+import { useCourses, useSchedules } from "@/hooks/use-lista-data";
 import { withBase } from "@/lib/with-base";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,14 +7,25 @@ import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import AvatarInitials from "@/components/avatar-initials";
 import PrimaryButton from "@/components/primary-button";
-import { Clock, BarChart, Calendar, ChevronLeft, CheckCircle2, ArrowRight, ChevronRight } from "lucide-react";
+import { Clock, BarChart, Calendar, ChevronLeft, CheckCircle2, ArrowRight, ChevronRight, Loader2 } from "lucide-react";
 import useEmblaCarousel from 'embla-carousel-react';
 import { useState, useEffect, useCallback } from "react";
 import NotFound from "@/pages/not-found";
 
 export default function CourseDetailPage() {
   const { slug } = useParams();
+  const { data: courses = [], isLoading } = useCourses();
+  const { data: schedules = [] } = useSchedules();
   const course = courses.find((c) => c.slug === slug);
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-24 text-muted-foreground gap-2">
+        <Loader2 className="h-6 w-6 animate-spin" />
+        Loading course…
+      </div>
+    );
+  }
 
   if (!course) {
     return <NotFound />;

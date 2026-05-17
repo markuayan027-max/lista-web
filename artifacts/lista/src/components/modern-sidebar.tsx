@@ -22,6 +22,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useAnnouncements } from "@/hooks/use-lista-data";
+import { announcementCountForRole } from "@/lib/analytics-utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -43,16 +45,30 @@ interface ModernSidebarProps {
   menuItems: SidebarItemType[];
   roleName?: string;
   logoHref?: string;
+  announcementRole?: "admin" | "staff" | "trainee";
 }
 
 export function ModernSidebar({ 
   menuItems, 
   roleName = "Administrator", 
-  logoHref = "/" 
+  logoHref = "/",
+  announcementRole,
 }: ModernSidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [location, setLocation] = useLocation();
   const { user, logout } = useAuth();
+  const { data: announcements = [] } = useAnnouncements();
+
+  const notifyRole: "admin" | "staff" | "trainee" =
+    announcementRole ??
+    (location.includes("/admin") ? "admin" : location.includes("/staff") ? "staff" : "trainee");
+  const announcementCount = announcementCountForRole(announcements, notifyRole);
+  const announcementsHref =
+    notifyRole === "admin"
+      ? "/admin/announcements"
+      : notifyRole === "staff"
+        ? "/staff/announcements"
+        : "/trainee/announcements";
 
   const handleLogout = () => {
     logout();
@@ -121,8 +137,8 @@ export function ModernSidebar({
             <SidebarItem 
               icon={Bell} 
               label="Notifications" 
-              badge="3" 
-              href={location.includes('admin') ? '/admin/announcements' : '/trainee/announcements'}
+              badge={announcementCount > 0 ? String(announcementCount) : undefined}
+              href={announcementsHref}
               active={location.includes('announcements')}
               isCollapsed={isCollapsed} 
             />

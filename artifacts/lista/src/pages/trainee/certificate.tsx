@@ -4,7 +4,8 @@ import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { certificates, courses } from "@/lib/institutional-data";
+import { useCourses, useDerivedCertificates } from "@/hooks/use-lista-data";
+import { courseTitleBySlug } from "@/lib/lista-insforge-data";
 import StatusBadge from "@/components/status-badge";
 import { Download, Eye, Award } from "lucide-react";
 import { format } from "date-fns";
@@ -24,7 +25,9 @@ const item = {
 
 export default function TraineeCertificatePage() {
   const { user } = useAuth();
-  const myCerts = certificates.filter(c => c.userId === user?.id) || certificates;
+  const { data: certificates = [] } = useDerivedCertificates();
+  const { data: courses = [] } = useCourses();
+  const myCerts = certificates.filter((c) => !c.userId || c.userId === user?.id);
   const [previewCert, setPreviewCert] = useState<any>(null);
 
   return (
@@ -44,7 +47,7 @@ export default function TraineeCertificatePage() {
         className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
       >
         {myCerts.map((cert) => {
-          const course = courses.find(c => c.slug === cert.courseSlug);
+          const courseTitle = courseTitleBySlug(courses, cert.courseSlug);
           const isIssued = cert.status === "issued";
 
           return (
@@ -55,7 +58,7 @@ export default function TraineeCertificatePage() {
                 </div>
                 <CardContent className="p-6 flex-1 flex flex-col">
                   <div className="flex items-start justify-between mb-4 gap-2">
-                    <h3 className="font-bold text-lg leading-tight">{course?.title}</h3>
+                    <h3 className="font-bold text-lg leading-tight">{courseTitle}</h3>
                     <StatusBadge status={cert.status as any} />
                   </div>
                   
@@ -75,7 +78,7 @@ export default function TraineeCertificatePage() {
                     <Button 
                       variant="outline" 
                       className="flex-1 font-semibold"
-                      onClick={() => setPreviewCert({ cert, course })}
+                      onClick={() => setPreviewCert({ cert, courseTitle })}
                     >
                       <Eye className="mr-2 h-4 w-4" /> Preview
                     </Button>
@@ -124,7 +127,7 @@ export default function TraineeCertificatePage() {
               <p className="text-muted-foreground mb-4">has successfully completed the course</p>
               
               <p className="text-2xl font-bold text-foreground mb-12">
-                {previewCert.course?.title}
+                {previewCert.courseTitle}
               </p>
               
               <div className="flex justify-center gap-24 text-sm font-medium">

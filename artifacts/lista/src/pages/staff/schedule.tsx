@@ -9,13 +9,14 @@ import { Input } from "@/components/ui/input";
 import FormInputField from "@/components/form-input-field";
 import PrimaryButton from "@/components/primary-button";
 import { useToast } from "@/hooks/use-toast";
-import { schedules as initialSchedules, courses } from "@/lib/institutional-data";
+import { useCourses, useCreateSchedule, useSchedules } from "@/hooks/use-lista-data";
 import { format, addDays, startOfWeek, isSameDay } from "date-fns";
 
 export default function StaffSchedulePage() {
   const { toast } = useToast();
-  const [schedules, setSchedules] = useState(initialSchedules);
-  const [courseList, setCourseList] = useState(courses);
+  const { data: schedules = [] } = useSchedules();
+  const { data: courseList = [] } = useCourses();
+  const createSchedule = useCreateSchedule();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isPeriodsDialogOpen, setIsPeriodsDialogOpen] = useState(false);
@@ -33,25 +34,27 @@ export default function StaffSchedulePage() {
   const prevWeek = () => setCurrentDate(addDays(currentDate, -7));
   const today = () => setCurrentDate(new Date());
 
-  const handleAddSession = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleAddSession = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const newSession = {
-      id: "s" + Date.now(),
-      courseSlug: formData.get("course") as string,
-      date: formData.get("date") as string,
-      startTime: formData.get("startTime") as string,
-      endTime: formData.get("endTime") as string,
-      trainer: formData.get("trainer") as string,
-      room: formData.get("room") as string,
-    };
-    
-    setSchedules([...schedules, newSession]);
-    setIsDialogOpen(false);
-    toast({
-      title: "Session Added",
-      description: "New schedule session has been created.",
-    });
+    try {
+      await createSchedule.mutateAsync({
+        courseSlug: formData.get("course") as string,
+        date: formData.get("date") as string,
+        startTime: formData.get("startTime") as string,
+        endTime: formData.get("endTime") as string,
+        trainer: formData.get("trainer") as string,
+        room: formData.get("room") as string,
+      });
+      setIsDialogOpen(false);
+      toast({ title: "Session Added", description: "New schedule session has been created." });
+    } catch (err) {
+      toast({
+        title: "Schedule failed",
+        description: err instanceof Error ? err.message : "Could not create session.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handlePeriodUpdate = (e: React.FormEvent<HTMLFormElement>) => {
@@ -66,17 +69,10 @@ export default function StaffSchedulePage() {
       return;
     }
 
-    setCourseList(
-      (prev) =>
-        prev.map((c) =>
-          c.slug === slug ? { ...c, startDate: start, endDate: end } : c
-        ) as typeof courses
-    );
-    
     setIsPeriodsDialogOpen(false);
-    toast({ 
-      title: "Course Period Updated", 
-      description: `Schedule limits set for ${courseList.find(c => c.slug === slug)?.title}` 
+    toast({
+      title: "Course period noted",
+      description: `Period dates noted for ${courseList.find((c) => c.slug === slug)?.title ?? slug}.`,
     });
   };
 

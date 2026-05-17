@@ -127,7 +127,7 @@ const PrintableTESDAForm: React.FC<PrintableTESDAFormProps> = ({ data, refNo }) 
       </div>
 
       {/* SECTION 2: PROFILE */}
-      <div className="bg-[#F5F5F5] border-x border-t border-black p-1 text-xs font-black uppercase">2. PROFILE</div>
+      <div className="tesda-section bg-[#F5F5F5] border-x border-t border-black p-1 text-xs font-black uppercase">2. PROFILE</div>
       <div className="border border-black text-[9px]">
          <div className="p-1 border-b border-black font-bold flex justify-between items-center">
            <span>2.1. Name:</span>
@@ -315,7 +315,7 @@ const PrintableTESDAForm: React.FC<PrintableTESDAFormProps> = ({ data, refNo }) 
       </div>
 
       {/* SECTION 3: WORK EXPERIENCE */}
-      <div className="bg-slate-200 border border-black p-1 text-xs font-black uppercase mt-2 mb-1">3. Work Experience (National Qualification-related)</div>
+      <div className="tesda-section tesda-section-break bg-slate-200 border border-black p-1 text-xs font-black uppercase mt-2 mb-1">3. Work Experience (National Qualification-related)</div>
       <table className="w-full border-collapse border border-black text-[9px] mb-4">
          <thead>
           <tr className="bg-slate-100 text-[8px] font-bold">
@@ -533,17 +533,49 @@ const PrintableTESDAForm: React.FC<PrintableTESDAFormProps> = ({ data, refNo }) 
 
       <style dangerouslySetInnerHTML={{ __html: `
         @media print {
+          @page {
+            size: letter portrait;
+            margin: 0.35in;
+          }
+          html, body {
+            height: auto !important;
+            overflow: visible !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
           body * { visibility: hidden; }
-          #printable-form, #printable-form * { visibility: visible; }
+          .print-modal-overlay,
+          .print-modal-overlay .print-preview-shell {
+            position: static !important;
+            overflow: visible !important;
+            max-height: none !important;
+            background: white !important;
+          }
+          #printable-form,
+          #printable-form * {
+            visibility: visible;
+          }
           #printable-form {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: auto;
-            border: none;
-            padding: 0;
-            margin: 0;
+            position: static !important;
+            left: auto !important;
+            top: auto !important;
+            width: 7.8in !important;
+            max-width: 100% !important;
+            height: auto !important;
+            border: none !important;
+            padding: 0 !important;
+            margin: 0 auto !important;
+            box-shadow: none !important;
+            overflow: visible !important;
+          }
+          #printable-form table,
+          #printable-form .tesda-section {
+            break-inside: avoid;
+            page-break-inside: avoid;
+          }
+          #printable-form .tesda-section-break {
+            break-before: page;
+            page-break-before: always;
           }
           .no-print { display: none !important; }
         }

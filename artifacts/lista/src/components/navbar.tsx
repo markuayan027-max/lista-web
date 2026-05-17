@@ -1,9 +1,11 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Menu, X, GraduationCap } from "lucide-react";
+import { Menu } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { useAuth } from "@/context/auth-context";
+import { getEnrollCta } from "@/lib/role-navigation";
 
 const NAV_LINKS = [
   { href: "/", label: "Home" },
@@ -17,6 +19,8 @@ const NAV_LINKS = [
 export default function Navbar() {
   const [location] = useLocation();
   const [isScrolled, setIsScrolled] = useState(false);
+  const { user, isRegistered } = useAuth();
+  const enrollCta = getEnrollCta(user, isRegistered);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -75,10 +79,9 @@ export default function Navbar() {
             <Link href="/login" className="text-sm font-bold text-slate-500 hover:text-primary-indigo transition-colors whitespace-nowrap">
               Log in
             </Link>
-            {/* 2026-05-13: single application entrypoint */}
-            <Link href="/trainee/register">
+            <Link href={enrollCta.href}>
               <Button className="rounded-full px-8 h-11 font-black bg-primary-indigo hover:bg-slate-900 text-white border-none shadow-lg shadow-primary-indigo/20 transition-all active:scale-95 whitespace-nowrap">
-                Enroll Now
+                {enrollCta.label}
               </Button>
             </Link>
           </div>
@@ -111,9 +114,9 @@ export default function Navbar() {
                     <Link href="/login" className="text-lg font-bold text-muted-foreground">
                       Log in
                     </Link>
-                    <Link href="/trainee/register">
+                    <Link href={enrollCta.href}>
                       <Button className="w-full rounded-xl py-6 text-lg font-bold">
-                        Enroll now
+                        {enrollCta.label}
                       </Button>
                     </Link>
                   </div>

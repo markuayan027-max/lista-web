@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, Clock, MapPin, User as UserIcon, Calendar as CalendarIcon, BookOpen, LayoutGrid, Calendar as CalendarMonthIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { schedules, courses, enrollments } from "@/lib/institutional-data";
+import { useCourses, useSchedules } from "@/hooks/use-lista-data";
+import { courseTitleBySlug } from "@/lib/lista-insforge-data";
+import { fetchTraineeEnrollmentByEmail } from "@/lib/trainee-enrollment-insforge";
 import { format, addDays, startOfWeek, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, endOfWeek } from "date-fns";
 import { useAuth } from "@/context/auth-context";
 import { loadLocalProfile } from "@/lib/profile-utils";
@@ -11,8 +13,19 @@ import { cn } from "@/lib/utils";
 
 export default function TraineeSchedulePage() {
   const { user } = useAuth();
-  const [currentDate, setCurrentDate] = useState(new Date()); 
+  const { data: schedules = [] } = useSchedules();
+  const { data: courses = [] } = useCourses();
+  const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<"week" | "month">("week");
+  const [userEnrollment, setUserEnrollment] = useState<{ courseSlug?: string } | null>(null);
+
+  useEffect(() => {
+    if (user?.email) {
+      fetchTraineeEnrollmentByEmail(user.email).then((res) => {
+        if (res.success && res.data) setUserEnrollment(res.data as { courseSlug?: string });
+      });
+    }
+  }, [user?.email]);
   
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
   const weekDays = Array.from({ length: 7 }).map((_, i) => addDays(weekStart, i));
@@ -24,13 +37,11 @@ export default function TraineeSchedulePage() {
   const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
   const calendarDays = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
 
-  // Dynamically determine the trainee's course
-  const userEnrollment = enrollments.find(e => e.traineeEmail === user?.email);
   const draft = loadLocalProfile();
   const myEnrollment = userEnrollment || draft;
-  
-  const myCourse = myEnrollment?.courseSlug ? courses.find(c => c.slug === myEnrollment.courseSlug) : null;
-  const mySchedules = myCourse ? schedules.filter(s => s.courseSlug === myCourse.slug) : [];
+  const myCourseSlug = myEnrollment?.courseSlug;
+  const myCourseTitle = myCourseSlug ? courseTitleBySlug(courses, myCourseSlug) : null;
+  const mySchedules = myCourseSlug ? schedules.filter((s) => s.courseSlug === myCourseSlug) : [];
 
   const nextRange = () => setCurrentDate(addDays(currentDate, view === "week" ? 7 : 30));
   const prevRange = () => setCurrentDate(addDays(currentDate, view === "week" ? -7 : -30));
@@ -46,22 +57,14 @@ export default function TraineeSchedulePage() {
         <div className="space-y-1">
           <h1 className="text-3xl font-black tracking-tight text-slate-900">Class Schedule</h1>
           <p className="text-muted-foreground font-medium">Your upcoming sessions and events</p>
-          {myCourse ? (
+          {myCourseTitle ? (
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-3">
               <div className="flex items-center gap-2 bg-primary/5 px-3 py-1 rounded-full border border-primary/10">
                 <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                 <span className="text-xs font-bold text-primary uppercase tracking-wider">
-                  {myCourse.title}
+                  {myCourseTitle}
                 </span>
               </div>
-              {myCourse.startDate && myCourse.endDate && (
-                <div className="flex items-center gap-2 text-slate-500 bg-slate-50 px-3 py-1 rounded-full border border-slate-200">
-                  <CalendarIcon className="h-3.5 w-3.5" />
-                  <span className="text-xs font-bold uppercase tracking-tight">
-                    {format(new Date(myCourse.startDate), "MMM dd")} – {format(new Date(myCourse.endDate), "MMM dd, yyyy")}
-                  </span>
-                </div>
-              )}
             </div>
           ) : (
             <div className="flex items-center gap-2 mt-2 text-amber-600 bg-amber-50 px-3 py-1 rounded-full border border-amber-100 w-fit">
@@ -152,7 +155,7 @@ export default function TraineeSchedulePage() {
                   <div className="flex-1 flex flex-col gap-3 min-h-[120px]">
                     {daySchedules.length > 0 ? (
                       daySchedules.map((schedule) => {
-                        const course = courses.find(c => c.slug === schedule.courseSlug);
+                        const courseTitle = courseTitleBySlug(courses, schedule.courseSlug);
                         return (
                           <motion.div
                             key={schedule.id}
@@ -167,7 +170,7 @@ export default function TraineeSchedulePage() {
                                   {schedule.startTime} - {schedule.endTime}
                                 </div>
                                 <h4 className="text-sm font-bold text-slate-800 leading-tight mb-3 group-hover/item:text-primary transition-colors">
-                                  {course?.title || schedule.courseSlug}
+                                  {courseTitle || schedule.courseSlug}
                                 </h4>
                                 <div className="space-y-2">
                                   <div className="flex items-center text-[11px] font-bold text-slate-500 bg-white/60 w-fit px-2 py-1 rounded-md border border-slate-100">

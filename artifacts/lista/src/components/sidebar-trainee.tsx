@@ -8,6 +8,8 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/context/auth-context";
 import AvatarInitials from "@/components/avatar-initials";
 import { loadProfilePic } from "@/lib/profile-utils";
+import { useAnnouncements } from "@/hooks/use-lista-data";
+import { announcementCountForRole } from "@/lib/analytics-utils";
 
 const MAIN_MENU = [
   { href: "/trainee", label: "Dashboard", icon: Home },
@@ -66,7 +68,11 @@ export default function SidebarTrainee() {
                 <Bell className={cn("h-4 w-4", location === "/trainee/announcements" ? "text-indigo-600" : "text-zinc-400")} />
                 <span>Notifications</span>
               </div>
-              <span className="text-[10px] font-medium bg-zinc-200/70 text-zinc-600 px-1.5 py-0.5 rounded-md">3</span>
+              {announcementCount > 0 && (
+                <span className="text-[10px] font-medium bg-zinc-200/70 text-zinc-600 px-1.5 py-0.5 rounded-md">
+                  {announcementCount}
+                </span>
+              )}
             </div>
           </Link>
         </div>

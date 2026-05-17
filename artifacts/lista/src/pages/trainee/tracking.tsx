@@ -14,7 +14,8 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
-import { courses } from "@/lib/institutional-data";
+import { useCourses } from "@/hooks/use-lista-data";
+import { courseTitleBySlug } from "@/lib/lista-insforge-data";
 import type { Enrollment } from "@/lib/institutional-data";
 import { fetchTraineeEnrollmentByEmail, updateTraineeEnrollmentByEmail } from "@/lib/trainee-enrollment-insforge";
 import { useToast } from "@/hooks/use-toast";
@@ -37,6 +38,7 @@ const item = {
 export default function TraineeTrackingPage() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { data: courses = [] } = useCourses();
   const [userEnrollment, setUserEnrollment] = useState<Enrollment | null>(null);
   const [isFetching, setIsFetching] = useState(true);
   const [isCancelling, setIsCancelling] = useState(false);
@@ -135,7 +137,7 @@ export default function TraineeTrackingPage() {
                     <span className="text-gray-500 text-sm font-medium">Ref: {userEnrollment.refNo}</span>
                   </div>
                   <h3 className="text-xl font-black text-gray-900">
-                    {courses.find(c => c.slug === userEnrollment.courseSlug)?.title || "Course"}
+                    {courseTitleBySlug(courses, userEnrollment.courseSlug) || "Course"}
                   </h3>
                   <p className="text-sm text-gray-500 font-medium mt-1">Submitted on {new Date(userEnrollment.createdAt).toLocaleDateString()}</p>
                 </div>

@@ -5,7 +5,7 @@ import { ArrowRight, RefreshCw } from "lucide-react";
 import PrimaryButton from "@/components/primary-button";
 import CourseCard from "@/components/course-card";
 import { Progress } from "@/components/ui/progress";
-import { courses } from "@/lib/institutional-data";
+import { useCourses } from "@/hooks/use-lista-data";
 
 type AssessmentOption = { text: string; category?: string; score?: string };
 type AssessmentQuestion = { id: number; text: string; options: AssessmentOption[] };
@@ -72,6 +72,7 @@ export default function AssessmentPage() {
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [showResults, setShowResults] = useState(false);
+  const { data: courses = [] } = useCourses();
 
   const handleStart = () => setStarted(true);
 

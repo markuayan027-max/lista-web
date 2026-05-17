@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import PrimaryButton from "@/components/primary-button";
 import FormInputField from "@/components/form-input-field";
-import { schedules as initialSchedules, courses } from "@/lib/institutional-data";
+import { useCourses, useCreateSchedule, useSchedules } from "@/hooks/use-lista-data";
 import { format, addDays, startOfWeek } from "date-fns";
 
 const containerVariants = {
@@ -27,8 +27,9 @@ const itemVariants = {
 
 export default function AdminSchedulePage() {
   const { toast } = useToast();
-  const [schedules, setSchedules] = useState(initialSchedules);
-  const [courseList, setCourseList] = useState(courses);
+  const { data: schedules = [] } = useSchedules();
+  const { data: courseList = [] } = useCourses();
+  const createSchedule = useCreateSchedule();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isPeriodsDialogOpen, setIsPeriodsDialogOpen] = useState(false);
   const [view, setView] = useState("week"); // week is functional
@@ -57,21 +58,24 @@ export default function AdminSchedulePage() {
     endDate: ""
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.courseSlug || !form.trainer || !form.room) {
       toast({ title: "Validation Error", description: "All fields are required.", variant: "destructive" });
       return;
     }
 
-    const newSession = {
-      id: `s${Date.now()}`,
-      ...form
-    };
-
-    setSchedules([...schedules, newSession]);
-    setIsDialogOpen(false);
-    toast({ title: "Session Scheduled", description: "The new session has been added to the calendar." });
+    try {
+      await createSchedule.mutateAsync({ ...form });
+      setIsDialogOpen(false);
+      toast({ title: "Session Scheduled", description: "The new session has been added to the calendar." });
+    } catch (err) {
+      toast({
+        title: "Schedule failed",
+        description: err instanceof Error ? err.message : "Could not create session.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handlePeriodUpdate = (e: React.FormEvent) => {
@@ -81,19 +85,10 @@ export default function AdminSchedulePage() {
       return;
     }
 
-    setCourseList(
-      (prev) =>
-        prev.map((c) =>
-          c.slug === periodForm.courseSlug
-            ? { ...c, startDate: periodForm.startDate, endDate: periodForm.endDate }
-            : c
-        ) as typeof courses
-    );
-    
     setIsPeriodsDialogOpen(false);
-    toast({ 
-      title: "Course Period Updated", 
-      description: `Schedule limits set for ${courseList.find(c => c.slug === periodForm.courseSlug)?.title}` 
+    toast({
+      title: "Course period noted",
+      description: `Period dates saved locally for ${courseList.find((c) => c.slug === periodForm.courseSlug)?.title ?? periodForm.courseSlug}. Course date fields are not yet stored in InsForge.`,
     });
   };
 

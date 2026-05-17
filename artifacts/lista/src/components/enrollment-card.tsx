@@ -1,7 +1,8 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import StatusBadge from "./status-badge";
-import { courses } from "@/lib/institutional-data";
+import { useCourses } from "@/hooks/use-lista-data";
+import { courseTitleBySlug } from "@/lib/lista-insforge-data";
 import { format } from "date-fns";
 
 interface Enrollment {
@@ -18,7 +19,8 @@ interface EnrollmentCardProps {
 }
 
 export default function EnrollmentCard({ enrollment, className }: EnrollmentCardProps) {
-  const course = courses.find((c) => c.slug === enrollment.courseSlug);
+  const { data: courses = [] } = useCourses();
+  const courseTitle = courseTitleBySlug(courses, enrollment.courseSlug);
 
   return (
     <Card className={cn("overflow-hidden border-card-border shadow-sm", className)}>
@@ -33,7 +35,7 @@ export default function EnrollmentCard({ enrollment, className }: EnrollmentCard
             </div>
             <h4 className="font-bold text-lg">{enrollment.traineeName}</h4>
             <p className="text-sm text-muted-foreground font-medium">
-              {course?.title || enrollment.courseSlug}
+              {courseTitle}
             </p>
           </div>
           <div className="text-left sm:text-right">

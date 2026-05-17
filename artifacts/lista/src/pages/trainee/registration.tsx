@@ -31,13 +31,16 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { courses, type Enrollment } from "@/lib/institutional-data";
+import { useCourses } from "@/hooks/use-lista-data";
+import type { Enrollment } from "@/lib/institutional-data";
 import { exportSingleTraineeToExcel, exportSingleTraineeToWord } from "@/lib/export-utils";
 import { fetchTraineeEnrollmentByEmail, registerTraineeFromForm } from "@/lib/trainee-enrollment-insforge";
 import { 
   saveLocalProfile, 
   loadLocalProfile, 
-  clearLocalProfile
+  buildRegistrationDraft,
+  isRegistrationStepComplete,
+  maxCompletedRegistrationStep,
 } from "@/lib/profile-utils";
 
 const STEPS = [
@@ -49,6 +52,7 @@ const STEPS = [
 
 export default function TraineeRegistrationPage() {
   const { user, completeRegistration } = useAuth();
+  const { data: courses = [] } = useCourses();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(1);
@@ -99,10 +103,10 @@ export default function TraineeRegistrationPage() {
     homeAddress: "",
     barangay: "",
     district: "",
-    city: "Gingoog City",
-    province: "Misamis Oriental",
-    region: "Region X — Northern Mindanao",
-    zipCode: "9014",
+    city: "",
+    province: "",
+    region: "",
+    zipCode: "",
     
     // ── Education ──
     education: "Senior High School Graduate",
@@ -233,17 +237,18 @@ export default function TraineeRegistrationPage() {
         initialData.courseSlug = urlCourse;
       }
 
+      const completed = maxCompletedRegistrationStep(initialData);
+      const scoped = buildRegistrationDraft(initialData as Enrollment, completed, {
+        authEmail: user?.email,
+      });
+      initialData = { ...initialData, ...scoped } as Enrollment;
+
       // Step 5: Update state and mark as loaded
       setFormData(initialData as Enrollment);
       setIsLoaded(true);
 
-      // Step 6: Smart Step Navigation
-      // Check if Step 1-3 (Personal/Contact/Education) are already satisfied
-      const s1Valid = !!(initialData.firstName && initialData.lastName && initialData.dob && initialData.birthPlace);
-      const s2Valid = !!(initialData.mobileNumber && initialData.homeAddress && initialData.barangay);
-      const s3Valid = !!(initialData.schoolLastAttended && initialData.yearGraduated);
-
-      if (s1Valid && s2Valid && s3Valid) {
+      // Step 6: Smart Step Navigation — only when each phase was actually completed
+      if (completed >= 3) {
         // If they have a course intent (from URL or saved), go to Step 4 (Program Selection/Confirmation)
         if (urlCourse || initialData.courseSlug) {
           setCurrentStep(4);
@@ -257,16 +262,18 @@ export default function TraineeRegistrationPage() {
     fetchExistingProfile();
   }, [user?.email]);
 
-  // Auto-save whenever formData changes, but ONLY after initial load is complete
+  // Auto-save only fields for steps the user has reached (avoids phantom step-2+ prefills)
   useEffect(() => {
     if (isLoaded) {
-      saveLocalProfile(formData);
+      saveLocalProfile(
+        buildRegistrationDraft(formData, currentStep, { authEmail: user?.email }),
+      );
     }
     // Expose formData to window for Playwright debugging in test mode
-    if (localStorage.getItem('TEST_MODE') === 'true') {
+    if (import.meta.env.DEV && localStorage.getItem("TEST_MODE") === "true") {
       (window as any).formData = formData;
     }
-  }, [formData, isLoaded]);
+  }, [formData, isLoaded, currentStep, user?.email]);
 
   const stepProgress = Math.round((currentStep / STEPS.length) * 100);
 
@@ -288,14 +295,16 @@ export default function TraineeRegistrationPage() {
   }, []);
 
   const isStepValid = () => {
-    if (currentStep === 1) {
-      return !!(formData.firstName && formData.lastName && formData.dob && formData.birthPlace && formData.nationality && formData.gender && formData.civilStatus);
-    } else if (currentStep === 2) {
-      return !!(formData.mobileNumber && formData.homeAddress && formData.barangay);
-    } else if (currentStep === 3) {
-      return !!(formData.schoolLastAttended && formData.yearGraduated);
-    }
+    if (currentStep === 1) return isRegistrationStepComplete(1, formData);
+    if (currentStep === 2) return isRegistrationStepComplete(2, formData);
+    if (currentStep === 3) return isRegistrationStepComplete(3, formData);
     return true;
+  };
+
+  const persistDraft = (maxStep: number) => {
+    saveLocalProfile(
+      buildRegistrationDraft(formData, maxStep, { authEmail: user?.email }),
+    );
   };
 
   const nextStep = async () => {
@@ -331,8 +340,31 @@ export default function TraineeRegistrationPage() {
   };
 
   const handleSkipForNow = () => {
-    // Save current progress before skipping
-    saveLocalProfile(formData);
+    const completed = maxCompletedRegistrationStep(formData);
+    if (completed === 0) {
+      toast({
+        title: "Complete Step 1 First",
+        description: "Fill in your identity details before leaving, or use Save & Exit after step 1 is complete.",
+        variant: "destructive",
+      });
+      return;
+    }
+    persistDraft(completed);
+    completeRegistration();
+    setLocation("/trainee");
+  };
+
+  const handleSaveAndExit = () => {
+    if (currentStep === 1 && !isStepValid()) {
+      toast({
+        title: "Required Info Missing",
+        description: "Please fill in all identity details before saving.",
+        variant: "destructive",
+      });
+      return;
+    }
+    const completed = isStepValid() ? currentStep : Math.max(0, currentStep - 1);
+    persistDraft(completed);
     completeRegistration();
     setLocation("/trainee");
   };
@@ -350,7 +382,9 @@ export default function TraineeRegistrationPage() {
 
       // Ensure data is saved as a permanent pre-filled profile
       setFormData(submissionData);
-      saveLocalProfile(submissionData);
+      saveLocalProfile(
+        buildRegistrationDraft(submissionData, 3, { authEmail: user?.email }),
+      );
       
       completeRegistration();
       setIsFinished(true);
@@ -495,7 +529,7 @@ export default function TraineeRegistrationPage() {
            <Button 
             variant="ghost" 
             className="w-full justify-start text-zinc-400 hover:text-zinc-900 gap-3 text-xs font-semibold"
-            onClick={handleSkipForNow}
+            onClick={handleSaveAndExit}
            >
              <ArrowLeft className="h-4 w-4" /> Save & Exit
            </Button>
@@ -716,11 +750,11 @@ export default function TraineeRegistrationPage() {
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                               <div className="space-y-2">
                                 <label className="text-xs font-semibold text-zinc-700">City/Municipality</label>
-                                <Input className="h-10 border-zinc-200 rounded-md" value={formData.city} onChange={e => updateForm({ city: e.target.value })} />
+                                <Input className="h-10 border-zinc-200 rounded-md" placeholder="e.g., Gingoog City" value={formData.city} onChange={e => updateForm({ city: e.target.value })} />
                               </div>
                               <div className="space-y-2">
                                 <label className="text-xs font-semibold text-zinc-700">Province</label>
-                                <Input className="h-10 border-zinc-200 rounded-md" value={formData.province} onChange={e => updateForm({ province: e.target.value })} />
+                                <Input className="h-10 border-zinc-200 rounded-md" placeholder="e.g., Misamis Oriental" value={formData.province} onChange={e => updateForm({ province: e.target.value })} />
                               </div>
                               <div className="space-y-2">
                                 <label className="text-xs font-semibold text-zinc-700">Region</label>
@@ -965,6 +999,7 @@ export default function TraineeRegistrationPage() {
                               ? "bg-zinc-900 text-white hover:bg-zinc-800 shadow-xl shadow-zinc-100 active:scale-[0.98]" 
                               : "bg-zinc-100 text-zinc-400 cursor-not-allowed opacity-50"
                           )}
+                          disabled={!isStepValid()}
                           onClick={nextStep}
                         >
                           Continue <ArrowRight className="ml-2 h-3.5 w-3.5" />

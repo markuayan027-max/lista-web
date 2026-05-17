@@ -39,7 +39,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     <div className="flex h-screen bg-muted/30 overflow-hidden">
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex h-full shrink-0">
-        <ModernSidebar menuItems={ADMIN_MENU} roleName="Administrator" logoHref="/admin" />
+        <ModernSidebar
+          menuItems={ADMIN_MENU}
+          roleName="Administrator"
+          logoHref="/admin"
+          announcementRole="admin"
+        />
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">

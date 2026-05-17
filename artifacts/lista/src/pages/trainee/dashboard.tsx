@@ -19,7 +19,8 @@ import StatCard from "@/components/stat-card";
 import AnnouncementCard from "@/components/announcement-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { courses, schedules, announcements, certificates } from "@/lib/institutional-data";
+import { useAnnouncements, useCourses, useDerivedCertificates, useSchedules } from "@/hooks/use-lista-data";
+import { courseTitleBySlug } from "@/lib/lista-insforge-data";
 import type { Enrollment } from "@/lib/institutional-data";
 import { format } from "date-fns";
 import { calculateProfileCompletion, loadLocalProfile } from "@/lib/profile-utils";
@@ -43,6 +44,10 @@ const item = {
 export default function TraineeDashboardPage() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { data: courses = [] } = useCourses();
+  const { data: schedules = [] } = useSchedules();
+  const { data: announcements = [] } = useAnnouncements();
+  const { data: certificates = [] } = useDerivedCertificates();
   const [printTarget, setPrintTarget] = useState<any>(null);
   const [isCancelling, setIsCancelling] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -100,8 +105,9 @@ export default function TraineeDashboardPage() {
   const profileIncomplete = completionPercentage < 100;
   const displayPercentage = completionPercentage;
 
-  const myCourse = myEnrollment?.courseSlug ? courses.find(c => c.slug === myEnrollment.courseSlug) : null;
-  const mySchedules = myCourse ? schedules.filter(s => s.courseSlug === myCourse.slug).slice(0, 3) : [];
+  const myCourseSlug = myEnrollment?.courseSlug;
+  const myCourseTitle = myCourseSlug ? courseTitleBySlug(courses, myCourseSlug) : null;
+  const mySchedules = myCourseSlug ? schedules.filter((s) => s.courseSlug === myCourseSlug).slice(0, 3) : [];
   const recentAnnouncements = announcements
     .filter(a => a.targetRole === "all" || a.targetRole === "trainee");
 
@@ -197,7 +203,7 @@ export default function TraineeDashboardPage() {
         <motion.div variants={item}>
           <StatCard
             label="Enrolled Course"
-            value={myCourse?.title || "None"}
+            value={myCourseTitle || "None"}
             icon={BookOpen}
             className="h-full"
           />

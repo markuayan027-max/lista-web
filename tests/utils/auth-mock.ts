@@ -1,69 +1,110 @@
-import { Page } from '@playwright/test';
+import type { Page } from "@playwright/test";
+
+export type MockAuthRole = "trainee" | "staff" | "admin";
+
+export type MockAuthOptions = {
+  /** DEV-only RBAC bypass in App.tsx — default true for smoke tests; false for RBAC redirect tests */
+  testMode?: boolean;
+};
 
 /**
- * Mocks the Auth state for Playwright tests.
- * This bypasses real redirects and populates LocalStorage/Network requests.
+ * Mocks InsForge auth + lista_session so Protected routes load with the given role.
  */
-export async function mockAuthState(page: Page, role: 'trainee' | 'staff' | 'admin' = 'trainee') {
+export async function mockAuthState(
+  page: Page,
+  role: MockAuthRole = "trainee",
+  options: MockAuthOptions = {},
+) {
+  const { testMode = true } = options;
   const userId = `test-${role}-id`;
   const email = `${role}@example.com`;
-  
-  // 1. Mock Supabase/InsForge Auth API
-  await page.route('**/auth/v1/user', async route => {
+  const displayName = `Test ${role.charAt(0).toUpperCase()}${role.slice(1)}`;
+
+  const insforgeUser = {
+    id: userId,
+    aud: "authenticated",
+    role: "authenticated",
+    email,
+    app_metadata: { provider: "email", providers: ["email"], role },
+    user_metadata: { full_name: displayName, name: displayName, role },
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+
+  const sessionPayload = {
+    accessToken: "mock-access-token",
+    refreshToken: "mock-refresh-token",
+    user: insforgeUser,
+  };
+
+  await page.route("**/api/auth/sessions/current", async (route) => {
     await route.fulfill({
       status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({
-        id: userId,
-        aud: 'authenticated',
-        role: 'authenticated',
-        email: email,
-        app_metadata: { provider: 'email', providers: ['email'], role: role },
-        user_metadata: { full_name: `Test ${role.charAt(0).toUpperCase() + role.slice(1)}`, role: role },
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      })
+      contentType: "application/json",
+      body: JSON.stringify(sessionPayload),
     });
   });
 
-  await page.route('**/auth/v1/session', async route => {
+  await page.route("**/api/auth/refresh**", async (route) => {
     await route.fulfill({
       status: 200,
-      contentType: 'application/json',
+      contentType: "application/json",
+      body: JSON.stringify(sessionPayload),
+    });
+  });
+
+  await page.route("**/auth/v1/user", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify(insforgeUser),
+    });
+  });
+
+  await page.route("**/auth/v1/session", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
       body: JSON.stringify({
-        access_token: 'mock-token',
-        token_type: 'bearer',
+        access_token: sessionPayload.accessToken,
+        token_type: "bearer",
         expires_in: 3600,
-        refresh_token: 'mock-refresh-token',
-        user: {
-          id: userId,
-          email: email,
-          app_metadata: { role: role },
-          user_metadata: { role: role },
-          role: 'authenticated'
-        }
-      })
+        refresh_token: sessionPayload.refreshToken,
+        user: insforgeUser,
+      }),
     });
   });
 
-  // 2. Pre-populate LocalStorage
-  await page.addInitScript(({ userId, email, role }) => {
-    const mockSession = {
-      access_token: 'mock-token',
-      refresh_token: 'mock-refresh-token',
-      expires_at: Math.floor(Date.now() / 1000) + 3600,
-      user: { 
-        id: userId, 
-        email: email, 
-        app_metadata: { role: role },
-        role: 'authenticated'
+  await page.route("**/api/database/records/users**", async (route) => {
+    if (route.request().method() === "GET") {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify([
+          {
+            id: userId,
+            email,
+            first_name: displayName.split(" ")[0],
+            last_name: displayName.split(" ").slice(1).join(" ") || "User",
+            role,
+          },
+        ]),
+      });
+      return;
+    }
+    await route.continue();
+  });
+
+  await page.addInitScript(
+    ({ sessionPayload, testMode, userId }) => {
+      window.localStorage.setItem("lista_session", JSON.stringify(sessionPayload));
+      if (testMode) {
+        window.localStorage.setItem("TEST_MODE", "true");
+      } else {
+        window.localStorage.removeItem("TEST_MODE");
       }
-    };
-    
-    // Find the supabase key in localstorage if it exists, or use a default one
-    // The key format is usually sb-<project-id>-auth-token
-    window.localStorage.setItem('sb-2r6c3q25-auth-token', JSON.stringify(mockSession));
-    window.localStorage.setItem('TEST_MODE', 'true');
-    window.localStorage.setItem(`reg_${userId}`, 'false');
-  }, { userId, email, role });
+      window.localStorage.setItem(`reg_${userId}`, "true");
+    },
+    { sessionPayload, testMode, userId },
+  );
 }

@@ -72,7 +72,7 @@ function Protected({
   useEffect(() => {
     if (loading) return;
     if (user) return;
-    if (localStorage.getItem("TEST_MODE") === "true") return;
+    if (import.meta.env.DEV && localStorage.getItem("TEST_MODE") === "true") return;
     setLocation("/login");
   }, [user, loading, setLocation]);
 
@@ -85,14 +85,14 @@ function Protected({
   }
 
   if (!user) {
-    if (localStorage.getItem('TEST_MODE') === 'true') {
+    if (import.meta.env.DEV && localStorage.getItem("TEST_MODE") === "true") {
       return <Layout>{children}</Layout>;
     }
     return null;
   }
 
   if (user.role !== allowedRole) {
-    if (localStorage.getItem('TEST_MODE') === 'true') {
+    if (import.meta.env.DEV && localStorage.getItem("TEST_MODE") === "true") {
       return <Layout>{children}</Layout>;
     }
     

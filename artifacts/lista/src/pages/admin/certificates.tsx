@@ -8,7 +8,13 @@ import { Button } from "@/components/ui/button";
 import StatusBadge from "@/components/status-badge";
 import PrimaryButton from "@/components/primary-button";
 import { useToast } from "@/hooks/use-toast";
-import { certificates as initialCertificates, courses, users } from "@/lib/institutional-data";
+import {
+  useCourses,
+  useDerivedCertificates,
+  useEnrollments,
+  useUpdateEnrollmentStatus,
+  useUsers,
+} from "@/hooks/use-lista-data";
 import { format } from "date-fns";
 
 const containerVariants = {
@@ -37,47 +43,63 @@ type AdminCertificate = {
 
 export default function AdminCertificatesPage() {
   const { toast } = useToast();
-  const [certificates, setCertificates] = useState<AdminCertificate[]>(
-    initialCertificates as AdminCertificate[]
-  );
-  
-  const [form, setForm] = useState({ userId: "", courseSlug: "" });
-  const trainees = users.filter(u => u.role === 'trainee');
+  const { data: certificates = [] } = useDerivedCertificates();
+  const { data: courses = [] } = useCourses();
+  const { data: users = [] } = useUsers();
+  const { data: enrollments = [] } = useEnrollments();
+  const updateStatus = useUpdateEnrollmentStatus();
 
-  const handleIssue = (e: React.FormEvent) => {
+  const [form, setForm] = useState({ userId: "", courseSlug: "" });
+  const trainees = users.filter((u) => u.role === "trainee");
+
+  const handleIssue = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.userId || !form.courseSlug) {
       toast({ title: "Error", description: "Select trainee and course.", variant: "destructive" });
       return;
     }
 
-    const course = courses.find(c => c.slug === form.courseSlug);
-    const newCert = {
-      id: `cert${Date.now()}`,
-      userId: form.userId,
-      courseSlug: form.courseSlug,
-      ncLevel: course?.ncLevel ?? "NC II",
-      status: "issued" as const,
-      progressStage: "passed" as const,
-      issuedAt: new Date().toISOString(),
-      fileUrl: "#"
-    };
+    const enrollment = enrollments.find(
+      (en) => en.userId === form.userId && en.courseSlug === form.courseSlug,
+    );
+    if (!enrollment) {
+      toast({
+        title: "No enrollment found",
+        description: "This trainee has no enrollment for the selected course.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    setCertificates([newCert, ...certificates]);
-    setForm({ userId: "", courseSlug: "" });
-    toast({
-      title: "Certificate Issued",
-      description: "Digital certificate has been generated successfully.",
-    });
+    try {
+      await updateStatus.mutateAsync({ id: enrollment.id, status: "completed" });
+      toast({ title: "Certificate issued", description: "Enrollment marked as completed." });
+      setForm({ userId: "", courseSlug: "" });
+    } catch (err) {
+      toast({
+        title: "Issue failed",
+        description: err instanceof Error ? err.message : "Could not update enrollment.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleRevoke = (id: string) => {
-    setCertificates(certificates.map(c => c.id === id ? { ...c, status: "rejected" } : c));
-    toast({
-      title: "Certificate Revoked",
-      description: "The certificate has been marked as invalid.",
-      variant: "destructive"
-    });
+  const handleRevoke = async (certId: string) => {
+    const enrollmentId = certId.replace(/^cert-/, "");
+    try {
+      await updateStatus.mutateAsync({ id: enrollmentId, status: "rejected" });
+      toast({
+        title: "Certificate Revoked",
+        description: "Enrollment status updated; certificate no longer issued.",
+        variant: "destructive",
+      });
+    } catch (err) {
+      toast({
+        title: "Revoke failed",
+        description: err instanceof Error ? err.message : "Could not update enrollment.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (

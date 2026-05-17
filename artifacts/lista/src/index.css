@@ -187,3 +187,22 @@
     scrollbar-width: none;
   }
 }
+
+/* TESDA print modal — keeps multi-page forms from being clipped by app shells */
+@media print {
+  .print-modal-overlay {
+    position: static !important;
+    overflow: visible !important;
+    background: #fff !important;
+  }
+
+  .print-modal-overlay .print-preview-shell {
+    overflow: visible !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+}

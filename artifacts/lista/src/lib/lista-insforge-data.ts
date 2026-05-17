@@ -104,6 +104,21 @@ export function rowToCourse(row: Record<string, unknown>): Course {
   const duration = str(row.duration);
   const hoursMatch = duration.match(/(\d+)/);
   const twsp = row.twsp_scholarship === true || row.twsp_scholarship === "true";
+  const tags: string[] = twsp ? ["TWSP"] : [];
+  if (row.is_bestseller === true || row.is_bestseller === "true") tags.push("Bestseller");
+  const feeRaw = row.fee_amount ?? row.fee;
+  const fee =
+    feeRaw != null && feeRaw !== "" && !Number.isNaN(Number(feeRaw)) ? Number(feeRaw) : null;
+  const originalRaw = row.original_fee_amount ?? row.original_fee;
+  const originalFee =
+    originalRaw != null && originalRaw !== "" && !Number.isNaN(Number(originalRaw))
+      ? Number(originalRaw)
+      : null;
+  const isAvailable =
+    row.is_available !== false &&
+    row.is_available !== "false" &&
+    row.is_available !== 0;
+
   return {
     id: str(row.id),
     slug: str(row.slug),
@@ -112,12 +127,14 @@ export function rowToCourse(row: Record<string, unknown>): Course {
     category: str(row.sector),
     level: str(row.nc_level),
     twsp,
-    tags: twsp ? ["TWSP"] : [],
+    tags,
     durationHours: hoursMatch ? parseInt(hoursMatch[1], 10) : 0,
     shortDescription: str(row.short_description || row.description).slice(0, 280),
     longDescription: str(row.description),
     galleryImages: row.cover_image_url ? [str(row.cover_image_url)] : [],
-    isAvailable: true,
+    isAvailable,
+    fee: twsp ? null : fee,
+    originalFee: twsp ? null : originalFee,
   };
 }
 

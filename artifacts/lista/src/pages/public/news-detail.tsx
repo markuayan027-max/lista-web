@@ -1,15 +1,28 @@
+import { useMemo } from "react";
 import { useParams, Link } from "wouter";
-import { posts } from "@/lib/institutional-data";
+import { useAnnouncements } from "@/hooks/use-lista-data";
+import { announcementToPost } from "@/lib/lista-insforge-data";
 import { withBase } from "@/lib/with-base";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, Calendar, User, Clock, Share2, ArrowRight } from "lucide-react";
+import { ChevronLeft, Calendar, User, Clock, Share2, ArrowRight, Loader2 } from "lucide-react";
 import NotFound from "@/pages/not-found";
 import { motion } from "framer-motion";
 import PrimaryButton from "@/components/primary-button";
 
 export default function NewsDetailPage() {
   const { id } = useParams();
+  const { data: announcements = [], isLoading } = useAnnouncements();
+  const posts = useMemo(() => announcements.map(announcementToPost), [announcements]);
   const post = posts.find((p) => p.id === id);
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-24 text-muted-foreground gap-2">
+        <Loader2 className="h-6 w-6 animate-spin" />
+        Loading…
+      </div>
+    );
+  }
 
   if (!post) {
     return <NotFound />;

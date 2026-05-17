@@ -21,6 +21,7 @@ export interface User {
   email: string;
   role: UserRole;
   avatarUrl?: string;
+  createdAt?: string;
 }
 
 export const siteConfig = {
@@ -260,8 +261,12 @@ export interface Course {
   trainer?: string;
   galleryImages: string[];
   isAvailable?: boolean;
+  /** Paid program fee (PHP); null when TWSP or fee not set in InsForge. */
+  fee?: number | null;
+  originalFee?: number | null;
 }
 
+/** @deprecated Use useCourses() / fetchCourses() — InsForge `courses` */
 export const courses: Course[] = [
   {
     id: "c1",
@@ -598,6 +603,7 @@ export const scholarshipAnnouncement = "Scholarship slots for Bookkeeping NC III
 // USERS
 // ============================================================================
 
+/** @deprecated Use useUsers() / fetchUsers() — InsForge `public.users` */
 export const users: User[] = [
   { id: "u1", name: "Lina Theresa Zapanta Escudero", email: "lina.escudero@lorenzinternational.org", role: "staff" },
   { id: "u2", name: "Joseph Carlo Hormillada Espiritu", email: "joseph.espiritu@lorenzinternational.org", role: "staff" },
@@ -745,6 +751,7 @@ export interface Enrollment {
   staffNotes?: { note: string; addedBy: string; addedAt: string }[];
 }
 
+/** @deprecated Use useEnrollments() / fetchAllEnrollments() — InsForge `enrollments` */
 export const enrollments: Enrollment[] = [
   {
     id: "e1",

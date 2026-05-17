@@ -11,8 +11,13 @@ import {
 } from "lucide-react";
 import PrimaryButton from "@/components/primary-button";
 import CourseCard from "@/components/course-card";
-import { useGetCourses, useGetTestimonials } from "@workspace/api-client-react";
-import { courses as mockCourses, testimonials as mockTestimonials, posts as mockPosts, schoolInfo, scholarshipSlots } from "@/lib/institutional-data";
+import { useAnnouncements, useCourses, useTestimonials, useUsers } from "@/hooks/use-lista-data";
+import { announcementToPost } from "@/lib/lista-insforge-data";
+import {
+  formatPublicCount,
+  mapCourseToHeroItem,
+  mapTestimonialsForHome,
+} from "@/lib/public-data-utils";
 import { withBase } from "@/lib/with-base";
 const containerVars = {
   hidden: { opacity: 0 },
@@ -24,16 +29,13 @@ const itemVars = {
   show: { opacity: 1, y: 0, transition: { duration: 0.5 } },
 };
 
-const stats = [
-  { value: "1,200+", label: "Graduates", icon: UserCheck },
-  { value: "40+", label: "Programs", icon: Library },
-  { value: "95%", label: "Employment Rate", icon: BriefcaseBusiness },
-  { value: "15+", label: "Years of Excellence", icon: Trophy },
-];
-
 export default function HomePage() {
-  const { data: apiCourses } = useGetCourses();
-  const { data: apiTestimonials } = useGetTestimonials();
+  const { data: liveCourses = [] } = useCourses();
+  const { data: liveTestimonials = [] } = useTestimonials();
+  const { data: announcements = [] } = useAnnouncements();
+  const { data: users = [] } = useUsers();
+  const traineeCount = users.filter((u) => u.role === "trainee").length;
+  const livePosts = useMemo(() => announcements.map(announcementToPost), [announcements]);
   const [activeBenefit, setActiveBenefit] = useState<null | { title: string; desc: string; details: string; icon: any }>(null);
 
   const benefits = [
@@ -65,112 +67,15 @@ export default function HomePage() {
 
 
 
-  const displayCourses = useMemo(() => {
-    type HeroCourse = {
-      id: string;
-      slug: string;
-      name: string;
-      sector: string;
-      ncLevel: string;
-      description: string;
-      shortDescription: string;
-      coverImageUrl?: string;
-      twspScholarship?: string;
-      isFrozen?: boolean;
-    };
+  const displayCourses = useMemo(
+    () => liveCourses.map(mapCourseToHeroItem).slice(0, 8),
+    [liveCourses],
+  );
 
-    // Use all mock courses, but overlay API data if available
-    let courses: HeroCourse[] = mockCourses.map((c) => {
-      const apiOverride = (apiCourses && Array.isArray(apiCourses)) 
-        ? (apiCourses as any[]).find((ac: any) => ac.slug === c.slug || ac.id === c.id) 
-        : null;
-        
-      const slotInfo = scholarshipSlots.find(s => s.courseSlug === c.slug);
-      
-      if (apiOverride) {
-        return {
-          id: apiOverride.id || c.id,
-          slug: apiOverride.slug || c.slug,
-          name: apiOverride.name || c.title,
-          sector: apiOverride.sector || c.category,
-          ncLevel: apiOverride.ncLevel || c.ncLevel,
-          description: apiOverride.description || c.longDescription,
-          shortDescription: apiOverride.shortDescription || c.shortDescription,
-          coverImageUrl: apiOverride.coverImageUrl || c.galleryImages?.[0],
-          twspScholarship: apiOverride.twspScholarship ?? (c.twsp ? "true" : "false"),
-          isFrozen: slotInfo ? slotInfo.available <= 0 : true,
-        };
-      }
-
-      return {
-        id: c.id,
-        slug: c.slug,
-        name: c.title,
-        sector: c.category,
-        ncLevel: c.ncLevel,
-        description: c.longDescription,
-        shortDescription: c.shortDescription,
-        coverImageUrl: c.galleryImages?.[0],
-        twspScholarship: c.twsp ? "true" : "false",
-        isFrozen: slotInfo ? slotInfo.available <= 0 : true,
-      };
-    });
-
-    const paidCourse = {
-      id: "paid-bcl",
-      slug: "basic-computer-literacy",
-      name: "Basic Computer Literacy (BCL)",
-      sector: "ICT Sector",
-      ncLevel: "Paid Course",
-      description: "Master essential computer skills for modern teaching and administrative work. Perfect for fulfilling professional development requirements. Estimated Fee: ₱2,500.",
-      shortDescription: "Master essential computer skills for modern teaching and administrative work. Estimated Fee: ₱2,500.",
-      coverImageUrl: "https://images.unsplash.com/photo-1531297484001-80022131f5a1?auto=format&fit=crop&q=80&w=800",
-      twspScholarship: "false",
-    };
-
-    // Merge paid course at the front, then all others; cap at 8 for homepage
-    return [paidCourse, ...courses].slice(0, 8);
-  }, [apiCourses]);
-
-  const testimonials = useMemo(() => {
-    if (apiTestimonials && Array.isArray(apiTestimonials) && apiTestimonials.length > 0) {
-      return apiTestimonials.slice(0, 3).map((t) => ({
-        id: t.id,
-        quote: t.quote,
-        attribution: t.attribution,
-        name: t.attribution,
-        role: "LISTA Graduate",
-        imageUrl: "/hero.png",
-      }));
-    }
-    const diversifiedTestimonials = [
-      {
-        id: "m-freelancer-1",
-        quote: "As a freelancer, staying competitive is everything. LISTA's Visual Graphic Design program gave me the technical edge I needed. My portfolio now stands out to international clients, and the TESDA certification adds a level of trust that really closes deals.",
-        attribution: "Maria Clara Santos",
-        name: "Maria Clara Santos",
-        role: "FREELANCE GRAPHIC DESIGNER",
-        imageUrl: "/hero.png"
-      },
-      {
-        id: "m-corporate-1",
-        quote: "The administrative workflows I learned at LISTA have completely changed how I manage my team's operations. Our office efficiency has increased by 40%. The programs are practical, direct, and incredibly relevant to today's environment.",
-        attribution: "James Lim",
-        name: "James Lim",
-        role: "OPERATIONS MANAGER",
-        imageUrl: "/hero.png"
-      },
-      {
-        id: "m-deped-1",
-        quote: "I just want to express my gratitude. The training I received here has been incredibly valuable for my career progression. I can say that this training center is 💯% legit. Tested and proven based on my experience.",
-        attribution: "Rosechelle Sumayang",
-        name: "Rosechelle Sumayang",
-        role: "LICENSED PROFESSIONAL TEACHER",
-        imageUrl: "/hero.png"
-      }
-    ];
-    return diversifiedTestimonials;
-  }, [apiTestimonials]);
+  const testimonials = useMemo(
+    () => mapTestimonialsForHome(liveTestimonials),
+    [liveTestimonials],
+  );
 
   return (
     <div className="w-full">
@@ -393,8 +298,12 @@ export default function HomePage() {
                 ))}
               </div>
               <div className="text-left leading-tight">
-                <div className="text-[11px] font-black text-slate-900">12,000+</div>
-                <div className="text-[9px] font-bold text-slate-400 uppercase tracking-tight">Verified Students</div>
+                <motion.div className="text-[11px] font-black text-slate-900">
+                  {traineeCount > 0 ? formatPublicCount(traineeCount) : "—"}
+                </motion.div>
+                <div className="text-[9px] font-bold text-slate-400 uppercase tracking-tight">
+                  {traineeCount > 0 ? "Registered Trainees" : "Join our next cohort"}
+                </motion.div>
               </div>
             </div>
           </div>
@@ -712,7 +621,7 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {mockPosts.slice(0, 6).map((post, i) => (
+            {livePosts.slice(0, 6).map((post, i) => (
               <motion.div
                 key={post.id}
                 className="group flex flex-col bg-white rounded-xl border border-slate-200 overflow-hidden hover:border-blue-200 hover:shadow-md transition-all duration-300"

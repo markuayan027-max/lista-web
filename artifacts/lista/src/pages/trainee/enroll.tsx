@@ -23,12 +23,16 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { courses, type Enrollment } from "@/lib/institutional-data";
+import { useCourses } from "@/hooks/use-lista-data";
+import { courseTitleBySlug } from "@/lib/lista-insforge-data";
+import type { Enrollment } from "@/lib/institutional-data";
 import { exportSingleTraineeToExcel, exportSingleTraineeToWord } from "@/lib/export-utils";
 import { fetchTraineeEnrollmentByEmail, registerTraineeFromForm } from "@/lib/trainee-enrollment-insforge";
 import { 
   saveLocalProfile, 
-  loadLocalProfile, 
+  loadLocalProfile,
+  buildRegistrationDraft,
+  maxCompletedRegistrationStep,
 } from "@/lib/profile-utils";
 
 const STEPS = [
@@ -39,6 +43,7 @@ const STEPS = [
 
 export default function TraineeEnrollPage() {
   const { user } = useAuth();
+  const { data: courses = [] } = useCourses();
   const [location, setLocation] = useLocation();
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(1);
@@ -90,7 +95,15 @@ export default function TraineeEnrollPage() {
       if (!initialData.preferredSchedule) initialData.preferredSchedule = "Full Day (8:00 AM – 5:00 PM)";
       if (!initialData.scholarshipApplication) initialData.scholarshipApplication = "Yes, I want to apply for TWSP";
 
-      setFormData(initialData as Enrollment);
+      const completed = maxCompletedRegistrationStep(initialData);
+      const scoped = {
+        ...initialData,
+        ...buildRegistrationDraft(initialData as Enrollment, completed, {
+          authEmail: user?.email,
+        }),
+      };
+
+      setFormData(scoped as Enrollment);
       setIsLoaded(true);
     };
 
@@ -181,7 +194,7 @@ export default function TraineeEnrollPage() {
             </div>
             <h1 className="text-3xl font-black text-zinc-900 tracking-tight mb-3 uppercase">Application Received</h1>
             <p className="text-zinc-500 text-sm leading-relaxed mb-10 font-medium">
-              Your application for <span className="text-zinc-900 font-bold">{courses.find(c => c.slug === formData.courseSlug)?.title}</span> has been successfully submitted. 
+              Your application for <span className="text-zinc-900 font-bold">{courseTitleBySlug(courses, formData.courseSlug)}</span> has been successfully submitted. 
               Reference: <code className="bg-zinc-100 px-1.5 py-0.5 rounded text-zinc-900 font-mono text-[11px] font-bold">{formData.refNo}</code>
             </p>
 
@@ -441,7 +454,7 @@ export default function TraineeEnrollPage() {
                           <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-6 text-sm">
                             <div className="sm:col-span-2">
                               <span className="block text-xs text-zinc-500 mb-1">Selected Course</span>
-                              <span className="font-medium text-zinc-900">{courses.find(c => c.slug === formData.courseSlug)?.title || "Not selected"}</span>
+                              <span className="font-medium text-zinc-900">{courseTitleBySlug(courses, formData.courseSlug) || "Not selected"}</span>
                             </div>
                             <div>
                               <span className="block text-xs text-zinc-500 mb-1">Schedule</span>
@@ -492,6 +505,7 @@ export default function TraineeEnrollPage() {
                               ? "bg-zinc-900 text-white hover:bg-zinc-800 shadow-xl shadow-zinc-100 active:scale-[0.98]" 
                               : "bg-zinc-100 text-zinc-400 cursor-not-allowed opacity-50"
                           )}
+                          disabled={!isStepValid()}
                           onClick={nextStep}
                         >
                           Continue <ArrowRight className="ml-2 h-3.5 w-3.5" />

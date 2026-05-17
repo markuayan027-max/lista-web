@@ -24,8 +24,6 @@ export default defineConfig({
     trace: 'on-first-retry',
   },
 
-
-
   /* Default: Chromium only for fast local/CI enrollment runs. Set FULL_BROWSER_MATRIX=1 for all browsers. */
   projects: process.env.FULL_BROWSER_MATRIX
     ? [
@@ -43,7 +41,7 @@ export default defineConfig({
     {
       command: "pnpm run dev",
       url: "http://localhost:3001/api/healthz",
-      reuseExistingServer: !process.env.CI,
+      reuseExistingServer: true,
       cwd: "./artifacts/api-server",
       timeout: 180000,
       name: "API Server",
@@ -51,7 +49,7 @@ export default defineConfig({
     {
       command: "pnpm run dev:client",
       url: "http://localhost:5173",
-      reuseExistingServer: !process.env.CI,
+      reuseExistingServer: true,
       cwd: "./artifacts/lista",
       timeout: 120000,
       name: "Vite Dev (lista)",

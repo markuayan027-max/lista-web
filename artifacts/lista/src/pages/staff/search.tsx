@@ -4,13 +4,17 @@ import { Search as SearchIcon, Users, BookOpen, FileText, ChevronRight } from "l
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
-import { users, enrollments, courses } from "@/lib/institutional-data";
+import { useCourses, useEnrollments, useUsers } from "@/hooks/use-lista-data";
+import { courseTitleBySlug } from "@/lib/lista-insforge-data";
 import StatusBadge from "@/components/status-badge";
 
 export default function StaffSearchPage() {
   const [query, setQuery] = useState("");
-  
-  const trainees = users.filter(u => u.role === "trainee");
+  const { data: users = [] } = useUsers();
+  const { data: enrollments = [] } = useEnrollments();
+  const { data: courses = [] } = useCourses();
+
+  const trainees = users.filter((u) => u.role === "trainee");
   
   const searchResults = {
     trainees: query.length > 1 ? trainees.filter(t => 
@@ -137,8 +141,9 @@ function TraineeResult({ trainee }: any) {
   );
 }
 
-function EnrollmentResult({ enrollment }: any) {
-  const course = courses.find(c => c.slug === enrollment.courseSlug);
+function EnrollmentResult({ enrollment }: { enrollment: { refNo: string; status: string; traineeName: string; courseSlug: string } }) {
+  const { data: courses = [] } = useCourses();
+  const courseTitle = courseTitleBySlug(courses, enrollment.courseSlug);
   return (
     <Card className="border-card-border hover:border-primary/30 hover:bg-primary/5 transition-all cursor-pointer group shadow-none">
       <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -148,7 +153,7 @@ function EnrollmentResult({ enrollment }: any) {
             <StatusBadge status={enrollment.status as any} />
           </div>
           <p className="font-semibold">{enrollment.traineeName}</p>
-          <p className="text-sm text-muted-foreground">{course?.title}</p>
+          <p className="text-sm text-muted-foreground">{courseTitle}</p>
         </div>
         <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors hidden sm:block" />
       </CardContent>

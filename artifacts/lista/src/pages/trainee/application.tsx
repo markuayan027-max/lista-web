@@ -1,6 +1,7 @@
 import { useAuth } from "@/context/auth-context";
 import { motion } from "framer-motion";
-import { courses, scholarshipSlots } from "@/lib/institutional-data";
+import { useCourses } from "@/hooks/use-lista-data";
+import { scholarshipSlots } from "@/lib/institutional-data";
 import { BookOpen, Clock, ArrowRight, Lock } from "lucide-react";
 import { Link } from "wouter";
 import { cn } from "@/lib/utils";
@@ -23,6 +24,7 @@ const item = {
 
 export default function TraineeApplicationPage() {
   const { user } = useAuth();
+  const { data: courses = [] } = useCourses();
   const [userEnrollment, setUserEnrollment] = useState<Enrollment | null>(null);
   const [isFetching, setIsFetching] = useState(true);
 

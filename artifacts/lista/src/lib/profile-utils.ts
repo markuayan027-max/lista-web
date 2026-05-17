@@ -78,6 +78,123 @@ export function clearLocalProfile(): void {
   localStorage.removeItem(LOCAL_STORAGE_KEY);
 }
 
+/** Fields collected on each registration wizard step (trainee/register). */
+const REGISTRATION_STEP_FIELDS: Record<1 | 2 | 3, (keyof Enrollment)[]> = {
+  1: [
+    "firstName",
+    "middleName",
+    "lastName",
+    "extensionName",
+    "traineeName",
+    "dob",
+    "birthPlace",
+    "age",
+    "gender",
+    "civilStatus",
+    "nationality",
+    "uli",
+    "voucherNo",
+    "psaNo",
+    "learnerClassification",
+    "clientType",
+    "qualificationType",
+    "motherMaidenName",
+    "fatherName",
+    "isIP",
+    "indigenousGroup",
+    "motherTongue",
+  ],
+  2: [
+    "traineeEmail",
+    "contactNumber",
+    "mobileNumber",
+    "telephone",
+    "homeAddress",
+    "barangay",
+    "district",
+    "city",
+    "province",
+    "region",
+    "zipCode",
+  ],
+  3: [
+    "education",
+    "schoolLastAttended",
+    "yearGraduated",
+    "employmentStatus",
+    "employmentType",
+    "companyName",
+    "workExperience",
+  ],
+};
+
+export function isRegistrationStepComplete(
+  step: 1 | 2 | 3,
+  data: Partial<Enrollment> | null | undefined,
+): boolean {
+  if (!data) return false;
+  if (step === 1) {
+    return !!(
+      data.firstName?.trim() &&
+      data.lastName?.trim() &&
+      data.dob &&
+      data.birthPlace?.trim() &&
+      data.nationality?.trim() &&
+      data.gender &&
+      data.civilStatus
+    );
+  }
+  if (step === 2) {
+    return !!(
+      data.mobileNumber?.trim() &&
+      data.homeAddress?.trim() &&
+      data.barangay?.trim()
+    );
+  }
+  return !!(data.schoolLastAttended?.trim() && data.yearGraduated?.trim());
+}
+
+/** Highest registration step the trainee has actually completed (not skipped). */
+export function maxCompletedRegistrationStep(
+  data: Partial<Enrollment> | null | undefined,
+): 0 | 1 | 2 | 3 {
+  if (isRegistrationStepComplete(3, data)) return 3;
+  if (isRegistrationStepComplete(2, data)) return 2;
+  if (isRegistrationStepComplete(1, data)) return 1;
+  return 0;
+}
+
+/**
+ * Persist only fields from steps the user reached/completed.
+ * Prevents step-2+ UI defaults from appearing as saved data after "Skip for now".
+ */
+export function buildRegistrationDraft(
+  data: Partial<Enrollment>,
+  maxStep: number,
+  opts?: { authEmail?: string },
+): Partial<Enrollment> {
+  const capped = Math.min(3, Math.max(0, maxStep)) as 0 | 1 | 2 | 3;
+  const out: Partial<Enrollment> = {
+    id: data.id,
+    refNo: data.refNo,
+    status: data.status,
+    createdAt: data.createdAt,
+    consent: data.consent,
+  };
+  if (opts?.authEmail) {
+    out.traineeEmail = opts.authEmail;
+  }
+  for (let step = 1; step <= capped; step++) {
+    for (const key of REGISTRATION_STEP_FIELDS[step as 1 | 2 | 3]) {
+      const value = data[key];
+      if (value !== undefined && value !== null && value !== "") {
+        (out as Record<string, unknown>)[key] = value;
+      }
+    }
+  }
+  return out;
+}
+
 /**
  * Saves the profile picture (base64 data URL) to local storage.
  */

@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/auth-context";
-import { courses } from "@/lib/institutional-data";
+import { useCourses } from "@/hooks/use-lista-data";
 import type { Enrollment } from "@/lib/institutional-data";
 import { exportSingleTraineeToExcel, exportSingleTraineeToWord } from "@/lib/export-utils";
 import StatusBadge from "@/components/status-badge";
@@ -115,6 +115,7 @@ const MemoizedInfoRow = memo(InfoRow);
 export default function TraineeProfilePage() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { data: courses = [] } = useCourses();
   const [activeTab, setActiveTab] = useState("personal");
 
   const [existing, setExisting] = useState<Enrollment | null>(null);
@@ -212,9 +213,10 @@ export default function TraineeProfilePage() {
     }
   }, [form, isEditing]);
 
-  const course = useMemo(() => 
-    existing?.courseSlug ? courses.find((c) => c.slug === existing.courseSlug) : null
-  , [existing?.courseSlug]);
+  const course = useMemo(
+    () => (existing?.courseSlug ? courses.find((c) => c.slug === existing.courseSlug) : null),
+    [existing?.courseSlug, courses],
+  );
 
   const mergedEnrollment = useMemo(
     () => ({ ...existing, ...form } as Enrollment),

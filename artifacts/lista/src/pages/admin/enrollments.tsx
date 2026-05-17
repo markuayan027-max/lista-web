@@ -2,7 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Search, Filter, Download, Check, X, MoreHorizontal,
-  Printer, Eye, ChevronRight, FileText, Clock, Users, CheckCircle2, XCircle
+  Printer, Eye, ChevronRight, FileText, Clock, Users, CheckCircle2, XCircle, Loader2
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -13,12 +13,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import StatusBadge from "@/components/status-badge";
 import { useToast } from "@/hooks/use-toast";
-import { enrollments as initialEnrollments, courses, Enrollment } from "@/lib/institutional-data";
+import type { Enrollment } from "@/lib/institutional-data";
 import PrintModal from "@/components/print-modal";
-
 import { useAuth } from "@/context/auth-context";
+import {
+  useBulkUpdateEnrollmentStatus,
+  useCourses,
+  useEnrollments,
+  useUpdateEnrollmentStatus,
+} from "@/hooks/use-lista-data";
 
-// ── Stats card ────────────────────────────────────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬ Stats card Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 function StatPill({ label, value, color }: { label: string; value: number; color: string }) {
   return (
     <div className={`flex items-center gap-3 px-5 py-3 rounded-2xl border ${color}`}>
@@ -28,12 +33,15 @@ function StatPill({ label, value, color }: { label: string; value: number; color
   );
 }
 
-// ── Main Page ─────────────────────────────────────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬ Main Page Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 export default function AdminEnrollmentsPage() {
   const { user } = useAuth();
   const isAdmin = user?.role === "admin";
   const { toast } = useToast();
-  const [enrollments, setEnrollments] = useState(initialEnrollments);
+  const { data: enrollments = [], isLoading, isError, error } = useEnrollments();
+  const { data: courses = [] } = useCourses();
+  const updateStatus = useUpdateEnrollmentStatus();
+  const bulkUpdate = useBulkUpdateEnrollmentStatus();
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -54,29 +62,38 @@ export default function AdminEnrollmentsPage() {
     );
   };
 
-  const handleBulkAction = (action: "confirm" | "reject") => {
-    setEnrollments(prev =>
-      prev.map(e =>
-        selectedIds.includes(e.id)
-          ? { ...e, status: action === "confirm" ? "confirmed" : "rejected" }
-          : e
-      )
-    );
-    toast({
-      title: `Enrollments ${action === "confirm" ? "Approved" : "Rejected"}`,
-      description: `${selectedIds.length} enrollments have been updated.`,
-    });
-    setSelectedIds([]);
+  const handleBulkAction = async (action: "confirm" | "reject") => {
+    const status = action === "confirm" ? "confirmed" : "rejected";
+    try {
+      await bulkUpdate.mutateAsync({ ids: selectedIds, status });
+      toast({
+        title: `Enrollments ${action === "confirm" ? "Approved" : "Rejected"}`,
+        description: `${selectedIds.length} enrollments updated in InsForge.`,
+      });
+      setSelectedIds([]);
+    } catch (err) {
+      toast({
+        title: "Update failed",
+        description: err instanceof Error ? err.message : "Unknown error",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleSingleAction = (id: string, action: "confirmed" | "rejected") => {
-    setEnrollments(prev =>
-      prev.map(e => (e.id === id ? { ...e, status: action } : e))
-    );
-    toast({
-      title: "Status Updated",
-      description: `Enrollment status changed to ${action}.`,
-    });
+  const handleSingleAction = async (id: string, action: "confirmed" | "rejected") => {
+    try {
+      await updateStatus.mutateAsync({ id, status: action });
+      toast({
+        title: "Status Updated",
+        description: `Enrollment status changed to ${action}.`,
+      });
+    } catch (err) {
+      toast({
+        title: "Update failed",
+        description: err instanceof Error ? err.message : "Unknown error",
+        variant: "destructive",
+      });
+    }
   };
 
   // Stat counts - excluding 'ready_to_apply' from total and formal counts
@@ -123,7 +140,7 @@ export default function AdminEnrollmentsPage() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h1 className="text-2xl font-black tracking-tight text-slate-900">All Enrollments</h1>
-            <p className="text-slate-400 text-sm mt-1">Manage, approve, and print TESDA application forms.</p>
+            <p className="text-slate-400 text-sm mt-1">Review trainee submissions — approve, reject, or print forms. Admins do not fill applications here.</p>
           </div>
           {isAdmin && (
             <Button variant="outline" className="gap-2 font-semibold rounded-xl border-slate-200">
@@ -213,6 +230,17 @@ export default function AdminEnrollmentsPage() {
 
         {/* Table */}
         <Card className="border-slate-100 shadow-sm overflow-hidden rounded-2xl">
+          {isLoading ? (
+            <motion.div className="flex items-center justify-center py-16 text-muted-foreground gap-2">
+              <Loader2 className="h-5 w-5 animate-spin" />
+              Loading enrollments from InsForgeÃ¢â‚¬Â¦
+            </motion.div>
+          ) : isError ? (
+            <motion.div className="p-8 text-center text-destructive text-sm">
+              {error instanceof Error ? error.message : "Failed to load enrollments"}
+            </motion.div>
+          ) : (
+          <>
           <div className="overflow-x-auto hide-scrollbar">
             <Table>
               <TableHeader>
@@ -339,6 +367,8 @@ export default function AdminEnrollmentsPage() {
               <Button variant="outline" size="sm" disabled={filteredEnrollments.length <= 10} className="rounded-lg text-xs">Next</Button>
             </div>
           </div>
+          </>
+          )}
         </Card>
       </motion.div>
     </>

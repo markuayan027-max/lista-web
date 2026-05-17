@@ -10,12 +10,13 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { faqs } from "@/lib/institutional-data";
+import { useFaqs } from "@/hooks/use-lista-data";
 
 export default function TraineeHelpPage() {
   const [searchQuery, setSearchQuery] = useState("");
+  const { data: faqs = [], isLoading } = useFaqs();
 
-  const filteredFaqs = faqs.filter(faq => 
+  const filteredFaqs = faqs.filter((faq) => 
     faq.question.toLowerCase().includes(searchQuery.toLowerCase()) || 
     faq.answer.toLowerCase().includes(searchQuery.toLowerCase())
   );

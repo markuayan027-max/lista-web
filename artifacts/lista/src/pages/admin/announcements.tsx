@@ -11,8 +11,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import FormInputField from "@/components/form-input-field";
 import PrimaryButton from "@/components/primary-button";
-import { announcements as initialAnnouncements } from "@/lib/institutional-data";
+import {
+  useAnnouncements,
+  useCreateAnnouncement,
+  useDeleteAnnouncement,
+  useUpdateAnnouncement,
+} from "@/hooks/use-lista-data";
+import type { ListaAnnouncement } from "@/lib/lista-insforge-data";
 import { format } from "date-fns";
+import { Loader2 } from "lucide-react";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -29,7 +36,10 @@ const itemVariants = {
 
 export default function AdminAnnouncementsPage() {
   const { toast } = useToast();
-  const [announcements, setAnnouncements] = useState(initialAnnouncements);
+  const { data: announcements = [], isLoading } = useAnnouncements();
+  const createAnnouncement = useCreateAnnouncement();
+  const updateAnnouncement = useUpdateAnnouncement();
+  const deleteAnnouncement = useDeleteAnnouncement();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
@@ -41,7 +51,7 @@ export default function AdminAnnouncementsPage() {
     setIsDialogOpen(true);
   };
 
-  const openEdit = (announcement: typeof announcements[0]) => {
+  const openEdit = (announcement: ListaAnnouncement) => {
     setEditingId(announcement.id);
     setForm({ 
       title: announcement.title, 
@@ -51,40 +61,42 @@ export default function AdminAnnouncementsPage() {
     setIsDialogOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    setAnnouncements(announcements.filter(a => a.id !== id));
-    toast({
-      title: "Announcement Deleted",
-      description: "The announcement has been removed.",
-    });
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteAnnouncement.mutateAsync(id);
+      toast({ title: "Announcement Deleted", description: "The announcement has been removed." });
+    } catch (err) {
+      toast({
+        title: "Delete failed",
+        description: err instanceof Error ? err.message : "Could not delete announcement.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.title || !form.body) {
       toast({ title: "Validation Error", description: "Title and body are required.", variant: "destructive" });
       return;
     }
 
-    if (editingId) {
-      setAnnouncements(announcements.map(a => 
-        a.id === editingId ? { ...a, ...form } : a
-      ));
-      toast({ title: "Announcement Updated" });
-    } else {
-      const newAnnouncement = {
-        id: `a${Date.now()}`,
-        title: form.title,
-        body: form.body,
-        targetRole: form.targetRole,
-        createdAt: new Date().toISOString(),
-        author: "Admin"
-      };
-      setAnnouncements([newAnnouncement, ...announcements]);
-      toast({ title: "Announcement Published" });
+    try {
+      if (editingId) {
+        await updateAnnouncement.mutateAsync({ id: editingId, ...form });
+        toast({ title: "Announcement Updated" });
+      } else {
+        await createAnnouncement.mutateAsync(form);
+        toast({ title: "Announcement Published" });
+      }
+      setIsDialogOpen(false);
+    } catch (err) {
+      toast({
+        title: "Save failed",
+        description: err instanceof Error ? err.message : "Could not save announcement.",
+        variant: "destructive",
+      });
     }
-    
-    setIsDialogOpen(false);
   };
 
   const getTargetBadge = (target: string) => {
@@ -128,7 +140,13 @@ export default function AdminAnnouncementsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {announcements.length === 0 ? (
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-12 text-muted-foreground">
+                    <Loader2 className="h-6 w-6 animate-spin mx-auto" />
+                  </TableCell>
+                </TableRow>
+              ) : announcements.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center py-12 text-muted-foreground">
                     <div className="flex flex-col items-center justify-center gap-2">

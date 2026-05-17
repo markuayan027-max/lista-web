@@ -38,12 +38,14 @@ import {
 } from "@/components/ui/sheet";
 import { useToast } from "@/hooks/use-toast";
 import StatusBadge from "@/components/status-badge";
-import { enrollments as mockEnrollments, courses } from "@/lib/institutional-data";
+import { useCourses, useEnrollments, useUpdateEnrollmentStatus } from "@/hooks/use-lista-data";
 import { format } from "date-fns";
 
 export default function StaffEnrollmentsPage() {
   const { toast } = useToast();
-  const [enrollments, setEnrollments] = useState(mockEnrollments);
+  const { data: enrollments = [], isLoading } = useEnrollments();
+  const { data: courses = [] } = useCourses();
+  const updateStatus = useUpdateEnrollmentStatus();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [courseFilter, setCourseFilter] = useState("all");
@@ -61,14 +63,22 @@ export default function StaffEnrollmentsPage() {
     return matchesSearch && matchesStatus && matchesCourse;
   });
 
-  const handleAction = (id: string, action: 'confirmed' | 'rejected') => {
-    setEnrollments(prev => prev.map(e => e.id === id ? { ...e, status: action } : e));
-    toast({
-      title: "Enrollment Updated",
-      description: `Enrollment status changed to ${action}.`,
-    });
-    if (selectedEnrollment?.id === id) {
-      setSelectedEnrollment({ ...selectedEnrollment, status: action });
+  const handleAction = async (id: string, action: 'confirmed' | 'rejected') => {
+    try {
+      await updateStatus.mutateAsync({ id, status: action });
+      toast({
+        title: "Enrollment Updated",
+        description: `Enrollment status changed to ${action}.`,
+      });
+      if (selectedEnrollment?.id === id) {
+        setSelectedEnrollment({ ...selectedEnrollment, status: action });
+      }
+    } catch (err) {
+      toast({
+        title: "Update failed",
+        description: err instanceof Error ? err.message : "Unknown error",
+        variant: "destructive",
+      });
     }
   };
 
@@ -81,7 +91,7 @@ export default function StaffEnrollmentsPage() {
       >
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Manage Enrollments</h1>
-          <p className="text-muted-foreground mt-1">Review and process trainee applications.</p>
+          <p className="text-muted-foreground mt-1">Review and process trainee applications. Staff do not submit TESDA forms on this page.</p>
         </div>
         <Button variant="outline" className="shrink-0 bg-white">
           <Download className="mr-2 h-4 w-4" /> Export CSV

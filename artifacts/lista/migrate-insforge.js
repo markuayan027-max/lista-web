@@ -1,7 +1,7 @@
 import { createClient } from "@insforge/sdk";
 
 const INSFORGE_URL = "https://2r6c3q25.ap-southeast.insforge.app";
-const INSFORGE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVkZ3hzYWhqdW9kYmV4ZW1pbXhtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2NzUyODgsImV4cCI6MjA5MzI1MTI4OH0.zUvr_4ejOr7IrkaAnyg2QrX3xLIIA-dROhzpSPjff_c";
+const INSFORGE_ANON_KEY = "ik_49ec6acefe414885c8d0b122e7b310d0";
 
 const client = createClient({
   baseUrl: INSFORGE_URL,

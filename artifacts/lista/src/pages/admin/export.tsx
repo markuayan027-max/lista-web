@@ -18,7 +18,7 @@ import StatusBadge from "@/components/status-badge";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription
 } from "@/components/ui/dialog";
-import { enrollments, courses } from "@/lib/institutional-data";
+import { useCourses, useEnrollments } from "@/hooks/use-lista-data";
 import {
   exportTraineesToExcel,
   exportSingleTraineeToExcel,
@@ -39,6 +39,8 @@ const itemVariants = {
 
 export default function AdminExportPage() {
   const { toast } = useToast();
+  const { data: enrollments = [], isLoading } = useEnrollments();
+  const { data: courses = [] } = useCourses();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [exportingId, setExportingId] = useState<string | null>(null);

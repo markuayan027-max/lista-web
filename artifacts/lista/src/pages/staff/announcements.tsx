@@ -9,34 +9,37 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import AnnouncementCard from "@/components/announcement-card";
-import { announcements as initialAnnouncements } from "@/lib/institutional-data";
+import { useAnnouncements, useCreateAnnouncement } from "@/hooks/use-lista-data";
 
 export default function StaffAnnouncementsPage() {
   const { toast } = useToast();
-  const [announcements, setAnnouncements] = useState(initialAnnouncements);
+  const { data: announcements = [], isLoading } = useAnnouncements();
+  const createAnnouncement = useCreateAnnouncement();
   const [isMobileComposerOpen, setIsMobileComposerOpen] = useState(false);
 
-  const handlePost = (e: React.FormEvent<HTMLFormElement>) => {
+  const handlePost = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    
-    const newAnnouncement = {
-      id: "a" + Date.now(),
-      title: formData.get("title") as string,
-      body: formData.get("body") as string,
-      targetRole: formData.get("targetRole") as string,
-      author: "Staff Member", // Mock author
-      createdAt: new Date().toISOString()
-    };
-    
-    setAnnouncements([newAnnouncement, ...announcements]);
-    setIsMobileComposerOpen(false);
-    e.currentTarget.reset();
-    
-    toast({
-      title: "Announcement Posted",
-      description: "Your message has been broadcasted successfully.",
-    });
+
+    try {
+      await createAnnouncement.mutateAsync({
+        title: formData.get("title") as string,
+        body: formData.get("body") as string,
+        targetRole: formData.get("targetRole") as string,
+      });
+      setIsMobileComposerOpen(false);
+      e.currentTarget.reset();
+      toast({
+        title: "Announcement Posted",
+        description: "Your message has been broadcasted successfully.",
+      });
+    } catch (err) {
+      toast({
+        title: "Post failed",
+        description: err instanceof Error ? err.message : "Could not post announcement.",
+        variant: "destructive",
+      });
+    }
   };
 
   const ComposerForm = () => (
