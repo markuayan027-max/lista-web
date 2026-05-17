@@ -1,4 +1,5 @@
 import type { Course, User } from "@/lib/institutional-data";
+import { resolveCourseCoverImage } from "@/lib/course-images";
 import type { DbTestimonial } from "@/lib/lista-insforge-data";
 import { contactInfo, schoolInfo } from "@/lib/institutional-data";
 
@@ -80,7 +81,11 @@ export function mapCourseToHeroItem(course: Course): HeroCourseItem {
     ncLevel: course.ncLevel,
     description: course.longDescription,
     shortDescription: course.shortDescription,
-    coverImageUrl: course.galleryImages?.[0],
+    coverImageUrl: resolveCourseCoverImage(
+      course.slug,
+      course.category,
+      course.galleryImages?.[0],
+    ),
     twspScholarship: course.twsp ? "true" : "false",
     isFrozen: !isCourseOpenForEnrollment(course),
   };

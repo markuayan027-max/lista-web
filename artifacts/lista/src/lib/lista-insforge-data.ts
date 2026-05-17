@@ -6,6 +6,7 @@ import { lista } from "@/lib/insforge";
 import { authHeaders } from "@/lib/auth-token";
 import { insforgeEnrollmentRowToApiData } from "@/lib/trainee-enrollment-insforge";
 import type { Course, Enrollment, User, UserRole } from "@/lib/institutional-data";
+import { resolveCourseCoverImage, resolveCourseGalleryImages } from "@/lib/course-images";
 
 export type ListaAnnouncement = {
   id: string;
@@ -131,7 +132,11 @@ export function rowToCourse(row: Record<string, unknown>): Course {
     durationHours: hoursMatch ? parseInt(hoursMatch[1], 10) : 0,
     shortDescription: str(row.short_description || row.description).slice(0, 280),
     longDescription: str(row.description),
-    galleryImages: row.cover_image_url ? [str(row.cover_image_url)] : [],
+    galleryImages: resolveCourseGalleryImages(
+      str(row.slug),
+      str(row.sector),
+      row.cover_image_url ? str(row.cover_image_url) : null,
+    ),
     isAvailable,
     fee: twsp ? null : fee,
     originalFee: twsp ? null : originalFee,
@@ -213,9 +218,26 @@ export function rowToFaq(row: Record<string, unknown>): DbFaq {
 // ── Users ────────────────────────────────────────────────────────────────────
 
 export async function fetchUsers(): Promise<ListaFetchResult<User[]>> {
-  const { data, error } = await lista.from("users").select("*").order("created_at", { ascending: false });
-  if (error) return { success: false, error: error.message };
-  return { success: true, data: ((data as Record<string, unknown>[]) || []).map(rowToUser) };
+  try {
+    const apiRes = await fetch("/api/users", { headers: authHeaders() });
+    const body = (await apiRes.json().catch(() => ({}))) as {
+      success?: boolean;
+      data?: Record<string, unknown>[];
+      error?: string;
+    };
+    if (apiRes.ok && body.success && Array.isArray(body.data)) {
+      return { success: true, data: body.data.map(rowToUser) };
+    }
+    const apiError =
+      body.error ||
+      (!apiRes.ok ? `User list failed (${apiRes.status})` : "User list returned no data");
+    return { success: false, error: apiError };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Could not reach /api/users — is api-server running?",
+    };
+  }
 }
 
 export async function updateUserRole(userId: string, role: UserRole): Promise<ListaFetchResult<User>> {

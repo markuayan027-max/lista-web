@@ -2,6 +2,7 @@ import { Link } from "wouter";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { withBase } from "@/lib/with-base";
+import { resolveCourseCoverImage } from "@/lib/course-images";
 import { BookOpen, ArrowRight, CheckCircle2, Lock } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -24,6 +25,9 @@ interface CourseCardProps {
 
 export default function CourseCard({ course, hideLockOverlay = false }: CourseCardProps) {
   const [imageError, setImageError] = useState(false);
+  const coverSrc = withBase(
+    resolveCourseCoverImage(course.slug, course.sector, course.coverImageUrl),
+  );
 
   const canNavigate = !course.isFrozen || hideLockOverlay;
 
@@ -58,12 +62,13 @@ export default function CourseCard({ course, hideLockOverlay = false }: CourseCa
             )}
             
             <div className="relative w-full aspect-[16/10] bg-slate-100 flex items-center justify-center border-b border-slate-200 overflow-hidden shrink-0">
-              {course.coverImageUrl && !imageError ? (
+              {!imageError ? (
                 <img
-                  src={withBase(course.coverImageUrl)}
+                  src={coverSrc}
                   alt={course.name}
                   className="h-full w-full object-cover"
-                  crossOrigin="anonymous"
+                  loading="lazy"
+                  decoding="async"
                   onError={() => setImageError(true)}
                 />
               ) : (

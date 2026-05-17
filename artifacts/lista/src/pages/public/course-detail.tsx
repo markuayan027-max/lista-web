@@ -73,11 +73,7 @@ export default function CourseDetailPage() {
             </div>
             <div className="flex-1 lg:max-w-md w-full">
               <CourseImageSlider
-                images={
-                  (course.galleryImages ?? []).filter(Boolean).length > 0
-                    ? (course.galleryImages ?? []).filter(Boolean)
-                    : ["/logo.png"]
-                }
+                images={(course.galleryImages ?? []).filter(Boolean)}
                 title={course.title}
               />
             </div>
@@ -247,11 +243,12 @@ function CourseImageSlider({ images, title }: { images: string[], title: string 
         <div className="flex h-full">
           {images.map((src, index) => (
             <div key={index} className="flex-[0_0_100%] min-w-0 h-full relative">
-              <img 
-                src={withBase(src)} 
+              <img
+                src={withBase(src)}
                 alt={`${title} - image ${index + 1}`}
                 className="w-full h-full object-cover"
-                crossOrigin="anonymous"
+                loading="lazy"
+                decoding="async"
               />
               <div className="absolute inset-0 bg-black/5" />
             </div>
