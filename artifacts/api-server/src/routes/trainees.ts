@@ -4,8 +4,10 @@ import { enrollments } from "@workspace/db/schema";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { logger } from "../lib/logger";
+import { assertEmailAccess, requireAuth } from "../middleware/auth";
 
 const router = Router();
+router.use(requireAuth);
 
 const registerSchema = z.object({
   refNo: z.string().min(1),
@@ -84,6 +86,9 @@ function supplementalEnrollmentNotes(data: {
 router.post("/register", async (req, res) => {
   try {
     const data = registerSchema.parse(req.body) as any;
+    if (!assertEmailAccess(req, data.traineeEmail)) {
+      return res.status(403).json({ success: false, error: "Cannot register for another user's email" });
+    }
 
     const notesExtra = supplementalEnrollmentNotes(data);
 
@@ -151,6 +156,9 @@ router.get("/profile", async (req, res) => {
   if (!email) {
     return res.status(400).json({ success: false, error: "Email is required" });
   }
+  if (!assertEmailAccess(req, email)) {
+    return res.status(403).json({ success: false, error: "Forbidden" });
+  }
 
   try {
     const [enrollment] = await db.select().from(enrollments).where(eq(enrollments.email, email)).limit(1);
@@ -217,9 +225,24 @@ router.put("/profile", async (req, res) => {
   if (!email) {
     return res.status(400).json({ success: false, error: "Email is required" });
   }
+  if (!assertEmailAccess(req, email)) {
+    return res.status(403).json({ success: false, error: "Forbidden" });
+  }
 
   try {
     const parsedData = updateSchema.parse(req.body) as any;
+
+    if (
+      parsedData.status &&
+      req.authUser?.role === "trainee" &&
+      !["Cancelled", "Ready to Apply", "Pending"].includes(parsedData.status)
+    ) {
+      return res.status(403).json({
+        success: false,
+        error: "Trainees cannot set this enrollment status",
+      });
+    }
+
     const notesExtra = supplementalEnrollmentNotes(parsedData);
 
     const updatePayload: Partial<typeof enrollments.$inferInsert> = {
@@ -277,33 +300,17 @@ router.put("/profile", async (req, res) => {
     logger.info({ email, status: filteredPayload.status }, "Attempting profile update");
     // #endregion
 
-    try {
-      // FORCE MOCK SUCCESS FOR DEVELOPMENT SINCE DB IS UNREACHABLE
-      if (process.env.NODE_ENV === "development") {
-        logger.info({ email }, "Development mode: Returning mock success for profile update");
-        return res.json({ 
-          success: true, 
-          data: { email, ...filteredPayload }, 
-          note: "Mock update successful (Development Mode)" 
-        });
-      }
+    const [updated] = await db
+      .update(enrollments)
+      .set(filteredPayload)
+      .where(eq(enrollments.email, email))
+      .returning();
 
-      const [updated] = await db.update(enrollments).set(filteredPayload).where(eq(enrollments.email, email)).returning();
-      
-      if (!updated) {
-        logger.warn({ email }, "Profile not found in DB during update, but returning mock success");
-        return res.json({ success: true, data: { email, ...filteredPayload }, note: "Mock update successful (DB profile not found)" });
-      }
-
-      return res.json({ success: true, data: updated });
-    } catch (dbError) {
-      logger.warn({ dbError, email }, "Database update failed, using mock success fallback");
-      return res.json({ 
-        success: true, 
-        data: { email, ...filteredPayload }, 
-        note: "Mock update successful (Database unreachable)" 
-      });
+    if (!updated) {
+      return res.status(404).json({ success: false, error: "Profile not found" });
     }
+
+    return res.json({ success: true, data: updated });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ success: false, error: "Validation Error", details: error.errors });

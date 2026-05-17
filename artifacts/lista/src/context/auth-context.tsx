@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { User, UserRole } from "../lib/institutional-data";
 import { lista } from "../lib/insforge";
+import { isTraineeRegistrationComplete, skipsTraineeApplication } from "../lib/role-navigation";
 
 interface AuthContextType {
   user: User | null;
@@ -35,17 +36,27 @@ const baseUrl = import.meta.env.VITE_INSFORGE_URL || "https://2r6c3q25.ap-southe
 // Helpers
 // ---------------------------------------------------------------------------
 
-/** Derive a LISTA User record from the InsForge / Supabase user object */
-function mapInsForgeUser(insUser: any): User | null {
+/** Staff/admin only from public.users or server-controlled app_metadata — never user_metadata. */
+async function resolveUserRole(email: string, insUser: Record<string, unknown>): Promise<UserRole> {
+  try {
+    const { data } = await lista.from("users").select("role").eq("email", email.toLowerCase()).maybeSingle();
+    const dbRole = (data as { role?: string } | null)?.role?.toLowerCase();
+    if (dbRole === "admin" || dbRole === "staff") return dbRole;
+  } catch {
+    // ignore
+  }
+  const appMeta = insUser.app_metadata as Record<string, unknown> | undefined;
+  const meta = insUser.metadata as Record<string, unknown> | undefined;
+  const appRole = (appMeta?.role ?? meta?.role) as string | undefined;
+  if (appRole === "admin" || appRole === "staff") return appRole;
+  return "trainee";
+}
+
+async function mapInsForgeUser(insUser: any): Promise<User | null> {
   if (!insUser) return null;
   const email: string = insUser.email || "";
 
-  // Priority: role stored in metadata (set by admin)
-  let role: UserRole = "trainee";
-  const appRole = insUser.metadata?.role as string | undefined;
-  if (appRole === "admin" || appRole === "staff") {
-    role = appRole;
-  }
+  const resolvedRole = await resolveUserRole(email, insUser as Record<string, unknown>);
 
   return {
     id: insUser.id,
@@ -54,9 +65,27 @@ function mapInsForgeUser(insUser: any): User | null {
       insUser.user_metadata?.name ||
       email.split("@")[0],
     email,
-    role,
+    role: resolvedRole,
     avatarUrl: insUser.user_metadata?.avatar_url || "",
   };
+}
+
+/** Merge session/current or refresh payload into lista_session and apply user state. */
+async function applySessionPayload(
+  payload: Record<string, unknown>,
+  setUser: (u: User | null) => void,
+  setIsRegistered: (v: boolean) => void,
+) {
+  localStorage.setItem("lista_session", JSON.stringify(payload));
+  const token = payload.accessToken;
+  lista.setAccessToken(typeof token === "string" ? token : null);
+  const rawUser = (payload.user ?? null) as Record<string, unknown> | null;
+  if (!rawUser) return;
+  const mapped = await mapInsForgeUser(rawUser);
+  setUser(mapped);
+  if (mapped) {
+    setIsRegistered(isTraineeRegistrationComplete(mapped));
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -74,55 +103,56 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const storedStr = localStorage.getItem("lista_session");
         if (storedStr) {
-          const session = JSON.parse(storedStr);
-          lista.setAccessToken(session.accessToken);
-          
-          const mapped = mapInsForgeUser(session.user);
-          setUser(mapped);
-          if (mapped) {
-            setIsRegistered(localStorage.getItem(`reg_${mapped.id}`) === "true");
-          }
-          
-          setIsInitializing(false); // Instant load UI!
+          const session = JSON.parse(storedStr) as Record<string, unknown>;
+          lista.setAccessToken(typeof session.accessToken === "string" ? session.accessToken : null);
 
-          // Verify session in background
-          const res = await fetch(`${baseUrl}/api/auth/sessions/current`, {
-            headers: { 'Authorization': `Bearer ${session.accessToken}` }
-          });
-
-          if (!res.ok) {
-            // Try refresh
-            const refreshRes = await fetch(`${baseUrl}/api/auth/refresh?client_type=mobile`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ refresh_token: session.refreshToken })
-            });
-
-            if (refreshRes.ok) {
-              const refreshData = await refreshRes.json();
-              localStorage.setItem("lista_session", JSON.stringify(refreshData));
-              lista.setAccessToken(refreshData.accessToken);
-              const refreshedMapped = mapInsForgeUser(refreshData.user);
-              setUser(refreshedMapped);
-              if (refreshedMapped) {
-                setIsRegistered(localStorage.getItem(`reg_${refreshedMapped.id}`) === "true");
-              }
-            } else {
-              throw new Error("Session expired");
+          // Optimistic UI from cache; role is re-resolved from server after verify.
+          if (session.user) {
+            const mapped = await mapInsForgeUser(session.user);
+            setUser(mapped);
+            if (mapped) {
+              setIsRegistered(isTraineeRegistrationComplete(mapped));
             }
           }
-          return;
+
+          setIsInitializing(false);
+
+          const res = await fetch(`${baseUrl}/api/auth/sessions/current`, {
+            headers: { Authorization: `Bearer ${session.accessToken}` },
+          });
+
+          if (res.ok) {
+            const current = (await res.json()) as Record<string, unknown>;
+            await applySessionPayload(
+              { ...session, ...current, user: current.user ?? session.user },
+              setUser,
+              setIsRegistered,
+            );
+            return;
+          }
+
+          const refreshRes = await fetch(`${baseUrl}/api/auth/refresh?client_type=mobile`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ refresh_token: session.refreshToken }),
+          });
+
+          if (refreshRes.ok) {
+            const refreshData = (await refreshRes.json()) as Record<string, unknown>;
+            await applySessionPayload(refreshData, setUser, setIsRegistered);
+            return;
+          }
+
+          throw new Error("Session expired");
         }
 
         // Fallback to SDK cookies if no local storage
         const { data, error } = await lista.auth.getCurrentUser();
         if (!error && data?.user) {
-          const mapped = mapInsForgeUser(data.user);
+          const mapped = await mapInsForgeUser(data.user);
           setUser(mapped);
           if (mapped) {
-            setIsRegistered(
-              localStorage.getItem(`reg_${mapped.id}`) === "true"
-            );
+            setIsRegistered(isTraineeRegistrationComplete(mapped));
           }
         }
       } catch (err) {
@@ -151,18 +181,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw new Error(errData.message || "Invalid login credentials");
     }
     
-    const data = await res.json();
-    localStorage.setItem("lista_session", JSON.stringify(data));
-    lista.setAccessToken(data.accessToken);
-
-    const rawUser = data?.user ?? null;
-    if (rawUser) {
-      const mapped = mapInsForgeUser(rawUser);
-      setUser(mapped);
-      if (mapped) {
-        setIsRegistered(localStorage.getItem(`reg_${mapped.id}`) === "true");
-      }
-    }
+    const data = (await res.json()) as Record<string, unknown>;
+    await applySessionPayload(data, setUser, setIsRegistered);
   };
 
   const signUp = async (email: string, password: string, name?: string) => {
@@ -187,15 +207,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw new Error(errData.message || "Invalid verification code");
     }
 
-    const data = await res.json();
-    localStorage.setItem("lista_session", JSON.stringify(data));
-    lista.setAccessToken(data.accessToken);
-
-    const rawUser = data?.user ?? null;
-    if (rawUser) {
-      const mapped = mapInsForgeUser(rawUser);
-      setUser(mapped);
-    }
+    const data = (await res.json()) as Record<string, unknown>;
+    await applySessionPayload(data, setUser, setIsRegistered);
   };
 
   const resendVerificationEmail = async (email: string) => {
@@ -225,10 +238,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const completeRegistration = () => {
-    if (user) {
-      localStorage.setItem(`reg_${user.id}`, "true");
-      setIsRegistered(true);
-    }
+    if (!user || skipsTraineeApplication(user)) return;
+    localStorage.setItem(`reg_${user.id}`, "true");
+    setIsRegistered(true);
   };
 
   return (
