@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { withBase } from "@/lib/with-base";
+import SiteLogo from "@/components/site-logo";
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -7,7 +7,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       <header className="py-6 px-4 md:px-12 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2 group">
           <div className="transition-transform group-hover:scale-105">
-            <img src={withBase("/logo.webp")} alt="LISTA Logo" className="h-12 w-auto object-contain" />
+            <SiteLogo className="h-12 w-auto object-contain" />
           </div>
           <span className="text-xl font-bold tracking-tighter">LISTA</span>
         </Link>

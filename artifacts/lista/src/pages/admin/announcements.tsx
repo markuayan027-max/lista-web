@@ -102,8 +102,8 @@ export default function AdminAnnouncementsPage() {
   const getTargetBadge = (target: string) => {
     switch(target) {
       case 'all': return <Badge className="bg-primary hover:bg-primary">All Users</Badge>;
-      case 'staff': return <Badge variant="secondary" className="bg-indigo-100 text-indigo-700 border-indigo-200">Staff Only</Badge>;
-      case 'trainee': return <Badge variant="outline" className="bg-slate-100 text-slate-700 border-slate-200">Trainees</Badge>;
+      case 'staff': return <Badge variant="secondary" className="bg-primary-indigo/15 text-primary-indigo border-primary-indigo/30">Staff Only</Badge>;
+      case 'trainee': return <Badge variant="outline" className="bg-muted text-muted-foreground border-border">Trainees</Badge>;
       default: return <Badge>{target}</Badge>;
     }
   };

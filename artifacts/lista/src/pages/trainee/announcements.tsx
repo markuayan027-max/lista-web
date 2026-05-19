@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import AnnouncementCard from "@/components/announcement-card";
 import { useAnnouncements } from "@/hooks/use-lista-data";
 import { isToday, isYesterday, isThisWeek, parseISO } from "date-fns";
-import { Loader2 } from "lucide-react";
+import { AnnouncementListSkeleton } from "@/components/skeletons";
 
 const container = {
   hidden: { opacity: 0 },
@@ -48,10 +48,7 @@ export default function TraineeAnnouncementsPage() {
       </motion.div>
 
       {isLoading ? (
-        <motion.div className="flex justify-center py-12 text-muted-foreground gap-2">
-          <Loader2 className="h-5 w-5 animate-spin" />
-          Loading announcements…
-        </motion.div>
+        <AnnouncementListSkeleton count={5} />
       ) : (
         <motion.div variants={container} initial="hidden" animate="show" className="space-y-10">
           {groupOrder.map((group) => {

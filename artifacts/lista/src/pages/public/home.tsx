@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { Link } from "wouter";
+import { getPublicEnrollHref } from "@/lib/enroll-entry";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowRight, CheckCircle, GraduationCap, Award,
@@ -11,14 +12,15 @@ import {
 } from "lucide-react";
 import PrimaryButton from "@/components/primary-button";
 import CourseCard from "@/components/course-card";
-import { useAnnouncements, useCourses, useTestimonials, useUsers } from "@/hooks/use-lista-data";
+import { useAnnouncements, useCourses, useTestimonials } from "@/hooks/use-lista-data";
 import { announcementToPost } from "@/lib/lista-insforge-data";
-import {
-  formatPublicCount,
-  mapCourseToHeroItem,
-  mapTestimonialsForHome,
-} from "@/lib/public-data-utils";
+import { mapCourseToHeroItem, mapTestimonialsForHome } from "@/lib/public-data-utils";
 import { withBase } from "@/lib/with-base";
+import { cn } from "@/lib/utils";
+import { CourseCarouselSkeleton } from "@/components/skeletons";
+import { ContentFadeIn } from "@/components/skeletons/primitives";
+import OptimizedImage from "@/components/optimized-image";
+import { PARTNER_LOGOS_HOME } from "@/lib/image-assets";
 const containerVars = {
   hidden: { opacity: 0 },
   show: { opacity: 1, transition: { staggerChildren: 0.1 } },
@@ -30,11 +32,11 @@ const itemVars = {
 };
 
 export default function HomePage() {
-  const { data: liveCourses = [] } = useCourses();
+  const coursesQuery = useCourses();
+  const { data: liveCourses = [], isLoading: coursesLoading } = coursesQuery;
   const { data: liveTestimonials = [] } = useTestimonials();
   const { data: announcements = [] } = useAnnouncements();
-  const { data: users = [] } = useUsers();
-  const traineeCount = users.filter((u) => u.role === "trainee").length;
+  const programCount = liveCourses.length;
   const livePosts = useMemo(() => announcements.map(announcementToPost), [announcements]);
   const [activeBenefit, setActiveBenefit] = useState<null | { title: string; desc: string; details: string; icon: any }>(null);
 
@@ -81,7 +83,7 @@ export default function HomePage() {
     <div className="w-full">
 
       {/* ── Hero ── */}
-      <section className="bg-white border-b border-slate-100 overflow-hidden">
+      <section className="bg-background border-b border-border overflow-hidden">
         <div className="container mx-auto px-6 md:px-8">
 
           {/* Top rule + tagline */}
@@ -101,16 +103,16 @@ export default function HomePage() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
             >
-              <h1 className="text-[clamp(2.5rem,5vw,4.5rem)] font-bold tracking-[-0.03em] text-slate-900 leading-[1.08] mb-6">
+              <h1 className="text-[clamp(2.5rem,5vw,4.5rem)] font-bold tracking-[-0.03em] text-foreground leading-[1.08] mb-6">
                 Skills that build<br />
                 <span className="text-blue-700">real careers.</span>
               </h1>
-              <p className="text-lg text-slate-600 leading-relaxed mb-8 max-w-lg">
+              <p className="text-lg text-muted-foreground leading-relaxed mb-8 max-w-lg">
                 LISTA trains thousands of Filipinos in professional and technical skills — from digital literacy to vocational mastery — certified by TESDA.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 {/* 2026-05-13: single application entrypoint */}
-                <Link href="/trainee/register">
+                <Link href={getPublicEnrollHref()}>
                   <PrimaryButton className="h-12 px-8 bg-blue-700 hover:bg-blue-800 text-white text-base font-semibold transition-colors shadow-lg shadow-blue-700/20">
                     Get Started <ArrowRight className="ml-1.5 h-4 w-4" />
                   </PrimaryButton>
@@ -130,12 +132,13 @@ export default function HomePage() {
               transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
             >
               <div className="relative aspect-[4/3] lg:aspect-[16/10] rounded-2xl overflow-hidden shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)] bg-slate-100">
-                <img 
+                <OptimizedImage
                   src="/hero.png"
-                  alt="LISTA Students and Facilities" 
-                  className="w-full h-full object-cover"
-                  fetchPriority="high"
-                  decoding="async"
+                  alt="LISTA Students and Facilities"
+                  priority
+                  imgClassName="w-full h-full object-cover"
+                  width={1536}
+                  height={1024}
                 />
                 <div className="absolute inset-0 bg-blue-900/10 mix-blend-multiply pointer-events-none" />
                 
@@ -168,21 +171,45 @@ export default function HomePage() {
             </div>
             <h3 className="text-xl font-bold text-slate-900">Accredited by National Institutions</h3>
           </div>
-          <div className="flex flex-wrap justify-center items-center gap-10 md:gap-20">
-            {[
-              { src: '/TESDA_Logo_official-removebg-preview.png', alt: 'TESDA Logo', label: 'TESDA' },
-              { src: '/DepEd logo.png', alt: 'DepEd Logo', label: 'DEPED' },
-              { src: '/ATI (Agricultural Training Institute) LOGO.png', alt: 'ATI Logo', label: 'ATI' },
-              { src: '/NVTC (National Vocational Training Council) is INTERNATIONAL LOGO.webp.png', alt: 'NVTC Logo', label: 'NVTC' },
-            ].map(({ src, alt, label }) => (
-              <div key={label} className="flex flex-col items-center gap-3 group">
-                <div className="h-16 md:h-20 flex items-center justify-center grayscale group-hover:grayscale-0 transition-all duration-500 hover:scale-110">
-                  <img src={withBase(src)} alt={alt} className="max-h-full w-auto object-contain" />
-                </div>
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">{label}</span>
-              </div>
+          <ul className="mx-auto grid w-full max-w-5xl list-none grid-cols-2 gap-x-8 gap-y-12 p-0 sm:grid-cols-4 sm:gap-x-10 md:gap-x-14">
+            {PARTNER_LOGOS_HOME.map(({ src, alt, label, fullLabel, wide }) => (
+              <li key={label} className="flex justify-center">
+                <figure className="flex w-full max-w-[11.5rem] flex-col items-center">
+                  <div
+                    className={cn(
+                      "mb-5 flex shrink-0 items-center justify-center",
+                      wide
+                        ? "h-12 w-[9.75rem] sm:h-14 sm:w-[11rem]"
+                        : "size-[5.5rem] sm:size-28",
+                    )}
+                    aria-hidden
+                  >
+                    <OptimizedImage
+                      src={src}
+                      alt={alt}
+                      width={wide ? 176 : 112}
+                      height={wide ? 56 : 112}
+                      imgClassName="max-h-full max-w-full object-contain object-center"
+                      objectFit="contain"
+                    />
+                  </div>
+                  <figcaption
+                    className={cn(
+                      "flex w-full flex-col items-center text-center",
+                      fullLabel ? "min-h-[4.5rem] gap-1.5" : "min-h-[1.25rem]",
+                    )}
+                  >
+                    <p className="text-sm font-bold leading-tight text-slate-900">{label}</p>
+                    {fullLabel ? (
+                      <p className="text-[11px] font-medium leading-snug text-pretty text-slate-500 line-clamp-3">
+                        {fullLabel}
+                      </p>
+                    ) : null}
+                  </figcaption>
+                </figure>
+              </li>
             ))}
-          </div>
+          </ul>
         </div>
       </section>
 
@@ -254,19 +281,19 @@ export default function HomePage() {
 
         {/* Single Line Action Bar: Categories + CTA + Stats (Spans full width below both) */}
         <motion.div 
-          className="mt-12 w-full flex flex-wrap xl:flex-nowrap items-center justify-center xl:justify-between gap-4 p-2.5 bg-slate-50/80 rounded-3xl border border-slate-100 backdrop-blur-sm shadow-xl shadow-slate-200/20"
+          className="mt-12 w-full flex flex-col lg:flex-row lg:flex-nowrap items-stretch lg:items-center justify-center lg:justify-between gap-4 p-3 sm:p-4 bg-slate-50/80 rounded-3xl border border-slate-100 backdrop-blur-sm shadow-xl shadow-slate-200/20"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, delay: 0.4 }}
         >
-          {/* 1. Category Quick Links */}
-          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
+          {/* 1. Category Quick Links — scroll on narrow screens, hidden scrollbar */}
+          <div className="min-w-0 w-full lg:flex-1 flex items-center gap-2 overflow-x-auto hide-scrollbar py-1 -mx-1 px-1 snap-x snap-mandatory">
             {benefits.map((item, index) => (
               <motion.button
                 key={index}
                 onClick={() => setActiveBenefit(item)}
-                className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-white border border-slate-100 hover:border-blue-200 hover:shadow-md transition-all whitespace-nowrap group"
+                className="flex shrink-0 snap-start items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-white border border-slate-100 hover:border-blue-200 hover:shadow-md transition-all whitespace-nowrap group"
                 whileHover={{ y: -2 }}
               >
                 <div className="w-7 h-7 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
@@ -278,35 +305,41 @@ export default function HomePage() {
           </div>
 
           {/* Vertical Divider (Desktop Only) */}
-          <div className="hidden xl:block h-10 w-px bg-slate-200 mx-2" />
+          <motion.div className="hidden lg:block h-10 w-px bg-slate-200 shrink-0" />
 
           {/* 2. CTA & Stats Group */}
-          <div className="flex items-center gap-6 py-1">
-            <Link href="/courses">
-              <PrimaryButton size="sm" className="h-11 px-8 text-[11px] font-black uppercase tracking-widest bg-blue-700 hover:bg-blue-800 text-white shadow-lg shadow-blue-700/20 group whitespace-nowrap rounded-2xl">
+          <motion.div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-4 sm:gap-6 py-1 shrink-0 w-full lg:w-auto">
+            <Link href="/courses" className="w-full sm:w-auto">
+              <PrimaryButton size="sm" className="w-full sm:w-auto h-11 px-6 sm:px-8 text-[11px] font-black uppercase tracking-widest bg-blue-700 hover:bg-blue-800 text-white shadow-lg shadow-blue-700/20 group whitespace-nowrap rounded-2xl">
                 Explore All Programs
                 <ArrowRight className="ml-2 h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
               </PrimaryButton>
             </Link>
             
-            <div className="flex items-center gap-4 border-l border-slate-200 pl-6">
+            <motion.div className="flex items-center justify-center sm:justify-start gap-4 border-t sm:border-t-0 sm:border-l border-slate-200 pt-4 sm:pt-0 sm:pl-6">
               <div className="flex -space-x-3">
                 {[1,2,3,4].map(i => (
                   <div key={i} className="w-8 h-8 rounded-full border-2 border-white bg-slate-200 overflow-hidden shadow-sm hover:z-10 transition-all">
-                    <img src={`https://i.pravatar.cc/100?u=${i}`} className="w-full h-full object-cover" alt="Student" />
+                    <img
+                      src={`https://i.pravatar.cc/100?u=${i}`}
+                      className="w-full h-full object-cover"
+                      alt="Student"
+                      loading="lazy"
+                      decoding="async"
+                    />
                   </div>
                 ))}
               </div>
               <div className="text-left leading-tight">
-                <motion.div className="text-[11px] font-black text-slate-900">
-                  {traineeCount > 0 ? formatPublicCount(traineeCount) : "—"}
-                </motion.div>
+                <div className="text-[11px] font-black text-slate-900">
+                  {programCount > 0 ? String(programCount) : "—"}
+                </div>
                 <div className="text-[9px] font-bold text-slate-400 uppercase tracking-tight">
-                  {traineeCount > 0 ? "Registered Trainees" : "Join our next cohort"}
-                </motion.div>
+                  {programCount > 0 ? "Programs Available" : "Catalog loading"}
+                </div>
               </div>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </motion.div>
 
         {/* Benefit Details Popup (Modal) */}
@@ -385,21 +418,25 @@ export default function HomePage() {
             <div className="flex items-center gap-2 text-sm text-slate-400 font-medium mb-4 md:hidden">
               <ArrowRight className="w-4 h-4" /> Swipe to see more
             </div>
-            <motion.div
-              variants={containerVars}
-              initial="hidden"
-              whileInView="show"
-              viewport={{ once: true, margin: "-100px" }}
-              className="flex overflow-x-auto snap-x snap-mandatory gap-6 pb-8 md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 md:overflow-visible md:pb-0"
-              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-            >
-              {displayCourses.map(course => (
-                <motion.div key={course.id} variants={itemVars} className="snap-start shrink-0 w-[85vw] md:w-auto">
-                  <CourseCard course={course} hideLockOverlay={true} />
+            {coursesLoading ? (
+              <CourseCarouselSkeleton count={4} />
+            ) : (
+              <ContentFadeIn>
+                <motion.div
+                  variants={containerVars}
+                  initial="hidden"
+                  whileInView="show"
+                  viewport={{ once: true, margin: "-100px" }}
+                  className="flex overflow-x-auto snap-x snap-mandatory gap-6 pb-8 md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 md:overflow-visible md:pb-0 hide-scrollbar"
+                >
+                  {displayCourses.map((course) => (
+                    <motion.div key={course.id} variants={itemVars} className="snap-start shrink-0 w-[85vw] md:w-auto">
+                      <CourseCard course={course} hideLockOverlay={true} />
+                    </motion.div>
+                  ))}
                 </motion.div>
-              ))}
-
-            </motion.div>
+              </ContentFadeIn>
+            )}
           </div>
         </div>
       </section>
@@ -576,10 +613,10 @@ export default function HomePage() {
                   {testimonial.quote}
                 </p>
                 <div className="mt-7 pt-6 border-t border-slate-200 flex items-center gap-4">
-                  <img
-                    src={withBase(testimonial.imageUrl)}
+                  <OptimizedImage
+                    src={testimonial.imageUrl}
                     alt={testimonial.name}
-                    className="w-11 h-11 rounded-full object-cover border border-slate-300"
+                    imgClassName="w-11 h-11 rounded-full object-cover border border-slate-300"
                   />
                   <div>
                     <p className="font-bold text-slate-900 leading-tight">{testimonial.name}</p>
@@ -631,10 +668,10 @@ export default function HomePage() {
                 transition={{ delay: i * 0.08 }}
               >
                 <div className="aspect-[16/10] overflow-hidden bg-slate-100">
-                  <img
+                  <OptimizedImage
                     src={post.imageUrl}
                     alt={post.title}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    imgClassName="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                 </div>
                 <div className="p-6 flex-1 flex flex-col">
@@ -694,9 +731,9 @@ export default function HomePage() {
               Join the next cohort and start your journey today.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-2">
-              <Link href="/trainee/register">
+              <Link href={getPublicEnrollHref()}>
                 <PrimaryButton size="lg" className="bg-white text-blue-700 hover:bg-blue-50 h-13 px-10 text-base font-bold shadow-lg border-none group">
-                  Enroll now
+                  Sign in to enroll
                   <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </PrimaryButton>
               </Link>

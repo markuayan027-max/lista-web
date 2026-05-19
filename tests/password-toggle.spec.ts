@@ -1,59 +1,45 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from "@playwright/test";
 
-test.describe('Password Toggle Functionality', () => {
-  test('should toggle password visibility in login form', async ({ page }) => {
-    // Navigate to the login page
-    await page.goto('http://localhost:5173/login');
+/**
+ * Login uses FormInputField (show/hide toggle). Sign-up uses labeled password fields.
+ */
+test.describe("Password toggle (FormInputField)", () => {
+  test("login: toggles password visibility", async ({ page }) => {
+    await page.goto("/login");
 
-    // Locate the password input field
-    const passwordInput = page.getByLabel('Password', { exact: true }).or(page.getByPlaceholder('••••••••'));
-    
-    // Check initial state is 'password'
-    await expect(passwordInput).toHaveAttribute('type', 'password');
+    const passwordInput = page.getByPlaceholder("••••••••");
+    await expect(passwordInput).toHaveAttribute("type", "password");
+    await passwordInput.fill("secretPassword123!");
 
-    // Fill some text to ensure it works properly
-    await passwordInput.fill('secretPassword123!');
+    const showToggle = page.getByRole("button", { name: "Show password" });
+    await expect(showToggle).toBeVisible();
+    await showToggle.click();
 
-    // Locate the toggle button (eye icon)
-    const toggleButton = page.getByRole('button', { name: 'Show password' });
-    await expect(toggleButton).toBeVisible();
+    await expect(passwordInput).toHaveAttribute("type", "text");
+    const hideToggle = page.getByRole("button", { name: "Hide password" });
+    await expect(hideToggle).toHaveAttribute("aria-pressed", "true");
+    await hideToggle.click();
 
-    // Click the toggle to show password
-    await toggleButton.click();
-
-    // Verify the input type changed to 'text'
-    await expect(passwordInput).toHaveAttribute('type', 'text');
-    await expect(toggleButton).toHaveAttribute('aria-label', 'Hide password');
-    await expect(toggleButton).toHaveAttribute('aria-pressed', 'true');
-
-    // Click the toggle again to hide password
-    await toggleButton.click();
-
-    // Verify the input type changed back to 'password'
-    await expect(passwordInput).toHaveAttribute('type', 'password');
-    await expect(toggleButton).toHaveAttribute('aria-label', 'Show password');
-    await expect(toggleButton).toHaveAttribute('aria-pressed', 'false');
+    await expect(passwordInput).toHaveAttribute("type", "password");
+    await expect(page.getByRole("button", { name: "Show password" })).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
   });
 
-  test('should support keyboard navigation for toggle', async ({ page }) => {
-    await page.goto('http://localhost:5173/login');
+  test("login: keyboard toggles password visibility", async ({ page }) => {
+    await page.goto("/login");
 
-    const passwordInput = page.getByPlaceholder('••••••••');
-    await passwordInput.fill('secret123');
+    const passwordInput = page.getByPlaceholder("••••••••");
+    await passwordInput.fill("secret123");
 
-    const toggleButton = page.getByRole('button', { name: 'Show password' });
+    const showToggle = page.getByRole("button", { name: "Show password" });
+    await showToggle.focus();
+    await showToggle.press("Enter");
+    await expect(passwordInput).toHaveAttribute("type", "text");
 
-    // Focus the button using Tab (we simulate focusing and pressing Enter)
-    await toggleButton.focus();
-    await toggleButton.press('Enter');
-
-    // Verify it toggled to text
-    await expect(passwordInput).toHaveAttribute('type', 'text');
-
-    // Press Space to toggle back
-    await toggleButton.press('Space');
-
-    // Verify it toggled back to password
-    await expect(passwordInput).toHaveAttribute('type', 'password');
+    const hideToggle = page.getByRole("button", { name: "Hide password" });
+    await hideToggle.press(" ");
+    await expect(passwordInput).toHaveAttribute("type", "password");
   });
 });

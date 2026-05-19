@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useAuth } from "@/context/auth-context";
 import { getEnrollCta } from "@/lib/role-navigation";
+import SiteLogo from "@/components/site-logo";
 
 const NAV_LINKS = [
   { href: "/", label: "Home" },
@@ -52,7 +53,7 @@ export default function Navbar() {
             }}
           >
             <div className="transition-transform group-hover:scale-105">
-              <img src="/logo.webp" alt="LISTA Logo" className="h-16 w-auto object-contain" />
+              <SiteLogo className="h-16 w-auto object-contain" priority />
             </div>
             <span className="text-xl font-bold tracking-tighter text-slate-900">LISTA</span>
           </Link>

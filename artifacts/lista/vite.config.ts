@@ -13,12 +13,37 @@ if (Number.isNaN(port) || port <= 0) {
 
 const basePath = process.env.BASE_PATH || "/";
 
+const CACHEABLE = /\.(webp|avif|png|jpe?g|svg|ico|woff2?|ttf)$/i;
+
+function staticCacheHeaders() {
+  return {
+    name: "lista-static-cache",
+    configureServer(server: { middlewares: { use: (fn: (req: any, res: any, next: () => void) => void) => void } }) {
+      server.middlewares.use((req, res, next) => {
+        if (req.url && CACHEABLE.test(req.url.split("?")[0] ?? "")) {
+          res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+        }
+        next();
+      });
+    },
+    configurePreviewServer(server: { middlewares: { use: (fn: (req: any, res: any, next: () => void) => void) => void } }) {
+      server.middlewares.use((req, res, next) => {
+        if (req.url && CACHEABLE.test(req.url.split("?")[0] ?? "")) {
+          res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+        }
+        next();
+      });
+    },
+  };
+}
+
 export default defineConfig({
   base: basePath,
   appType: "spa",
   plugins: [
     react(),
     tailwindcss(),
+    staticCacheHeaders(),
   ],
   resolve: {
     alias: {

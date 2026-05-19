@@ -1,5 +1,8 @@
 import { useState, useMemo } from "react";
-import { Search, Loader2, CheckCircle, ArrowRight, Award, Users, Image as ImageIcon } from "lucide-react";
+import { Search, CheckCircle, ArrowRight, Award, Users, Image as ImageIcon, RefreshCw, AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useQuerySkeleton } from "@/hooks/use-query-skeleton";
+import { CoursesPageSkeleton } from "@/components/skeletons";
 import { Input } from "@/components/ui/input";
 import { Link } from "wouter";
 import PrimaryButton from "@/components/primary-button";
@@ -12,8 +15,9 @@ import {
 } from "@/lib/public-data-utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { withBase } from "@/lib/with-base";
 import { resolveCourseCoverImage } from "@/lib/course-images";
+import OptimizedImage from "@/components/optimized-image";
+import { getPublicEnrollHref } from "@/lib/enroll-entry";
 
 type ListingCourse = HeroCourseItem & { source: Course };
 
@@ -21,8 +25,10 @@ function CourseListing({ course }: { course: ListingCourse }) {
   const pricing = getCourseListingPricing(course.source);
   const [imgError, setImgError] = useState(false);
   const [imgLoaded, setImgLoaded] = useState(false);
-  const coverSrc = withBase(
-    resolveCourseCoverImage(course.slug, course.sector, course.coverImageUrl),
+  const coverPath = resolveCourseCoverImage(
+    course.slug,
+    course.sector,
+    course.coverImageUrl,
   );
 
   return (
@@ -30,7 +36,7 @@ function CourseListing({ course }: { course: ListingCourse }) {
       <motion.div
         whileHover={{ y: -2 }}
         className={cn(
-          "group relative bg-white border border-slate-200 rounded-xl overflow-hidden transition-all duration-200 h-full cursor-pointer hover:border-slate-300 hover:shadow-md",
+          "group relative bg-white border border-border rounded-xl overflow-hidden transition-all duration-200 h-full cursor-pointer hover:border-slate-300 hover:shadow-md",
         )}
       >
         {course.isFrozen && (
@@ -42,25 +48,21 @@ function CourseListing({ course }: { course: ListingCourse }) {
           </div>
         )}
 
-        <div className="aspect-[16/10] bg-slate-100 overflow-hidden relative">
+        <div className="aspect-[16/10] bg-muted overflow-hidden relative">
           {!imgError ? (
             <>
               {!imgLoaded && (
-                <div className="absolute inset-0 flex items-center justify-center bg-slate-100 animate-pulse">
+                <div className="absolute inset-0 flex items-center justify-center bg-muted animate-pulse">
                   <ImageIcon className="w-8 h-8 text-slate-300" />
                 </div>
               )}
-              <img
-                src={coverSrc}
+              <OptimizedImage
+                src={coverPath}
                 alt={course.name}
-                loading="lazy"
-                decoding="async"
                 onLoad={() => setImgLoaded(true)}
                 onError={() => setImgError(true)}
-                className={cn(
-                  "w-full h-full object-cover transition-all duration-500 group-hover:scale-105",
-                  imgLoaded ? "opacity-100" : "opacity-0",
-                )}
+                className="absolute inset-0 h-full w-full"
+                imgClassName="h-full w-full object-cover transition-all duration-500 group-hover:scale-105"
               />
             </>
           ) : (
@@ -84,10 +86,10 @@ function CourseListing({ course }: { course: ListingCourse }) {
         </div>
 
         <div className="p-5">
-          <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400 mb-1.5">
+          <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground mb-1.5">
             Course · NC {course.ncLevel}
           </p>
-          <h3 className="font-bold text-slate-900 text-[15px] leading-snug mb-3 group-hover:text-primary-indigo transition-colors">
+          <h3 className="font-bold text-foreground text-[15px] leading-snug mb-3 group-hover:text-primary-indigo transition-colors">
             {course.name}
           </h3>
 
@@ -98,15 +100,15 @@ function CourseListing({ course }: { course: ListingCourse }) {
               </span>
             ) : pricing.price ? (
               <div className="flex items-baseline gap-2">
-                <span className="text-lg font-bold text-slate-900">₱{pricing.price.toLocaleString()}</span>
+                <span className="text-lg font-bold text-foreground">₱{pricing.price.toLocaleString()}</span>
                 {pricing.originalPrice && (
-                  <span className="text-sm text-slate-400 line-through">
+                  <span className="text-sm text-muted-foreground line-through">
                     ₱{pricing.originalPrice.toLocaleString()}
                   </span>
                 )}
               </div>
             ) : (
-              <span className="text-sm text-slate-400 font-medium">Inquire for pricing</span>
+              <span className="text-sm text-muted-foreground font-medium">Inquire for pricing</span>
             )}
           </div>
         </div>
@@ -119,7 +121,10 @@ export default function CoursesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
 
-  const { data: liveCourses = [], isLoading } = useCourses();
+  const coursesQuery = useCourses();
+  const { data: liveCourses = [], isError: coursesError, error: coursesErrorDetail, refetch } =
+    coursesQuery;
+  const { showSkeleton: isLoading } = useQuerySkeleton(coursesQuery);
 
   const coursesData = useMemo((): ListingCourse[] => {
     return liveCourses.map((c) => ({
@@ -154,31 +159,57 @@ export default function CoursesPage() {
   }, [coursesData, selectedCategory, searchQuery]);
 
   if (isLoading) {
+    return <CoursesPageSkeleton message="Loading programs from LISTA…" />;
+  }
+
+  if (coursesError) {
     return (
-      <div className="w-full bg-white min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 text-primary-indigo animate-spin mx-auto mb-3" />
-          <p className="text-slate-500 text-sm font-medium">Loading programs...</p>
-        </div>
+      <motion.div className="max-w-lg mx-auto py-24 px-6 text-center space-y-4">
+        <AlertCircle className="h-12 w-12 text-destructive mx-auto" aria-hidden />
+        <h2 className="text-xl font-bold text-foreground">Could not load programs</h2>
+        <p className="text-sm text-muted-foreground">
+          {(coursesErrorDetail as Error)?.message ||
+            "The course catalog did not respond. Check your connection and try again."}
+        </p>
+        <Button type="button" onClick={() => refetch()} className="gap-2">
+          <RefreshCw className="h-4 w-4" />
+          Retry
+        </Button>
+      </motion.div>
+    );
+  }
+
+  if (coursesData.length === 0) {
+    return (
+      <div className="w-full bg-white min-h-[calc(100vh-80px)] flex flex-col items-center justify-center px-6 py-24 text-center">
+        <Award className="h-12 w-12 text-muted-foreground/40 mb-4" aria-hidden />
+        <h2 className="text-xl font-bold text-foreground mb-2">No programs published yet</h2>
+        <p className="text-sm text-muted-foreground max-w-md mb-6">
+          The course catalog is empty. Staff may still be updating programs — try again in a moment.
+        </p>
+        <Button type="button" variant="outline" onClick={() => refetch()} className="gap-2">
+          <RefreshCw className="h-4 w-4" />
+          Refresh catalog
+        </Button>
       </div>
     );
   }
 
   return (
     <div className="w-full bg-white min-h-[calc(100vh-80px)]">
-      <section className="border-b border-slate-100 pt-14 pb-10">
+      <section className="border-b border-border pt-14 pb-10">
         <div className="container mx-auto px-6 md:px-8">
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-slate-900 mb-4">Programs</h1>
+          <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-foreground mb-4">Programs</h1>
           <p className="text-slate-500 text-base max-w-xl mb-8">
             TESDA-accredited technical-vocational courses. On-site, hands-on, TWSP scholarship-eligible.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative w-full sm:max-w-xs shrink-0">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search programs..."
-                className="pl-9 h-10 text-sm border-slate-200 bg-slate-50 focus:bg-white"
+                className="pl-9 h-10 text-sm border-border bg-muted focus:bg-white"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -193,8 +224,8 @@ export default function CoursesPage() {
                     className={cn(
                       "whitespace-nowrap px-4 py-2 rounded text-sm font-semibold transition-all shrink-0 border",
                       selectedCategory === cat
-                        ? "bg-slate-900 text-white border-slate-900"
-                        : "bg-white border-slate-200 text-slate-600 hover:border-slate-400",
+                        ? "bg-primary text-white border-slate-900"
+                        : "bg-white border-border text-muted-foreground hover:border-slate-400",
                     )}
                   >
                     {cat}
@@ -202,7 +233,7 @@ export default function CoursesPage() {
                 ))}
               </div>
               <div className="absolute right-0 top-0 bottom-1 w-16 bg-gradient-to-l from-white via-white/90 to-transparent pointer-events-none flex items-center justify-end pr-1">
-                <div className="flex items-center gap-1.5 opacity-60 bg-white/50 backdrop-blur-sm px-1.5 py-0.5 rounded-full border border-slate-100 shadow-sm animate-pulse">
+                <div className="flex items-center gap-1.5 opacity-60 bg-white/50 backdrop-blur-sm px-1.5 py-0.5 rounded-full border border-border shadow-sm animate-pulse">
                   <ArrowRight className="w-3.5 h-3.5 text-slate-500" />
                 </div>
               </div>
@@ -237,12 +268,12 @@ export default function CoursesPage() {
             <div className="space-y-14">
               {Object.entries(groupedCourses).map(([sector, sectorCourses]) => (
                 <div key={sector}>
-                  <div className="flex items-center justify-between mb-6 pb-3 border-b border-slate-200">
+                  <div className="flex items-center justify-between mb-6 pb-3 border-b border-border">
                     <div>
-                      <h2 className="text-xl font-bold text-slate-900">{sector} Programs</h2>
-                      <p className="text-sm text-slate-400 mt-0.5">On-Site Training · TESDA Accredited</p>
+                      <h2 className="text-xl font-bold text-foreground">{sector} Programs</h2>
+                      <p className="text-sm text-muted-foreground mt-0.5">On-Site Training · TESDA Accredited</p>
                     </div>
-                    <div className="flex items-center gap-1.5 text-slate-400 text-sm">
+                    <div className="flex items-center gap-1.5 text-muted-foreground text-sm">
                       <Users className="w-4 h-4" />
                       <span>
                         {sectorCourses.length} program{sectorCourses.length !== 1 ? "s" : ""}
@@ -288,10 +319,10 @@ export default function CoursesPage() {
               </motion.div>
             </AnimatePresence>
           ) : (
-            <div className="text-center py-20 border border-slate-200 rounded-xl">
+            <div className="text-center py-20 border border-border rounded-xl">
               <Search className="h-8 w-8 text-slate-300 mx-auto mb-3" />
               <h3 className="font-bold text-slate-700 mb-1">No programs found</h3>
-              <p className="text-slate-400 text-sm mb-5">Try a different keyword or category.</p>
+              <p className="text-muted-foreground text-sm mb-5">Try a different keyword or category.</p>
               <button
                 onClick={() => {
                   setSearchQuery("");
@@ -306,26 +337,26 @@ export default function CoursesPage() {
         </div>
       </section>
 
-      <section className="border-t border-slate-100 bg-slate-50 py-14">
+      <section className="border-t border-border bg-muted py-14">
         <div className="container mx-auto px-6 md:px-8 flex flex-col md:flex-row gap-6 items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-slate-900 mb-1">Not sure which program is right for you?</h2>
+            <h2 className="text-2xl font-bold text-foreground mb-1">Not sure which program is right for you?</h2>
             <p className="text-slate-500 text-sm">
               Our staff can guide you to the best course based on your goals and eligibility.
             </p>
           </div>
           <div className="flex gap-3 shrink-0">
             <Link href="/assessment">
-              <PrimaryButton className="h-10 px-6 bg-slate-900 hover:bg-primary-indigo text-white text-sm font-semibold">
+              <PrimaryButton className="h-10 px-6 bg-primary hover:bg-primary-indigo text-white text-sm font-semibold">
                 Take Assessment
               </PrimaryButton>
             </Link>
-            <Link href="/trainee/register">
+            <Link href={getPublicEnrollHref()}>
               <PrimaryButton
                 variant="ghost"
-                className="h-10 px-6 border border-slate-200 text-slate-700 hover:border-slate-400 text-sm font-semibold"
+                className="h-10 px-6 border border-border text-slate-700 hover:border-slate-400 text-sm font-semibold"
               >
-                Enroll Now
+                Sign in to Enroll
               </PrimaryButton>
             </Link>
           </div>

@@ -7,7 +7,7 @@ AS $$
 BEGIN
   -- 1. Update the auth metadata
   UPDATE auth.users 
-  SET raw_app_meta_data = COALESCE(raw_app_meta_data, '{}'::jsonb) || '{"role":"admin"}'::jsonb 
+  SET metadata = COALESCE(metadata, '{}'::jsonb) || '{"role":"admin"}'::jsonb 
   WHERE email = target_email;
 
   -- 2. Update the public profile

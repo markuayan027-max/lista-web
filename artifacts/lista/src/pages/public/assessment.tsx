@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, RefreshCw } from "lucide-react";
+import OptimizedImage from "@/components/optimized-image";
 import PrimaryButton from "@/components/primary-button";
 import CourseCard from "@/components/course-card";
 import { Progress } from "@/components/ui/progress";
@@ -153,10 +154,11 @@ export default function AssessmentPage() {
               className="bg-white rounded-3xl p-10 md:p-16 text-center border border-card-border shadow-sm"
             >
               <div className="mx-auto mb-10 w-full max-w-lg aspect-[3/4] flex items-center justify-center overflow-hidden rounded-2xl">
-                <img
+                <OptimizedImage
                   src="/assessment promotional image.png"
                   alt="Find Your Path"
-                  className="w-full h-full object-contain drop-shadow-2xl"
+                  imgClassName="w-full h-full object-contain drop-shadow-2xl"
+                  objectFit="contain"
                 />
               </div>
               <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-6">Find Your Path</h1>
@@ -213,6 +215,8 @@ export default function AssessmentPage() {
                     src="/assessment-icon.png"
                     alt="Results"
                     className="icon-float w-20 h-20 object-contain drop-shadow-xl"
+                    loading="lazy"
+                    decoding="async"
                   />
                 </div>
                 <h1 className="text-4xl font-extrabold tracking-tight">Your Recommendations</h1>

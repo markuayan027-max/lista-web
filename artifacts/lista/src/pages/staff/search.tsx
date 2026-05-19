@@ -39,7 +39,7 @@ export default function StaffSearchPage() {
         <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-6 w-6 text-muted-foreground" />
         <Input
           placeholder="Search across trainees, courses, and enrollments..."
-          className="pl-14 h-16 text-lg bg-white rounded-2xl shadow-sm border-card-border shadow-primary/5 focus-visible:ring-primary/20"
+          className="pl-14 h-16 text-lg bg-card rounded-2xl shadow-sm border-card-border shadow-primary/5 focus-visible:ring-primary/20"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           autoFocus
@@ -93,7 +93,7 @@ export default function StaffSearchPage() {
             </TabsContent>
           </Tabs>
         ) : (
-          <div className="text-center py-20 text-muted-foreground bg-white rounded-2xl border border-card-border">
+          <div className="text-center py-20 text-muted-foreground bg-card rounded-2xl border border-card-border">
             <SearchIcon className="h-12 w-12 mx-auto mb-4 opacity-20" />
             <p className="text-lg font-medium">No results found for "{query}"</p>
             <p className="text-sm mt-1">Try checking for typos or using different keywords.</p>

@@ -1,0 +1,23 @@
+-- Run on InsForge so cover_image_url matches local slug map (optional; app uses slug map first).
+UPDATE public.courses SET cover_image_url = '/agriculture-training.png' WHERE slug = 'agricultural-crops-production-nc-i';
+UPDATE public.courses SET cover_image_url = '/news-scholarship.png' WHERE slug = 'agricultural-crops-production-nc-ii';
+UPDATE public.courses SET cover_image_url = '/course-healthcare.png' WHERE slug = 'animal-production-poultry-chicken-nc-ii';
+UPDATE public.courses SET cover_image_url = '/course-marketing.png' WHERE slug = 'animal-production-ruminants-nc-ii';
+UPDATE public.courses SET cover_image_url = '/course-dressmaking.png' WHERE slug = 'animal-production-swine-nc-ii';
+UPDATE public.courses SET cover_image_url = '/course-project-management.png' WHERE slug = 'organic-agriculture-production-nc-ii';
+UPDATE public.courses SET cover_image_url = '/course-beauty-care.png' WHERE slug = 'beauty-care-nail-care-services-nc-ii';
+UPDATE public.courses SET cover_image_url = '/course-ui-ux.png' WHERE slug = 'hairdressing-nc-ii';
+UPDATE public.courses SET cover_image_url = '/graduate-bookkeeper.png' WHERE slug = 'bookkeeping-nc-iii';
+UPDATE public.courses SET cover_image_url = '/course-dressmaking.png' WHERE slug = 'bread-and-pastry-production-nc-ii';
+UPDATE public.courses SET cover_image_url = '/course-hospitality.png' WHERE slug = 'cookery-nc-ii';
+UPDATE public.courses SET cover_image_url = '/course-project-management.png' WHERE slug = 'food-beverage-services-nc-ii';
+UPDATE public.courses SET cover_image_url = '/course-web-dev.png' WHERE slug = 'housekeeping-nc-ii';
+UPDATE public.courses SET cover_image_url = '/graduate-it-support.png' WHERE slug = 'computer-systems-servicing-nc-ii';
+UPDATE public.courses SET cover_image_url = '/course-cybersecurity.png' WHERE slug = 'basic-computer-literacy';
+UPDATE public.courses SET cover_image_url = '/course-ui-ux.png' WHERE slug = 'visual-graphic-design-nc-iii';
+UPDATE public.courses SET cover_image_url = '/course-healthcare.png' WHERE slug = 'domestic-work-nc-ii';
+UPDATE public.courses SET cover_image_url = '/hero.png' WHERE slug = 'driving-nc-ii';
+UPDATE public.courses SET cover_image_url = '/course-cybersecurity.png' WHERE slug = 'electrical-installation-maintenance-nc-ii';
+UPDATE public.courses SET cover_image_url = '/agriculture-training.png' WHERE slug = 'heo-backhoe-loader-operations-nc-ii';
+UPDATE public.courses SET cover_image_url = '/course-data-science.png' WHERE slug = 'heo-hydraulic-excavator-operations-nc-ii';
+UPDATE public.courses SET cover_image_url = '/graduate-electrician.png' WHERE slug = 'smaw-nc-ii';

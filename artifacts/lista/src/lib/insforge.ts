@@ -1,24 +1,17 @@
 // LISTA Digital Records & Enrollment System — Backend Client
 // Created: 2026-05-12 | Purpose: Backend SDK client | Last verified with: @insforge/sdk@latest
-// Backend: https://2r6c3q25.ap-southeast.insforge.app
 
 import { InsForgeClient } from "@insforge/sdk";
+import { logInsforgeEnvNoticeOnce, resolveInsforgeEnv } from "@/lib/insforge-env";
 
-const baseUrl = import.meta.env.VITE_INSFORGE_URL as string;
-const anonKey = import.meta.env.VITE_INSFORGE_ANON_KEY as string;
+logInsforgeEnvNoticeOnce();
 
-if (!baseUrl || !anonKey) {
-  console.error(
-    "[LISTA] ⚠️  Backend credentials missing!\n" +
-      "  Set VITE_INSFORGE_URL and VITE_INSFORGE_ANON_KEY in your .env file.\n" +
-      "  Auth calls will fail until this is resolved."
-  );
-}
+const { baseUrl, anonKey } = resolveInsforgeEnv();
 
 /** Singleton backend client used app-wide */
 const client = new InsForgeClient({
-  baseUrl: baseUrl || "https://2r6c3q25.ap-southeast.insforge.app",
-  anonKey: anonKey || "",
+  baseUrl,
+  anonKey,
 });
 
 /**

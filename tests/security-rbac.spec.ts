@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { mockAuthState } from "./utils/auth-mock";
+import { mockAuthState, mockUnauthenticated } from "./utils/auth-mock";
 
 const API_BASE = process.env.API_BASE || "http://localhost:3001";
 
@@ -37,7 +37,12 @@ test.describe("API authorization", () => {
 
 test.describe("SPA route guards", () => {
   test("unauthenticated visit to /admin redirects to login", async ({ page }) => {
+    await mockUnauthenticated(page);
     await page.goto("/admin");
+    await page.waitForSelector('[data-testid="auth-loading"]', {
+      state: "hidden",
+      timeout: 30_000,
+    });
     await page.waitForURL(/\/login/, { timeout: 15_000 });
     expect(page.url()).toMatch(/\/login/);
   });

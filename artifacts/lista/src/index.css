@@ -179,13 +179,60 @@
     background-color: var(--color-muted-foreground);
   }
 
-  .hide-scrollbar::-webkit-scrollbar {
+  .hide-scrollbar::-webkit-scrollbar,
+  .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
-  .hide-scrollbar {
+  .hide-scrollbar,
+  .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+
+  .skeleton-shimmer {
+    background: linear-gradient(
+      90deg,
+      hsl(var(--muted)) 0%,
+      hsl(var(--muted) / 0.45) 45%,
+      hsl(var(--muted) / 0.85) 55%,
+      hsl(var(--muted)) 100%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.4s ease-in-out infinite;
+    will-change: background-position;
+  }
+
+  @keyframes skeleton-shimmer {
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
+  }
+
+  .content-fade-in {
+    animation: content-fade-in 0.35s ease-out both;
+  }
+
+  @keyframes content-fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+/* Official application form preview (screen) */
+.official-html-form-root .page-container {
+  margin: 0 auto 12px;
+}
+.official-html-form-root .page {
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
 }
 
 /* TESDA print modal — keeps multi-page forms from being clipped by app shells */
@@ -204,5 +251,18 @@
 
   .no-print {
     display: none !important;
+  }
+
+  .official-html-form-root .page-container {
+    margin: 0 !important;
+    page-break-after: always;
+  }
+
+  .official-html-form-root .page-container:last-child {
+    page-break-after: auto;
+  }
+
+  .official-html-form-root .page {
+    box-shadow: none !important;
   }
 }

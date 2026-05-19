@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, uuid, pgEnum, index } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, uuid, pgEnum, index, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -75,6 +75,7 @@ export const enrollments = pgTable("enrollments", {
   isIP: text("is_ip"),
   indigenousGroup: text("indigenous_group"),
   motherTongue: text("mother_tongue"),
+  consent: boolean("consent").notNull().default(false),
   submittedAt: timestamp("submitted_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, (table) => {

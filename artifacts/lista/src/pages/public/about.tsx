@@ -1,7 +1,7 @@
 import { Building2, Users, Target, Award, Globe, BookOpen, FileCheck, Eye } from "lucide-react";
 import AvatarInitials from "@/components/avatar-initials";
 import { leadership, officialDocuments } from "@/lib/institutional-data";
-import { withBase } from "@/lib/with-base";
+import OptimizedImage from "@/components/optimized-image";
 import {
   Dialog,
   DialogContent,
@@ -172,10 +172,10 @@ export default function AboutPage() {
                    <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl opacity-0 group-hover/avatar:opacity-100 transition-opacity" />
                    <div className="relative overflow-hidden rounded-full p-1 border-2 border-slate-100 group-hover:border-primary transition-all duration-500 scale-100 group-hover:scale-105">
                       {person.image ? (
-                        <img 
-                          src={withBase(person.image)} 
-                          alt={person.name} 
-                          className="w-32 h-32 rounded-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700"
+                        <OptimizedImage
+                          src={person.image}
+                          alt={person.name}
+                          imgClassName="w-32 h-32 rounded-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700"
                         />
                       ) : (
                         <AvatarInitials name={person.name} size="lg" className="w-32 h-32 text-3xl" />
@@ -198,37 +198,41 @@ export default function AboutPage() {
            <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-16">Officially Accredited & Recognized By</h2>
            <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12 items-center opacity-80">
               <div className="flex flex-col items-center gap-4 group">
-                <img 
-                  src={withBase('/TESDA_Logo_official-removebg-preview.png')} 
-                  alt="TESDA Logo" 
-                  className="h-16 md:h-20 w-auto object-contain grayscale group-hover:grayscale-0 transition-all duration-500" 
+                <OptimizedImage
+                  src="/TESDA_Logo_official-removebg-preview.png"
+                  alt="TESDA Logo"
+                  imgClassName="h-16 md:h-20 w-auto object-contain grayscale group-hover:grayscale-0 transition-all duration-500"
+                  objectFit="contain"
                 />
                 <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">TESDA</span>
               </div>
               
               <div className="flex flex-col items-center gap-4 group">
-                <img 
-                  src={withBase('/DepEd logo.png')} 
-                  alt="DepEd Logo" 
-                  className="h-16 md:h-20 w-auto object-contain grayscale group-hover:grayscale-0 transition-all duration-500" 
+                <OptimizedImage
+                  src="/DepEd logo.png"
+                  alt="DepEd Logo"
+                  imgClassName="h-16 md:h-20 w-auto object-contain grayscale group-hover:grayscale-0 transition-all duration-500"
+                  objectFit="contain"
                 />
                 <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">DepEd</span>
               </div>
               
               <div className="flex flex-col items-center gap-4 group">
-                <img 
-                  src={withBase('/ATI (Agricultural Training Institute) LOGO.png')} 
-                  alt="ATI Logo" 
-                  className="h-16 md:h-20 w-auto object-contain grayscale group-hover:grayscale-0 transition-all duration-500" 
+                <OptimizedImage
+                  src="/ATI (Agricultural Training Institute) LOGO.png"
+                  alt="ATI Logo"
+                  imgClassName="h-16 md:h-20 w-auto object-contain grayscale group-hover:grayscale-0 transition-all duration-500"
+                  objectFit="contain"
                 />
                 <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">ATI</span>
               </div>
               
               <div className="flex flex-col items-center gap-4 group">
-                <img 
-                  src={withBase('/NVTC (National Vocational Training Council) is INTERNATIONAL LOGO.webp.png')} 
-                  alt="NVTC International Logo" 
-                  className="h-16 md:h-20 w-auto object-contain grayscale group-hover:grayscale-0 transition-all duration-500" 
+                <OptimizedImage
+                  src="/NVTC (National Vocational Training Council) is INTERNATIONAL LOGO.webp.png"
+                  alt="NVTC International Logo"
+                  imgClassName="h-16 md:h-20 w-auto object-contain grayscale group-hover:grayscale-0 transition-all duration-500"
+                  objectFit="contain"
                 />
                 <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-center">NVTC International</span>
               </div>
@@ -271,14 +275,10 @@ export default function AboutPage() {
                             <div className="absolute inset-0 opacity-5 bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:16px_16px]" />
                             
                             {/* Document Preview Image */}
-                            <img 
-                              src={withBase(doc.image)} 
+                            <OptimizedImage
+                              src={doc.image}
                               alt={doc.title}
-                              className="w-full h-full object-cover grayscale-[20%] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700"
-                              onError={(e) => {
-                                const target = e.target as HTMLImageElement;
-                                target.src = "https://images.unsplash.com/photo-1589330694653-ded6df03f754?auto=format&fit=crop&q=80&w=600";
-                              }}
+                              imgClassName="w-full h-full object-cover grayscale-[20%] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700"
                             />
                             
                             {/* Hover Overlay */}
@@ -304,15 +304,11 @@ export default function AboutPage() {
                           <DialogDescription>{doc.description}</DialogDescription>
                         </DialogHeader>
                         <div className="relative w-full h-full flex items-center justify-center p-4">
-                          <img 
-                            src={withBase(doc.image)} 
-                            alt={doc.title} 
-                            className="max-w-full max-h-[85vh] w-auto h-auto rounded-lg shadow-2xl ring-4 ring-white/10 select-none"
+                          <OptimizedImage
+                            src={doc.image}
+                            alt={doc.title}
+                            imgClassName="max-w-full max-h-[85vh] w-auto h-auto rounded-lg shadow-2xl ring-4 ring-white/10 select-none"
                             onContextMenu={(e) => e.preventDefault()}
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.src = "https://images.unsplash.com/photo-1589330694653-ded6df03f754?auto=format&fit=crop&q=80&w=1200";
-                            }}
                           />
                           <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-4">
                              <div className="bg-black/60 backdrop-blur-md px-6 py-3 rounded-2xl border border-white/20 text-white flex flex-col items-center">

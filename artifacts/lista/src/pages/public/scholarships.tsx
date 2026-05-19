@@ -1,54 +1,30 @@
+import { useMemo } from "react";
 import { Award, DollarSign, ChevronRight, Clock, Banknote, Users, CheckCircle2, Info } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import PrimaryButton from "@/components/primary-button";
 import { useLocation } from "wouter";
+import { useCourses, useFaqs } from "@/hooks/use-lista-data";
+import {
+  TESDA_SCHOLARSHIP_PROGRAMS,
+  computeScholarshipPageStats,
+  countScholarshipFaqs,
+} from "@/lib/public-data-utils";
+import { getPublicEnrollHref } from "@/lib/enroll-entry";
 
-const scholarships = [
-  {
-    id: "twsp",
-    title: "Training for Work Scholarship Program (TWSP)",
-    description: "A TESDA scholarship program providing immediate help to job seekers through relevant skills training and competency assessment.",
-    amount: "Full Tuition + Allowance",
-    deadline: "Ongoing / Limited Slots",
-    eligibility: [
-      "Filipino citizen, at least 18 years old",
-      "High school graduate or equivalent",
-      "Unemployed or underemployed",
-      "Not a current recipient of other TESDA scholarships"
-    ]
-  },
-  {
-    id: "step",
-    title: "Special Training for Employment Program (STEP)",
-    description: "Community-based specialty training program that addresses the specific skills needs of the communities and promote self-employment.",
-    amount: "Free Training + Toolkit",
-    deadline: "Seasonal",
-    eligibility: [
-      "Must be at least 15 years old",
-      "Member of a marginalized group",
-      "Willing to undergo entrepreneurship training"
-    ]
-  },
-  {
-    id: "pesfa",
-    title: "Private Education Student Financial Assistance (PESFA)",
-    description: "Educational assistance to poor but deserving students in post-secondary non-degree courses.",
-    amount: "Tuition Subsidy",
-    deadline: "Per Academic Year",
-    eligibility: [
-      "Annual family income not exceeding P300,000",
-      "High school graduate",
-      "At least 18 years old"
-    ]
-  }
-];
+const STAT_ICONS = { Award, Users, Info, DollarSign } as const;
 
 export default function ScholarshipsPage() {
   const [, setLocation] = useLocation();
+  const { data: courses = [] } = useCourses();
+  const { data: faqs = [] } = useFaqs();
+  const scholarshipFaqs = countScholarshipFaqs(faqs);
+  const heroStats = useMemo(
+    () => computeScholarshipPageStats(courses, scholarshipFaqs),
+    [courses, scholarshipFaqs],
+  );
 
   const handleApply = (id: string) => {
-    // 2026-05-13: single application entrypoint
-    setLocation(`/trainee/register?scholarship=${id}`);
+    setLocation(getPublicEnrollHref({ scholarship: id }));
   };
 
   return (
@@ -83,22 +59,20 @@ export default function ScholarshipsPage() {
           </div>
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 relative z-10">
-            {[
-              { label: "Available slots", value: "500+", icon: Award },
-              { label: "Partnered Agencies", value: "12", icon: Users },
-              { label: "Scholarship types", value: "3 Main", icon: Info },
-              { label: "Funding sources", value: "National", icon: DollarSign },
-            ].map((stat, i) => (
+            {heroStats.map((stat, i) => {
+              const Icon = STAT_ICONS[stat.icon];
+              return (
               <div key={i} className="bg-white/80 backdrop-blur-md rounded-3xl border border-slate-100 shadow-[0_10px_40px_-15px_rgba(0,0,0,0.05)] p-6 flex flex-col justify-between group hover:-translate-y-1 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] transition-all duration-300">
                 <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 mb-4 group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300">
-                  <stat.icon className="w-6 h-6" />
+                  <Icon className="w-6 h-6" />
                 </div>
                 <div className="space-y-1">
                   <p className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight">{stat.value}</p>
                   <p className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-[0.2em]">{stat.label}</p>
                 </div>
               </div>
-            ))}
+            );
+            })}
           </div>
         </div>
       </section>
@@ -120,7 +94,7 @@ export default function ScholarshipsPage() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-            {scholarships.map((scholarship) => (
+            {TESDA_SCHOLARSHIP_PROGRAMS.map((scholarship) => (
               <Card key={scholarship.id} className="group border border-slate-100 shadow-[0_10px_30px_-15px_rgba(0,0,0,0.05)] hover:shadow-[0_30px_60px_-20px_rgba(0,0,0,0.1)] transition-all duration-700 flex flex-col relative z-10 bg-white rounded-[2.5rem] overflow-hidden hover:-translate-y-2">
                 {/* Decorative Accent */}
                 <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50/30 rounded-bl-full translate-x-10 -translate-y-10 group-hover:scale-150 transition-transform duration-700 z-0" />

@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import { BarChart3, Users, Bell, Calendar, Award, FileUp, Settings, GraduationCap, ChevronLeft, ChevronRight, ClipboardList } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import SiteLogo from "@/components/site-logo";
 
 const MENU_ITEMS = [
   { href: "/admin", label: "Analytics", icon: BarChart3 },
@@ -22,13 +23,13 @@ export default function SidebarAdmin() {
   return (
     <div
       className={cn(
-        "relative flex flex-col h-full bg-white border-r border-card-border transition-all duration-300",
+        "relative flex flex-col h-full bg-card border-r border-card-border transition-all duration-300",
         isCollapsed ? "w-20" : "w-64"
       )}
     >
       <div className={cn("p-6 flex items-center gap-3", isCollapsed && "justify-center px-0")}>
         <div className="shrink-0">
-          <img src="/logo.webp" alt="LISTA Logo" className="h-12 w-auto object-contain" />
+          <SiteLogo className="h-12 w-auto object-contain" />
         </div>
         {!isCollapsed && <span className="text-xl font-bold tracking-tighter">LISTA</span>}
       </div>

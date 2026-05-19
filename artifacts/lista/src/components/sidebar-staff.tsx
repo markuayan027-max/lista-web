@@ -1,16 +1,10 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Users, Search, Calendar, Bell, GraduationCap, ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-
-const MENU_ITEMS = [
-  { href: "/staff", label: "Overview", icon: LayoutDashboard },
-  { href: "/staff/enrollments", label: "Enrollments", icon: Users },
-  { href: "/staff/search", label: "Search", icon: Search },
-  { href: "/staff/schedule", label: "Schedule", icon: Calendar },
-  { href: "/staff/announcements", label: "Announcements", icon: Bell },
-];
+import SiteLogo from "@/components/site-logo";
+import { staffSidebarNavItems } from "@/lib/staff-nav";
 
 export default function SidebarStaff() {
   const [location] = useLocation();
@@ -19,19 +13,19 @@ export default function SidebarStaff() {
   return (
     <div
       className={cn(
-        "relative flex flex-col h-full bg-white border-r border-card-border transition-all duration-300",
+        "relative flex flex-col h-full bg-card border-r border-card-border transition-all duration-300",
         isCollapsed ? "w-20" : "w-64"
       )}
     >
       <div className={cn("p-6 flex items-center gap-2", isCollapsed && "justify-center px-0")}>
         <div className="shrink-0">
-          <img src="/logo.webp" alt="LISTA Logo" className="h-12 w-auto object-contain" />
+          <SiteLogo className="h-12 w-auto object-contain" />
         </div>
         {!isCollapsed && <span className="text-xl font-bold tracking-tighter">LISTA</span>}
       </div>
 
       <nav className="flex-1 px-4 space-y-1">
-        {MENU_ITEMS.map((item) => {
+        {staffSidebarNavItems().map((item) => {
           const isActive = location === item.href;
           return (
             <Link key={item.href} href={item.href}>

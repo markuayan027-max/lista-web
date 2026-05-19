@@ -116,3 +116,4 @@ connect.lock
 
 AI_App_Builder/
 AI_App_Builder_Backups/
+.vercel

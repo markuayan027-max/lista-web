@@ -1,4 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
+import { db } from "@workspace/db";
+import { users } from "@workspace/db/schema";
+import { eq } from "drizzle-orm";
 
 export type AuthRole = "trainee" | "staff" | "admin";
 
@@ -30,6 +33,26 @@ function roleFromInsForgeUser(user: Record<string, unknown>): AuthRole {
   return "trainee";
 }
 
+async function roleFromPublicUsers(email: string): Promise<AuthRole | null> {
+  try {
+    const [row] = await db
+      .select({ role: users.role })
+      .from(users)
+      .where(eq(users.email, email.toLowerCase()))
+      .limit(1);
+    if (row?.role === "admin" || row?.role === "staff") return row.role;
+  } catch {
+    // ignore
+  }
+  return null;
+}
+
+async function resolveAuthRole(email: string, insUser: Record<string, unknown>): Promise<AuthRole> {
+  const dbRole = await roleFromPublicUsers(email);
+  if (dbRole) return dbRole;
+  return roleFromInsForgeUser(insUser);
+}
+
 /** Validate Bearer token against InsForge session API. */
 export async function requireAuth(req: Request, res: Response, next: NextFunction) {
   const header = req.headers.authorization;
@@ -41,19 +64,25 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
   try {
     const sessionRes = await fetch(`${baseUrl}/api/auth/sessions/current`, {
       headers: { Authorization: `Bearer ${token}` },
+      signal: AbortSignal.timeout(25_000),
     });
     if (!sessionRes.ok) {
-      return res.status(401).json({ success: false, error: "Invalid or expired session" });
+      const detail =
+        sessionRes.status === 401
+          ? "Invalid or expired session — sign in again"
+          : `Auth validation failed (${sessionRes.status})`;
+      return res.status(401).json({ success: false, error: detail });
     }
     const session = (await sessionRes.json()) as { user?: Record<string, unknown> };
     const raw = session.user;
     if (!raw?.email) {
       return res.status(401).json({ success: false, error: "Invalid session user" });
     }
+    const email = String(raw.email).toLowerCase();
     req.authUser = {
       id: String(raw.id ?? ""),
-      email: String(raw.email).toLowerCase(),
-      role: roleFromInsForgeUser(raw),
+      email,
+      role: await resolveAuthRole(email, raw),
     };
     return next();
   } catch {

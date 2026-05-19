@@ -122,13 +122,13 @@ export default function AdminExportPage() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search by name, email, or ref no..."
-                className="pl-9 bg-white border-card-border"
+                className="pl-9 bg-card border-card-border"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full sm:w-40 bg-white border-card-border">
+              <SelectTrigger className="w-full sm:w-40 bg-card border-card-border">
                 <Filter className="h-4 w-4 mr-2 text-muted-foreground" />
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
@@ -299,7 +299,7 @@ export default function AdminExportPage() {
               </CardHeader>
               <CardFooter className="border-t border-card-border pt-4">
                 <Button
-                  className="w-full font-semibold bg-blue-600 hover:bg-blue-700 text-white"
+                  className="w-full font-semibold bg-primary-indigo hover:bg-primary-indigo/90 text-primary-foreground"
                   disabled={batchLoading === "word"}
                   onClick={() => doBatch(() => exportAllTraineesToWord(enrollments), "word")}
                 >

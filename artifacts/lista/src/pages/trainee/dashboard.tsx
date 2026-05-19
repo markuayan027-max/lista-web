@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useAuth } from "@/context/auth-context";
 import { Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
@@ -19,13 +19,30 @@ import StatCard from "@/components/stat-card";
 import AnnouncementCard from "@/components/announcement-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { useAnnouncements, useCourses, useDerivedCertificates, useSchedules } from "@/hooks/use-lista-data";
+import {
+  useAnnouncements,
+  useCourses,
+  useTraineeDerivedCertificates,
+  useSchedules,
+  useTraineeProfile,
+  listaKeys,
+} from "@/hooks/use-lista-data";
+import { useQueryClient } from "@tanstack/react-query";
 import { courseTitleBySlug } from "@/lib/lista-insforge-data";
 import type { Enrollment } from "@/lib/institutional-data";
 import { format } from "date-fns";
-import { calculateProfileCompletion, loadLocalProfile } from "@/lib/profile-utils";
+import {
+  calculateProfileCompletion,
+  isTraineeApplicationFormComplete,
+  loadLocalProfile,
+  mergeTraineeProfileSources,
+} from "@/lib/profile-utils";
 import PrintModal from "@/components/print-modal";
-import { updateTraineeEnrollmentByEmail, fetchTraineeEnrollmentByEmail } from "@/lib/trainee-enrollment-insforge";
+import {
+  updateTraineeEnrollmentByEmail,
+  hasSubmittedCourseApplication,
+  canCancelCourseApplication,
+} from "@/lib/trainee-enrollment-insforge";
 import { useToast } from "@/hooks/use-toast";
 
 const container = {
@@ -44,32 +61,22 @@ const item = {
 export default function TraineeDashboardPage() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const { data: courses = [] } = useCourses();
   const { data: schedules = [] } = useSchedules();
   const { data: announcements = [] } = useAnnouncements();
-  const { data: certificates = [] } = useDerivedCertificates();
+  const { data: certificates = [] } = useTraineeDerivedCertificates(user?.email);
+  const { data: profileRow } = useTraineeProfile(user?.email);
   const [printTarget, setPrintTarget] = useState<any>(null);
   const [isCancelling, setIsCancelling] = useState(false);
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
-  
-  const [userEnrollment, setUserEnrollment] = useState<Enrollment | null>(null);
 
-  useEffect(() => {
-    if (user?.email) {
-      fetchTraineeEnrollmentByEmail(user.email).then(res => {
-        if (res.success && res.data) {
-          setUserEnrollment(res.data as unknown as Enrollment);
-        }
-      });
-    }
-  }, [user?.email, refreshTrigger]);
+  const userEnrollment = (profileRow as Enrollment | null) ?? null;
 
   // Real profile completion check
-  const draft = loadLocalProfile();
+  const draft = loadLocalProfile(user?.id);
   
-  // Use user's real enrollment if it exists, otherwise use draft
-  const myEnrollment = userEnrollment || draft;
-  
+  const activeApplication = hasSubmittedCourseApplication(userEnrollment);
+
   const handleCancelApplication = async () => {
     if (!user?.email) return;
     if (confirm("Are you sure you want to cancel your application? This action cannot be undone.")) {
@@ -78,9 +85,11 @@ export default function TraineeDashboardPage() {
         const res = await updateTraineeEnrollmentByEmail(user.email, { status: "cancelled" });
       if (res.success) {
         toast({ title: "Application Cancelled", description: "Your application has been successfully cancelled." });
-        // Manually update local state for immediate feedback
-        setUserEnrollment(prev => prev ? { ...prev, status: "cancelled" } : null);
-        setRefreshTrigger(prev => prev + 1);
+        if (user.email) {
+          void queryClient.invalidateQueries({
+            queryKey: listaKeys.traineeProfile(user.email.trim().toLowerCase()),
+          });
+        }
       } else {
         console.error("Cancellation failed:", res.error);
         toast({ 
@@ -104,8 +113,10 @@ export default function TraineeDashboardPage() {
   
   const profileIncomplete = completionPercentage < 100;
   const displayPercentage = completionPercentage;
+  const mergedProfile = mergeTraineeProfileSources(userEnrollment, user?.id);
+  const applicationFormComplete = isTraineeApplicationFormComplete(mergedProfile);
 
-  const myCourseSlug = myEnrollment?.courseSlug;
+  const myCourseSlug = activeApplication ? userEnrollment?.courseSlug : undefined;
   const myCourseTitle = myCourseSlug ? courseTitleBySlug(courses, myCourseSlug) : null;
   const mySchedules = myCourseSlug ? schedules.filter((s) => s.courseSlug === myCourseSlug).slice(0, 3) : [];
   const recentAnnouncements = announcements
@@ -141,26 +152,26 @@ export default function TraineeDashboardPage() {
         </div>
       </motion.div>
 
-      {(!myEnrollment || myEnrollment.status === "ready_to_apply") && (
-        <motion.div 
+      {!activeApplication && (
+        <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-blue-50 border-l-4 border-l-blue-500 border-y border-r border-blue-100 p-5 flex flex-col md:flex-row items-center justify-between gap-6 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.04)] group"
+          className="bg-primary-indigo/10 border-l-4 border-l-primary-indigo border-y border-r border-primary-indigo/20 p-5 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm group"
         >
           <div className="flex items-center gap-5 text-center md:text-left">
             <div className="relative shrink-0">
-              <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-blue-600 shadow-sm border border-blue-100">
+              <div className="w-12 h-12 bg-card rounded-full flex items-center justify-center text-primary-indigo shadow-sm border border-primary-indigo/20">
                 <BookOpen className="w-6 h-6 stroke-[2.5px]" />
               </div>
             </div>
             <div className="space-y-0.5">
-              <h3 className="font-bold text-blue-900 text-sm uppercase tracking-wider">Course Application Required</h3>
-              <p className="text-[13px] text-blue-700 font-medium leading-relaxed max-w-xl">
+              <h3 className="font-bold text-foreground text-sm uppercase tracking-wider">Course Application Required</h3>
+              <p className="text-[13px] text-primary-indigo font-medium leading-relaxed max-w-xl">
                 You haven't submitted an official course application yet. Please browse available courses and submit your application.
               </p>
             </div>
           </div>
-          <Link href="/trainee/application" className="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg text-[11px] font-black uppercase tracking-widest transition-all shadow-md active:scale-[0.98] text-center">
+          <Link href="/trainee/application" className="w-full md:w-auto bg-primary-indigo hover:bg-primary-indigo/90 text-primary-foreground px-6 py-2.5 rounded-lg text-[11px] font-black uppercase tracking-widest transition-all shadow-md active:scale-[0.98] text-center">
             View Courses
           </Link>
         </motion.div>
@@ -170,25 +181,25 @@ export default function TraineeDashboardPage() {
         <motion.div 
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white border-l-4 border-l-amber-500 border-y border-r border-gray-100 p-5 flex flex-col md:flex-row items-center justify-between gap-6 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.04)] group"
+          className="bg-card border-l-4 border-l-amber-500 border-y border-r border-border p-5 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm group"
         >
           <div className="flex items-center gap-5 text-center md:text-left">
             <div className="relative shrink-0">
               <div className="w-12 h-12 bg-amber-50 rounded-full flex items-center justify-center text-amber-600">
                 <AlertCircle className="w-6 h-6 stroke-[2.5px]" />
               </div>
-              <div className="absolute -top-1 -right-1 bg-amber-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full border-2 border-white">
+              <div className="absolute -top-1 -right-1 bg-amber-500 text-primary-foreground text-[9px] font-black px-1.5 py-0.5 rounded-full border-2 border-card">
                 {displayPercentage}%
               </div>
             </div>
             <div className="space-y-0.5">
-              <h3 className="font-bold text-gray-900 text-sm uppercase tracking-wider">{displayPercentage}% Profile Action Required</h3>
-              <p className="text-[13px] text-gray-500 font-medium leading-relaxed max-w-xl">
-                Some TESDA-required fields are still missing. Complete them now to enable <span className="text-gray-900 font-bold">Instant Admission Slips</span> for your next enrollment.
+              <h3 className="font-bold text-foreground text-sm uppercase tracking-wider">{displayPercentage}% Profile Action Required</h3>
+              <p className="text-[13px] text-muted-foreground font-medium leading-relaxed max-w-xl">
+                Some TESDA-required fields are still missing. Complete them now to enable <span className="text-foreground font-bold">Instant Admission Slips</span> for your next enrollment.
               </p>
             </div>
           </div>
-          <Link href="/trainee/profile" className="w-full md:w-auto bg-primary hover:bg-primary/90 text-white px-6 py-2.5 rounded-lg text-[11px] font-black uppercase tracking-widest transition-all shadow-md active:scale-[0.98]">
+          <Link href="/trainee/profile" className="w-full md:w-auto bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-2.5 rounded-lg text-[11px] font-black uppercase tracking-widest transition-all shadow-md active:scale-[0.98]">
             Complete Profile
           </Link>
         </motion.div>
@@ -211,7 +222,13 @@ export default function TraineeDashboardPage() {
         <motion.div variants={item}>
           <StatCard
             label="Application Status"
-            value={myEnrollment?.status === "ready_to_apply" ? "Ready to Apply" : (myEnrollment?.status || "Pending")}
+            value={
+              activeApplication
+                ? userEnrollment!.status
+                : userEnrollment?.status === "ready_to_apply"
+                  ? "Ready to Apply"
+                  : "Not Applied"
+            }
             icon={FileText}
             className="h-full"
           />
@@ -233,23 +250,25 @@ export default function TraineeDashboardPage() {
                   <div>
                     <CardTitle className="text-lg">Application Timeline</CardTitle>
                     <CardDescription>
-                      {myEnrollment && myEnrollment.status?.toLowerCase() !== 'ready_to_apply' ? `Ref: ${myEnrollment.refNo}` : "No active application"}
+                      {activeApplication && userEnrollment?.refNo
+                        ? `Ref: ${userEnrollment.refNo}`
+                        : "No active application"}
                     </CardDescription>
                   </div>
-                  {myEnrollment && !['ready_to_apply', 'cancelled', 'completed', 'rejected'].includes(myEnrollment?.status?.toLowerCase() || '') ? (
+                  {activeApplication ? (
                     <div className="flex gap-2">
-                      {!['enrolled', 'confirmed'].includes(myEnrollment?.status?.toLowerCase() || '') && (
+                      {canCancelCourseApplication(userEnrollment) && (
                         <Button 
                           variant="destructive" 
                           size="sm" 
                           onClick={handleCancelApplication} 
                           disabled={isCancelling}
-                          className="hidden sm:flex bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 border-none"
+                          className="hidden sm:flex bg-destructive/10 text-destructive hover:bg-destructive/20 hover:text-destructive border-none"
                         >
                           {isCancelling ? "Cancelling..." : "Cancel Application"}
                         </Button>
                       )}
-                      <Button variant="outline" size="sm" onClick={() => setPrintTarget(myEnrollment)} className="hidden sm:flex">
+                      <Button variant="outline" size="sm" onClick={() => setPrintTarget(userEnrollment)} className="hidden sm:flex">
                         <Download className="w-4 h-4 mr-2" /> Download Form
                       </Button>
                       <Button variant="outline" size="sm" asChild>
@@ -264,30 +283,35 @@ export default function TraineeDashboardPage() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center justify-between relative">
-                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-muted rounded-full" />
-                  
-                  {(() => {
-                    const statusLower = myEnrollment?.status?.toLowerCase() || '';
-                    
-                    if (statusLower === 'ready_to_apply') {
+                {(() => {
+                    const statusLower = userEnrollment?.status?.toLowerCase() || '';
+
+                    if (!activeApplication) {
+                      if (statusLower === "ready_to_apply") {
+                        return (
+                          <div className="w-full flex flex-col items-center gap-4 py-4 bg-primary-indigo/10 rounded-xl border border-primary-indigo/20">
+                            <div className="text-primary-indigo font-bold text-sm">Profile Complete! You are ready to apply.</div>
+                            <Button size="sm" asChild className="bg-primary-indigo hover:bg-primary-indigo/90 text-primary-foreground">
+                              <Link href="/trainee/application">Select a Course Now</Link>
+                            </Button>
+                          </div>
+                        );
+                      }
                       return (
-                        <div className="w-full flex flex-col items-center gap-4 py-4 bg-blue-50/50 rounded-xl border border-blue-100">
-                          <div className="text-blue-700 font-bold text-sm">Profile Complete! You are ready to apply.</div>
-                          <Button size="sm" asChild className="bg-blue-600 hover:bg-blue-700">
-                            <Link href="/trainee/application">Select a Course Now</Link>
-                          </Button>
+                        <div className="w-full text-center text-muted-foreground text-sm py-6">
+                          Browse courses and submit an application to track progress here.
                         </div>
                       );
                     }
+
                     if (statusLower === 'completed') {
-                      return <div className="w-full text-center text-emerald-600 font-semibold py-2 bg-emerald-50 rounded-lg">Course Completed</div>;
+                      return <div className="w-full text-center text-emerald-700 font-semibold py-2 bg-emerald-500/10 rounded-lg">Course Completed</div>;
                     }
                     if (statusLower === 'cancelled') {
-                      return <div className="w-full text-center text-red-600 font-semibold py-2 bg-red-50 rounded-lg">Application Cancelled</div>;
+                      return <div className="w-full text-center text-destructive font-semibold py-2 bg-destructive/10 rounded-lg">Application Cancelled</div>;
                     }
                     if (statusLower === 'rejected') {
-                      return <div className="w-full text-center text-red-600 font-semibold py-2 bg-red-50 rounded-lg">Application Rejected</div>;
+                      return <div className="w-full text-center text-destructive font-semibold py-2 bg-destructive/10 rounded-lg">Application Rejected</div>;
                     }
 
                     const steps = ['Submitted', 'Review', 'Interview', 'Enrolled'];
@@ -301,7 +325,8 @@ export default function TraineeDashboardPage() {
                     const progressWidth = currentStepIndex === 0 ? "0%" : `${((currentStepIndex - 1) / (steps.length - 1)) * 100}%`;
 
                     return (
-                      <>
+                      <div className="flex items-center justify-between relative">
+                        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-muted rounded-full" />
                         <div className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-primary rounded-full transition-all duration-500" style={{ width: progressWidth }} />
                         {steps.map((step, i) => {
                           const isCompleted = i < currentStepIndex;
@@ -320,10 +345,9 @@ export default function TraineeDashboardPage() {
                             </div>
                           );
                         })}
-                      </>
+                      </div>
                     );
                   })()}
-                </div>
               </CardContent>
             </Card>
           </motion.div>

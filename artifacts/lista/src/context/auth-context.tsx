@@ -1,8 +1,11 @@
-import { createContext, useContext, useState, ReactNode, useEffect } from "react";
+import { useState, ReactNode, useEffect } from "react";
 import { User, UserRole } from "../lib/institutional-data";
+import { AuthContext, type AuthContextType } from "./use-auth";
+
+export { useAuth } from "./use-auth";
+export type { AuthContextType };
 import { lista } from "../lib/insforge";
 import { isTraineeRegistrationComplete, skipsTraineeApplication } from "../lib/role-navigation";
-import { resolveTraineeRegistrationFromCloud } from "../lib/trainee-registration-state";
 import { clearLocalProfile, clearProfilePic } from "../lib/profile-utils";
 import { authApiRequest, authApiUrl } from "../lib/auth-api";
 import {
@@ -10,38 +13,7 @@ import {
   ensureAccessToken,
   getStoredSession,
 } from "../lib/auth-token";
-import { ensurePublicTraineeUser } from "../lib/ensure-public-trainee";
-
-let traineeSyncUserId: string | null = null;
-let traineeSyncInFlight: string | null = null;
-
-interface AuthContextType {
-  user: User | null;
-  /** True while restoring session from the backend */
-  loading: boolean;
-  /** Email + password login */
-  login: (email: string, password: string) => Promise<void>;
-  /**
-   * Create a new account. Triggers a verification email with OTP.
-   * Call verifyEmail() afterwards to complete registration.
-   */
-  signUp: (email: string, password: string, name?: string) => Promise<void>;
-  /**
-   * Verify an email OTP (sign-up confirmation).
-   * After success the session is established and `user` is populated.
-   */
-  verifyEmail: (email: string, otp: string) => Promise<void>;
-  /** Resend the sign-up OTP to the supplied address */
-  resendVerificationEmail: (email: string) => Promise<void>;
-  /** OAuth redirect (Google) */
-  signUpWithOAuth: (provider: "google") => Promise<void>;
-  logout: () => Promise<void>;
-  isRegistered: boolean;
-  completeRegistration: () => void;
-  markRegistrationPartial: () => void;
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+import { clearTraineeSyncMarkers, syncTraineeSideEffects } from "../lib/auth-trainee-sync";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -72,49 +44,6 @@ async function mapInsForgeUser(insUser: any): Promise<User | null> {
     role: resolvedRole,
     avatarUrl: insUser.user_metadata?.avatar_url || "",
   };
-}
-
-/** One ensure-trainee + profile hydrate per user per page load (avoids HMR / remount spam). */
-async function syncTraineeSideEffects(
-  mapped: User,
-  setIsRegistered: (v: boolean) => void,
-): Promise<void> {
-  if (mapped.role !== "trainee") return;
-  if (traineeSyncUserId === mapped.id) return;
-  if (traineeSyncInFlight === mapped.id) return;
-
-  traineeSyncInFlight = mapped.id;
-  try {
-    await ensurePublicTraineeUser({
-      email: mapped.email,
-      firstName: mapped.name.split(" ")[0],
-      lastName: mapped.name.split(" ").slice(1).join(" ") || "-",
-    });
-    await hydrateTraineeRegistration(mapped, setIsRegistered);
-    traineeSyncUserId = mapped.id;
-  } finally {
-    if (traineeSyncInFlight === mapped.id) traineeSyncInFlight = null;
-  }
-}
-
-async function hydrateTraineeRegistration(
-  mapped: User,
-  setIsRegistered: (v: boolean) => void,
-): Promise<void> {
-  if (skipsTraineeApplication(mapped)) {
-    setIsRegistered(true);
-    return;
-  }
-  if (isTraineeRegistrationComplete(mapped)) {
-    setIsRegistered(true);
-    return;
-  }
-  try {
-    const fromCloud = await resolveTraineeRegistrationFromCloud(mapped);
-    setIsRegistered(fromCloud);
-  } catch {
-    setIsRegistered(false);
-  }
 }
 
 /** Normalize InsForge session JSON (camelCase or legacy snake_case). */
@@ -205,8 +134,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.error("[AuthProvider] Session restore failed:", err);
         localStorage.removeItem("lista_session");
         clearAccessTokenCache();
-        traineeSyncUserId = null;
-        traineeSyncInFlight = null;
+        clearTraineeSyncMarkers();
         lista.setAccessToken(null);
         setUser(null);
       } finally {
@@ -293,8 +221,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const signingOutId = user?.id;
       localStorage.removeItem("lista_session");
       clearAccessTokenCache();
-      traineeSyncUserId = null;
-      traineeSyncInFlight = null;
+      clearTraineeSyncMarkers();
       clearLocalProfile(signingOutId);
       clearProfilePic(signingOutId);
       lista.setAccessToken(null);
@@ -336,10 +263,3 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
-  return context;
-}

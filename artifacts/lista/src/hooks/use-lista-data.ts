@@ -33,6 +33,7 @@ export const listaKeys = {
   schedules: ["lista", "schedules"] as const,
   testimonials: ["lista", "testimonials"] as const,
   faqs: ["lista", "faqs"] as const,
+  traineeProfile: (email: string) => ["lista", "trainee-profile", email] as const,
 };
 
 function unwrap<T>(result: { success: boolean; data?: T; error?: string }): T {
@@ -48,6 +49,33 @@ export function useUsers() {
     queryFn: async () => unwrap(await fetchUsers()),
     staleTime: 60_000,
     enabled: !loading && canListUsers,
+  });
+}
+
+/** Shared trainee profile query — dedupes dashboard, schedule, tracking, application, etc. */
+export function useTraineeProfile(email: string | undefined) {
+  const { user, loading } = useAuth();
+  const normalized = email?.trim().toLowerCase() ?? "";
+  const isSelf = Boolean(
+    normalized && user?.email && user.email.trim().toLowerCase() === normalized,
+  );
+  return useQuery({
+    queryKey: listaKeys.traineeProfile(normalized),
+    queryFn: async () => {
+      const res = await fetchTraineeEnrollmentByEmail(normalized);
+      if (!res.success) {
+        const msg = res.error ?? "";
+        if (msg && !msg.toLowerCase().includes("not found")) {
+          throw new Error(msg);
+        }
+        return null;
+      }
+      if (!res.data) return null;
+      return res.data as unknown as Enrollment;
+    },
+    enabled: !loading && isSelf,
+    staleTime: 60_000,
+    retry: 1,
   });
 }
 
@@ -161,20 +189,17 @@ export function useDerivedCertificates() {
 /** Trainee-safe certificates — scopes to the signed-in user's enrollment via API, not all rows. */
 export function useTraineeDerivedCertificates(email: string | undefined) {
   const { data: courses = [], isLoading: coursesLoading } = useCourses();
-  const selfEnrollmentQuery = useQuery({
-    queryKey: [...listaKeys.enrollments, "self", email?.toLowerCase() ?? ""] as const,
-    queryFn: async () => {
-      if (!email) return [] as Enrollment[];
-      const res = await fetchTraineeEnrollmentByEmail(email);
-      if (!res.success || !res.data) return [];
-      return [res.data as unknown as Enrollment];
-    },
-    enabled: Boolean(email),
-    staleTime: 30_000,
-  });
+  const selfEnrollmentQuery = useTraineeProfile(email);
+  const enrollments = useMemo(
+    () =>
+      selfEnrollmentQuery.data
+        ? [selfEnrollmentQuery.data as unknown as Enrollment]
+        : ([] as Enrollment[]),
+    [selfEnrollmentQuery.data],
+  );
   const certificates = useMemo(
-    () => deriveCertificatesFromEnrollments(selfEnrollmentQuery.data ?? [], courses),
-    [selfEnrollmentQuery.data, courses],
+    () => deriveCertificatesFromEnrollments(enrollments, courses),
+    [enrollments, courses],
   );
   return {
     data: certificates,

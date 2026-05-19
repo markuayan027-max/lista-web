@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { Link } from "wouter";
 import PrimaryButton from "@/components/primary-button";
+import { getPublicEnrollHref } from "@/lib/enroll-entry";
 
 const containerVars = {
   hidden: { opacity: 0 },
@@ -183,9 +184,9 @@ export default function AdmissionsPage() {
               transition={{ duration: 0.8, delay: 0.3 }}
             >
               {/* 2026-05-13: single application entrypoint */}
-              <Link href="/trainee/register">
+              <Link href={getPublicEnrollHref()}>
                 <PrimaryButton size="lg" className="h-16 px-10 text-lg rounded-none bg-blue-600 hover:bg-blue-700 transition-colors duration-500 group">
-                  Begin Application
+                  Sign in to apply
                   <ArrowRight className="ml-3 h-5 w-5 transition-transform group-hover:translate-x-1" />
                 </PrimaryButton>
               </Link>
@@ -444,7 +445,7 @@ export default function AdmissionsPage() {
                  Join a community dedicated to technical mastery and career-focused excellence. Slots for the current cohort are limited.
                </p>
                <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
-                 <Link href="/trainee/register">
+                 <Link href={getPublicEnrollHref()}>
                    <PrimaryButton size="lg" className="h-20 px-16 text-xl font-black rounded-none shadow-2xl shadow-blue-200/50">
                       Enroll Now
                    </PrimaryButton>

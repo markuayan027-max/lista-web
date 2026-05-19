@@ -5,11 +5,11 @@ You (Antigravity/OpenCode/Gemini) are interacting with a project that uses **Gra
 ## CRITICAL INSTRUCTION
 BEFORE performing any generalized file searches, directory listings (`ls`), or attempting to understand the overall project architecture, you MUST:
 
-1. Consult the `graphify-out/` directory first.
-2. Read `graphify-out/manifest.json` (or any generated Graphify documentation/graphs) to understand file locations, structural mappings, and existing dependencies.
-3. Use the Graphify context as your "source of truth" to pinpoint exactly which files you need to modify. 
+1. If `graphify-out/graph.json` exists, run `graphify query "<question>"` first (or `path` / `explain`).
+2. Read `graphify-out/GRAPH_REPORT.md` only for broad architecture review.
+3. Then open only the files the query surfaced.
 
-Do NOT perform redundant, brute-force project searches unless the Graphify output is explicitly missing the information you need.
+Do NOT brute-force grep/list the whole repo when the graph answers the question. After code edits: `graphify update .` (AST-only).
 
 ## DAILY VERSIONING RULE
 You MUST ensure that every day, the code that is created or modified is marked so that past versions can be restored. This includes adding date markers to modified sections and ensuring a clear audit trail of changes.

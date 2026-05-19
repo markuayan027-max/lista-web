@@ -2,6 +2,7 @@ import { useAuth } from "@/context/auth-context";
 import { useLocation, Link } from "wouter";
 import SidebarStaff from "@/components/sidebar-staff";
 import AvatarInitials from "@/components/avatar-initials";
+import { staffAccountNavItems } from "@/lib/staff-nav";
 import { LogOut, Bell, Search, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,10 +13,12 @@ export default function StaffLayout({ children }: { children: React.ReactNode })
   const { user, logout } = useAuth();
   const [, setLocation] = useLocation();
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     setLocation("/");
   };
+
+  const accountItems = staffAccountNavItems();
 
   return (
     <div className="flex h-screen bg-muted/30 overflow-hidden">
@@ -26,7 +29,7 @@ export default function StaffLayout({ children }: { children: React.ReactNode })
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Top Bar */}
-        <header className="h-16 bg-white border-b border-card-border flex items-center justify-between px-4 md:px-8 shrink-0">
+        <header className="h-16 bg-card border-b border-card-border flex items-center justify-between px-4 md:px-8 shrink-0">
           <div className="flex items-center gap-4 flex-1">
             <div className="md:hidden">
               <Sheet>
@@ -46,7 +49,7 @@ export default function StaffLayout({ children }: { children: React.ReactNode })
               <Link href="/staff/search" className="w-full">
                 <Input
                   placeholder="Global search..."
-                  className="pl-10 bg-muted/50 border-transparent focus:bg-white transition-all rounded-xl cursor-pointer"
+                  className="pl-10 bg-muted/50 border-transparent focus:bg-card transition-all rounded-xl cursor-pointer"
                   readOnly
                 />
               </Link>
@@ -56,7 +59,7 @@ export default function StaffLayout({ children }: { children: React.ReactNode })
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="icon" className="text-muted-foreground relative">
               <Bell className="h-5 w-5" />
-              <span className="absolute top-2 right-2 h-2 w-2 bg-primary rounded-full border-2 border-white" />
+              <span className="absolute top-2 right-2 h-2 w-2 bg-primary rounded-full border-2 border-card" />
             </Button>
             
             <DropdownMenu>
@@ -72,8 +75,16 @@ export default function StaffLayout({ children }: { children: React.ReactNode })
               <DropdownMenuContent align="end" className="w-56 mt-2 rounded-xl">
                 <DropdownMenuLabel>Staff Portal</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setLocation("/staff/overview")}>Dashboard</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setLocation("/staff/enrollments")}>Enrollments</DropdownMenuItem>
+                {accountItems.map((item) => (
+                  <DropdownMenuItem
+                    key={item.href}
+                    onClick={() => setLocation(item.href)}
+                    className="rounded-lg"
+                  >
+                    <item.icon className="mr-2 h-4 w-4 text-muted-foreground" />
+                    {item.label}
+                  </DropdownMenuItem>
+                ))}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout} className="text-destructive font-bold">
                   <LogOut className="mr-2 h-4 w-4" />

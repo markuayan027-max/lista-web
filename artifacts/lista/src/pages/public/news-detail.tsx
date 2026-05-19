@@ -2,12 +2,13 @@ import { useMemo } from "react";
 import { useParams, Link } from "wouter";
 import { useAnnouncements } from "@/hooks/use-lista-data";
 import { announcementToPost } from "@/lib/lista-insforge-data";
-import { withBase } from "@/lib/with-base";
+import OptimizedImage from "@/components/optimized-image";
 import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, Calendar, User, Clock, Share2, ArrowRight, Loader2 } from "lucide-react";
 import NotFound from "@/pages/not-found";
 import { motion } from "framer-motion";
 import PrimaryButton from "@/components/primary-button";
+import { getPublicEnrollHref } from "@/lib/enroll-entry";
 
 export default function NewsDetailPage() {
   const { id } = useParams();
@@ -84,10 +85,11 @@ export default function NewsDetailPage() {
           transition={{ duration: 0.8, delay: 0.2 }}
           className="max-w-5xl mx-auto aspect-[16/9] md:aspect-[21/9] rounded-[2rem] md:rounded-[3rem] overflow-hidden shadow-2xl border-4 border-white"
         >
-          <img 
-            src={withBase(post.imageUrl)} 
-            alt={post.title} 
-            className="w-full h-full object-cover"
+          <OptimizedImage
+            src={post.imageUrl}
+            alt={post.title}
+            priority
+            imgClassName="w-full h-full object-cover"
           />
         </motion.div>
       </section>
@@ -135,10 +137,10 @@ export default function NewsDetailPage() {
                       <Link key={related.id} href={`/news/${related.id}`}>
                         <div className="group cursor-pointer space-y-3">
                           <div className="aspect-[16/10] rounded-2xl overflow-hidden bg-slate-100">
-                            <img 
-                              src={withBase(related.imageUrl)} 
+                            <OptimizedImage
+                              src={related.imageUrl}
                               alt={related.title}
-                              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                              imgClassName="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                             />
                           </div>
                           <h4 className="font-bold leading-tight group-hover:text-primary transition-colors line-clamp-2">
@@ -158,9 +160,9 @@ export default function NewsDetailPage() {
                 <h3 className="text-2xl font-bold leading-tight relative z-10 text-slate-900">Stay informed on latest scholarship slots</h3>
                 <p className="text-slate-500 text-sm relative z-10 font-medium">Get instant notifications about TESDA qualifications and enrollment periods.</p>
                 {/* 2026-05-13: single application entrypoint */}
-                <Link href="/trainee/register">
+                <Link href={getPublicEnrollHref()}>
                   <PrimaryButton className="w-full bg-primary text-white hover:bg-primary/90 mt-4">
-                    Apply Now
+                    Sign in to apply
                   </PrimaryButton>
                 </Link>
               </div>

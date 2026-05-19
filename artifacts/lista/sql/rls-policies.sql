@@ -10,6 +10,8 @@ STABLE
 AS $$
   SELECT COALESCE(
     auth.jwt() -> 'app_metadata' ->> 'role',
+    auth.jwt() -> 'metadata' ->> 'role',
+    auth.jwt() -> 'user_metadata' ->> 'role',
     'trainee'
   );
 $$;

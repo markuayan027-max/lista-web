@@ -13,7 +13,9 @@
     "dev": "pnpm run cleanup && pnpm -r --filter @workspace/api-server --filter @workspace/lista --parallel run dev",
     "typecheck:libs": "tsc --build",
     "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck",
-    "serve-frontend-static": "pnpm run build --filter @workspace/lista && http-server ./artifacts/lista/dist/public -p 5173"
+    "serve-frontend-static": "pnpm run build --filter @workspace/lista && http-server ./artifacts/lista/dist/public -p 5173",
+    "pilot-smoke": "pnpm exec playwright test enrollment lista-qa-matrix --reporter=list && node artifacts/lista/scripts/pilot-insforge-data.mjs",
+    "pilot-smoke:full": "pnpm run typecheck && pnpm run build --filter @workspace/lista && pnpm run pilot-smoke"
   },
   "private": true,
   "devDependencies": {

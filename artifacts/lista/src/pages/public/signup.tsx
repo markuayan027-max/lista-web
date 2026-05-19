@@ -1,14 +1,65 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/context/auth-context";
 import FormInputField from "@/components/form-input-field";
+import PasswordRequirements from "@/components/password-requirements";
+import { getPasswordValidationError, isPasswordValid } from "@/lib/password-policy";
 import PrimaryButton from "@/components/primary-button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useVerificationResendCooldown } from "@/hooks/use-verification-resend-cooldown";
+import { getRoleHomePath } from "@/lib/role-navigation";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, UserRoundCheck } from "lucide-react";
+
+function isAlreadyRegisteredError(err: unknown): boolean {
+  const e = err as { message?: string; code?: string; error?: string; statusCode?: number };
+  const msg = (e?.message ?? e?.error ?? "").toLowerCase();
+  return (
+    e?.statusCode === 409 ||
+    e?.code === "user_already_exists" ||
+    e?.code === "USER_EXISTS" ||
+    msg.includes("already exists") ||
+    msg.includes("already registered")
+  );
+}
+
+function needsEmailVerification(message: string): boolean {
+  const lower = message.toLowerCase();
+  return lower.includes("verif") || lower.includes("confirm");
+}
+
+function isInvalidCredentialsMessage(message: string): boolean {
+  const lower = message.toLowerCase();
+  return (
+    (lower.includes("invalid") && lower.includes("credential")) ||
+    lower.includes("incorrect")
+  );
+}
+
+function isNetworkError(err: unknown): boolean {
+  const msg = (err instanceof Error ? err.message : String(err)).toLowerCase();
+  return (
+    msg.includes("failed to fetch") ||
+    msg.includes("network request failed") ||
+    msg.includes("cannot reach lista") ||
+    msg.includes("timed out") ||
+    msg.includes("aborted")
+  );
+}
 
 export default function SignupPage() {
   const [_, setLocation] = useLocation();
-  const { signUp, verifyEmail, resendVerificationEmail, signUpWithOAuth } = useAuth();
+  const { signUp, verifyEmail, resendVerificationEmail, signUpWithOAuth, login, user } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -17,6 +68,36 @@ export default function SignupPage() {
   const [isSending, setIsSending] = useState(false);
   const [codeSent, setCodeSent] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [existingAccountEmail, setExistingAccountEmail] = useState<string | null>(null);
+  const [existingAccountDialogOpen, setExistingAccountDialogOpen] = useState(false);
+
+  const { secondsLeft, isOnCooldown, startCooldown } = useVerificationResendCooldown(email);
+
+  const promptExistingAccount = (addr: string) => {
+    const normalized = addr.trim().toLowerCase();
+    setExistingAccountEmail(normalized);
+    setExistingAccountDialogOpen(true);
+  };
+
+  const goToLogin = () => {
+    const target = existingAccountEmail ?? email.trim().toLowerCase();
+    setExistingAccountDialogOpen(false);
+    setLocation(target ? `/login?email=${encodeURIComponent(target)}` : "/login");
+  };
+
+  const sendCodeDisabled = isSending || isOnCooldown;
+  const sendCodeLabel = isSending
+    ? "Sending…"
+    : isOnCooldown
+      ? `Resend in ${secondsLeft}s`
+      : codeSent
+        ? "Resend code"
+        : "Send code";
+
+  useEffect(() => {
+    if (!user) return;
+    setLocation(getRoleHomePath(user.role));
+  }, [user, setLocation]);
 
   /* ── "Send Code" inline button ──────────────────────────────────────── */
   const handleSendCode = async () => {
@@ -28,31 +109,74 @@ export default function SignupPage() {
       toast.error("Please enter your password first.");
       return;
     }
-    if (password.length < 6) {
-      toast.error("Password must be at least 6 characters.");
+    if (!isPasswordValid(password)) {
+      toast.error(getPasswordValidationError(password) ?? "Password does not meet requirements.");
       return;
     }
+    if (isOnCooldown) return;
+
     setIsSending(true);
+    setExistingAccountEmail(null);
+    const normalizedEmail = email.trim().toLowerCase();
+
+    const showNetworkError = (err: unknown) => {
+      if (!isNetworkError(err)) return false;
+      const message =
+        err instanceof Error
+          ? err.message
+          : "Cannot reach LISTA servers. Try Log in or check your connection.";
+      toast.error(message);
+      return true;
+    };
+
     try {
-      await signUp(email, password);
+      // Fast path: existing verified account (avoids signUp + email send hang)
+      try {
+        await login(normalizedEmail, password);
+        toast.success("You're signed in. Continue with your trainee profile.");
+        return;
+      } catch (loginErr: unknown) {
+        if (showNetworkError(loginErr)) return;
+
+        const loginMessage =
+          loginErr instanceof Error ? loginErr.message : "Could not sign in.";
+
+        if (needsEmailVerification(loginMessage)) {
+          try {
+            await resendVerificationEmail(normalizedEmail);
+            startCooldown();
+            toast.success("Verification code sent! Check your inbox.");
+            setCodeSent(true);
+            return;
+          } catch (resendErr: unknown) {
+            if (showNetworkError(resendErr)) return;
+            const resendMessage =
+              resendErr instanceof Error ? resendErr.message : "Failed to resend code.";
+            toast.error(resendMessage);
+            return;
+          }
+        }
+
+        if (isAlreadyRegisteredError(loginErr) && !isInvalidCredentialsMessage(loginMessage)) {
+          promptExistingAccount(normalizedEmail);
+          return;
+        }
+        // Invalid credentials → likely new user; continue to signUp below
+      }
+
+      await signUp(normalizedEmail, password);
+      startCooldown();
       toast.success("Verification code sent! Check your inbox.");
       setCodeSent(true);
-    } catch (err: any) {
-      // Account already exists → resend the verification email instead
-      if (
-        err?.message?.toLowerCase().includes("already") ||
-        err?.code === "user_already_exists"
-      ) {
-        try {
-          await resendVerificationEmail(email);
-          toast.success("Code resent! Check your inbox.");
-          setCodeSent(true);
-        } catch (resendErr: any) {
-          toast.error(resendErr?.message || "Failed to resend code.");
-        }
-      } else {
-        toast.error(err?.message || "Failed to send verification code.");
+    } catch (err: unknown) {
+      if (showNetworkError(err)) return;
+      if (isAlreadyRegisteredError(err)) {
+        promptExistingAccount(normalizedEmail);
+        return;
       }
+      const message =
+        err instanceof Error ? err.message : "Failed to send verification code.";
+      toast.error(message);
     } finally {
       setIsSending(false);
     }
@@ -72,11 +196,15 @@ export default function SignupPage() {
     }
     setIsLoading(true);
     try {
-      await verifyEmail(email, code.trim());
-      toast.success("Account created! You can now log in.");
-      setLocation("/login");
-    } catch (err: any) {
-      toast.error(err?.message || "Invalid or expired code. Try again.");
+      await verifyEmail(email.trim().toLowerCase(), code.trim());
+      toast.success("Email verified — welcome to LISTA!");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Invalid or expired code. Try again.";
+      if (isAlreadyRegisteredError(err) || message.toLowerCase().includes("already")) {
+        promptExistingAccount(email);
+      } else {
+        toast.error(message);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -92,6 +220,46 @@ export default function SignupPage() {
   };
 
   return (
+    <>
+      <AlertDialog open={existingAccountDialogOpen} onOpenChange={setExistingAccountDialogOpen}>
+        <AlertDialogContent className="max-w-[min(100vw-2rem,22rem)] gap-0 rounded-2xl border-border/50 p-0 shadow-xl sm:rounded-2xl">
+          <div className="flex flex-col items-center px-6 pb-2 pt-8 text-center">
+            <div
+              className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary"
+              aria-hidden
+            >
+              <UserRoundCheck className="h-6 w-6" strokeWidth={1.75} />
+            </div>
+            <AlertDialogHeader className="space-y-2 text-center sm:text-center">
+              <AlertDialogTitle className="text-xl font-semibold tracking-tight">
+                Account already registered
+              </AlertDialogTitle>
+              <AlertDialogDescription className="text-sm leading-relaxed text-muted-foreground">
+                {existingAccountEmail ? (
+                  <>
+                    <span className="font-medium text-foreground">{existingAccountEmail}</span> is
+                    already on LISTA. Use the log in page to continue your profile or enrollment.
+                  </>
+                ) : (
+                  "This email is already registered. Use the log in page to continue."
+                )}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+          </div>
+          <AlertDialogFooter className="flex-col gap-2 border-t border-border/40 bg-muted/30 px-6 py-4 sm:flex-col sm:space-x-0">
+            <AlertDialogAction
+              className="h-11 w-full rounded-xl font-semibold"
+              onClick={goToLogin}
+            >
+              Go to log in
+            </AlertDialogAction>
+            <AlertDialogCancel className="h-10 w-full rounded-xl border-0 bg-transparent text-sm font-medium text-muted-foreground shadow-none hover:bg-transparent hover:text-foreground">
+              Stay on sign up
+            </AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
     <div className="w-full space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="text-center space-y-2">
         <h1 className="text-4xl font-extrabold tracking-tight text-foreground">Sign up</h1>
@@ -129,41 +297,91 @@ export default function SignupPage() {
           label=""
           type="email"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={(e) => {
+            setEmail(e.target.value);
+            setExistingAccountEmail(null);
+            setExistingAccountDialogOpen(false);
+          }}
           placeholder="email@example.com"
           required
           className="h-14 text-base rounded-xl"
         />
 
-        {/* Verification code + inline "Send Code" button — original design preserved */}
-        <div className="relative group">
-          <input
-            type="text"
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-            placeholder="Verification code"
-            className="w-full h-14 px-4 text-base rounded-xl border border-card-border bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all pr-36"
-          />
-          <button
-            type="button"
-            onClick={handleSendCode}
-            disabled={isSending}
-            className="absolute right-2 top-2 h-10 px-4 text-xs font-extrabold bg-slate-100 hover:bg-primary hover:text-white rounded-lg transition-all duration-300 disabled:opacity-50 flex items-center gap-1"
-          >
-            {isSending ? <><Loader2 className="w-3 h-3 animate-spin" /> Sending…</> : codeSent ? "Resend" : "Send Code"}
-          </button>
+        {/* Verification code + inline send / resend (60s cooldown) */}
+        <div className="space-y-0">
+          <div className="relative">
+            <input
+              id="signup-verification-code"
+              type="text"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              placeholder="Verification code"
+              aria-describedby={isOnCooldown ? "signup-resend-cooldown-hint" : undefined}
+              className="w-full h-14 px-4 text-base rounded-xl border border-card-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all pr-[8.5rem] sm:pr-36"
+            />
+            <button
+              type="button"
+              onClick={handleSendCode}
+              disabled={sendCodeDisabled}
+              aria-disabled={sendCodeDisabled}
+              aria-label={
+                isOnCooldown
+                  ? `Resend verification code available in ${secondsLeft} seconds`
+                  : codeSent
+                    ? "Resend verification code to your email"
+                    : "Send verification code to your email"
+              }
+              className={cn(
+                "absolute right-2 top-2 h-10 min-w-[7.25rem] px-3 text-xs font-extrabold rounded-lg transition-all duration-300 flex items-center justify-center gap-1",
+                sendCodeDisabled
+                  ? "bg-muted text-muted-foreground cursor-not-allowed opacity-80"
+                  : "bg-muted text-foreground hover:bg-primary hover:text-primary-foreground",
+              )}
+            >
+              {isSending ? (
+                <>
+                  <Loader2 className="w-3 h-3 animate-spin" aria-hidden />
+                  <span>Sending…</span>
+                </>
+              ) : (
+                <span aria-live="polite">{sendCodeLabel}</span>
+              )}
+            </button>
+          </div>
+          {isOnCooldown && (
+            <p
+              id="signup-resend-cooldown-hint"
+              className="mt-2 text-xs text-muted-foreground"
+              role="status"
+              aria-live="polite"
+            >
+              You can request another code in{" "}
+              <span className="font-semibold text-foreground tabular-nums">{secondsLeft}s</span>.
+              Check spam if you do not see the email.
+            </p>
+          )}
         </div>
 
         {/* Password */}
-        <FormInputField
-          label=""
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="Password"
-          required
-          className="h-14 text-base rounded-xl"
-        />
+        <div className="space-y-2">
+          <FormInputField
+            label=""
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Password"
+            required
+            autoComplete="new-password"
+            aria-describedby="signup-password-requirements"
+            className="h-14 text-base rounded-xl"
+          />
+          <PasswordRequirements
+            password={password}
+            id="signup-password-requirements"
+          />
+        </div>
 
         <PrimaryButton
           type="submit"
@@ -172,7 +390,8 @@ export default function SignupPage() {
         >
           {isLoading ? (
             <span className="flex items-center justify-center gap-2">
-              <Loader2 className="w-5 h-5 animate-spin" /> Creating account…
+              <Loader2 className="w-5 h-5 animate-spin" aria-hidden />
+              Verifying email…
             </span>
           ) : (
             "Sign Up"
@@ -197,5 +416,6 @@ export default function SignupPage() {
         </p>
       </div>
     </div>
+    </>
   );
 }

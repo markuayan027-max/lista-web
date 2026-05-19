@@ -1,4 +1,5 @@
 import type { User } from "@/lib/institutional-data";
+import { buildTraineeRegisterPath, getPublicEnrollHref } from "@/lib/enroll-entry";
 
 /** Staff and admin never complete trainee TESDA application forms — only review/print. */
 export function skipsTraineeApplication(user: User | null | undefined): boolean {
@@ -8,13 +9,21 @@ export function skipsTraineeApplication(user: User | null | undefined): boolean 
 export function isTraineeRegistrationComplete(user: User | null | undefined): boolean {
   if (!user) return false;
   if (skipsTraineeApplication(user)) return true;
-  return localStorage.getItem(`reg_${user.id}`) === "true";
+  const flag = localStorage.getItem(`reg_${user.id}`);
+  return flag === "true" || flag === "partial" || flag === "complete";
 }
 
 /** Primary CTA for navbar / public pages — never sends staff/admin to /trainee/register. */
-export function getEnrollCta(user: User | null | undefined, isRegistered: boolean) {
+export function getEnrollCta(
+  user: User | null | undefined,
+  isRegistered: boolean,
+  options?: { courseSlug?: string },
+) {
   if (!user) {
-    return { href: "/trainee/register", label: "Enroll Now" };
+    return {
+      href: getPublicEnrollHref(options?.courseSlug ? { course: options.courseSlug } : undefined),
+      label: "Sign in to Enroll",
+    };
   }
   if (user.role === "admin") {
     return { href: "/admin", label: "Admin Portal" };
@@ -23,7 +32,12 @@ export function getEnrollCta(user: User | null | undefined, isRegistered: boolea
     return { href: "/staff", label: "Staff Portal" };
   }
   if (!isRegistered) {
-    return { href: "/trainee/register", label: "Complete Profile" };
+    return {
+      href: buildTraineeRegisterPath(
+        options?.courseSlug ? { course: options.courseSlug } : undefined,
+      ),
+      label: "Complete Profile",
+    };
   }
   return { href: "/trainee/application", label: "My Application" };
 }

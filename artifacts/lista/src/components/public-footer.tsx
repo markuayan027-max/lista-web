@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { Twitter, Instagram, Linkedin, Mail, Phone, MapPin, Youtube } from "lucide-react";
-import { withBase } from "@/lib/with-base";
+import SiteLogo from "@/components/site-logo";
 import { contactInfo, schoolInfo } from "@/lib/institutional-data";
 
 export default function PublicFooter() {
@@ -40,7 +40,7 @@ export default function PublicFooter() {
           <div className="lg:col-span-4 space-y-8">
             <Link href="/" className="flex items-center gap-3 group">
               <div className="shrink-0 p-1 rounded-lg bg-slate-50 group-hover:bg-primary/5 transition-colors">
-                <img src={withBase('/logo.webp')} alt="LISTA Logo" className="h-12 w-auto object-contain" />
+                <SiteLogo className="h-12 w-auto object-contain" />
               </div>
               <div className="flex flex-col">
                 <span className="text-2xl font-black tracking-tighter leading-none">LISTA</span>

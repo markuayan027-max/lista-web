@@ -46,7 +46,7 @@ export default function StaffAnnouncementsPage() {
     <form onSubmit={handlePost} className="space-y-4">
       <div className="space-y-2">
         <label className="text-sm font-semibold">Title</label>
-        <Input name="title" required placeholder="e.g. Campus Holiday Notice" className="bg-white" />
+        <Input name="title" required placeholder="e.g. Campus Holiday Notice" className="bg-card" />
       </div>
       
       <div className="space-y-2">
@@ -55,14 +55,14 @@ export default function StaffAnnouncementsPage() {
           name="body" 
           required 
           placeholder="Type your announcement here..." 
-          className="min-h-[150px] bg-white resize-none" 
+          className="min-h-[150px] bg-card resize-none" 
         />
       </div>
       
       <div className="space-y-2">
         <label className="text-sm font-semibold">Target Audience</label>
         <Select name="targetRole" required defaultValue="all">
-          <SelectTrigger className="bg-white">
+          <SelectTrigger className="bg-card">
             <SelectValue placeholder="Select audience" />
           </SelectTrigger>
           <SelectContent>

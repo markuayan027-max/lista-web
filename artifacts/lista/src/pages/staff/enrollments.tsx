@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { 
   Download, 
   Search, 
@@ -37,6 +37,8 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { useToast } from "@/hooks/use-toast";
+import type { Enrollment } from "@/lib/institutional-data";
+import PrintModal from "@/components/print-modal";
 import StatusBadge from "@/components/status-badge";
 import { useCourses, useEnrollments, useUpdateEnrollmentStatus } from "@/hooks/use-lista-data";
 import { format } from "date-fns";
@@ -50,6 +52,7 @@ export default function StaffEnrollmentsPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [courseFilter, setCourseFilter] = useState("all");
   const [selectedEnrollment, setSelectedEnrollment] = useState<any>(null);
+  const [printTarget, setPrintTarget] = useState<Enrollment | null>(null);
 
   const filteredEnrollments = enrollments.filter(e => {
     // Filter out incomplete 'Ready to Apply' submissions from staff view
@@ -84,6 +87,13 @@ export default function StaffEnrollmentsPage() {
 
   return (
     <div className="space-y-6 h-full flex flex-col">
+      <AnimatePresence>
+        {printTarget && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <PrintModal enrollment={printTarget} onClose={() => setPrintTarget(null)} />
+          </motion.div>
+        )}
+      </AnimatePresence>
       <motion.div 
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -93,7 +103,7 @@ export default function StaffEnrollmentsPage() {
           <h1 className="text-3xl font-bold tracking-tight">Manage Enrollments</h1>
           <p className="text-muted-foreground mt-1">Review and process trainee applications. Staff do not submit TESDA forms on this page.</p>
         </div>
-        <Button variant="outline" className="shrink-0 bg-white">
+        <Button variant="outline" className="shrink-0 bg-card">
           <Download className="mr-2 h-4 w-4" /> Export CSV
         </Button>
       </motion.div>
@@ -104,14 +114,14 @@ export default function StaffEnrollmentsPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input 
               placeholder="Search by name, email, or Ref No..." 
-              className="pl-9 bg-white"
+              className="pl-9 bg-card"
               value={search}
               onChange={e => setSearch(e.target.value)}
             />
           </div>
           <div className="flex gap-2 w-full sm:w-auto">
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[140px] bg-white">
+              <SelectTrigger className="w-[140px] bg-card">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
@@ -122,7 +132,7 @@ export default function StaffEnrollmentsPage() {
               </SelectContent>
             </Select>
             <Select value={courseFilter} onValueChange={setCourseFilter}>
-              <SelectTrigger className="w-[180px] bg-white">
+              <SelectTrigger className="w-[180px] bg-card">
                 <SelectValue placeholder="Course" />
               </SelectTrigger>
               <SelectContent>
@@ -181,12 +191,12 @@ export default function StaffEnrollmentsPage() {
                         >
                           <FileSpreadsheet className="h-4 w-4" />
                         </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-8 w-8 text-blue-600" 
-                          onClick={() => exportSingleTraineeToWord(enrollment)}
-                          title="Download Word (Print)"
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-blue-600"
+                          onClick={() => setPrintTarget(enrollment)}
+                          title="Print TESDA Application Form (A4 / Long)"
                         >
                           <Printer className="h-4 w-4" />
                         </Button>
@@ -244,14 +254,14 @@ export default function StaffEnrollmentsPage() {
                 <div>
                   <h4 className="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wider">Submitted Documents</h4>
                   <div className="space-y-2">
-                    <div className="flex items-center justify-between p-3 rounded-lg border border-card-border bg-white">
+                    <div className="flex items-center justify-between p-3 rounded-lg border border-card-border bg-card">
                       <div className="flex items-center gap-3">
                         <FileText className="h-5 w-5 text-primary" />
                         <span className="text-sm font-medium">Resume.pdf</span>
                       </div>
                       <Button variant="ghost" size="sm" className="h-8">View</Button>
                     </div>
-                    <div className="flex items-center justify-between p-3 rounded-lg border border-card-border bg-white">
+                    <div className="flex items-center justify-between p-3 rounded-lg border border-card-border bg-card">
                       <div className="flex items-center gap-3">
                         <FileText className="h-5 w-5 text-primary" />
                         <span className="text-sm font-medium">ID_Copy.jpg</span>
@@ -261,21 +271,30 @@ export default function StaffEnrollmentsPage() {
                   </div>
                 </div>
 
-                <div className="pt-2 flex gap-2">
-                  <Button 
-                    variant="outline" 
-                    className="flex-1 gap-2 border-emerald-200 text-emerald-700 hover:bg-emerald-50"
-                    onClick={() => exportSingleTraineeToExcel(selectedEnrollment)}
+                <div className="pt-2 flex flex-col gap-2">
+                  <Button
+                    variant="outline"
+                    className="w-full gap-2 border-primary/30 text-primary hover:bg-primary/5"
+                    onClick={() => setPrintTarget(selectedEnrollment)}
                   >
-                    <FileSpreadsheet className="h-4 w-4" /> Excel
+                    <Printer className="h-4 w-4" /> TESDA Form (Print / PDF)
                   </Button>
-                  <Button 
-                    variant="outline" 
-                    className="flex-1 gap-2 border-blue-200 text-blue-700 hover:bg-blue-50"
-                    onClick={() => exportSingleTraineeToWord(selectedEnrollment)}
-                  >
-                    <Printer className="h-4 w-4" /> Word Slip
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      className="flex-1 gap-2 border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                      onClick={() => exportSingleTraineeToExcel(selectedEnrollment)}
+                    >
+                      <FileSpreadsheet className="h-4 w-4" /> Excel
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="flex-1 gap-2 border-primary-indigo/30 text-primary-indigo hover:bg-primary-indigo/10"
+                      onClick={() => exportSingleTraineeToWord(selectedEnrollment)}
+                    >
+                      <FileText className="h-4 w-4" /> Word
+                    </Button>
+                  </div>
                 </div>
 
                 {selectedEnrollment.status === 'pending' && (

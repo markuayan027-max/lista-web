@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Save, Building2, Palette, Shield, Link as LinkIcon, CheckCircle2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -10,6 +10,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import PrimaryButton from "@/components/primary-button";
 import FormInputField from "@/components/form-input-field";
+import {
+  type SiteSettings,
+  defaultSiteSettings,
+  loadSiteSettings,
+  saveSiteSettings,
+} from "@/lib/public-data-utils";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -35,16 +41,23 @@ const permissionsMatrix = [
 export default function AdminSettingsPage() {
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
+  const [settings, setSettings] = useState<SiteSettings>(() => defaultSiteSettings());
+
+  useEffect(() => {
+    setSettings(loadSiteSettings());
+  }, []);
 
   const handleSave = () => {
     setIsSaving(true);
-    setTimeout(() => {
-      setIsSaving(false);
+    try {
+      saveSiteSettings(settings);
       toast({
-        title: "Settings Saved",
-        description: "Your changes have been applied successfully.",
+        title: "Settings saved",
+        description: "Academy profile preferences are stored for this browser session.",
       });
-    }, 600);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -61,19 +74,19 @@ export default function AdminSettingsPage() {
 
       <Tabs defaultValue="profile" className="w-full">
         <TabsList className="bg-muted/50 p-1 rounded-xl h-auto w-full justify-start overflow-x-auto hide-scrollbar flex-nowrap shrink-0">
-          <TabsTrigger value="profile" className="rounded-lg px-4 py-2 font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm">
+          <TabsTrigger value="profile" className="rounded-lg px-4 py-2 font-medium data-[state=active]:bg-card data-[state=active]:shadow-sm">
             <Building2 className="h-4 w-4 mr-2" />
             Academy Profile
           </TabsTrigger>
-          <TabsTrigger value="branding" className="rounded-lg px-4 py-2 font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm">
+          <TabsTrigger value="branding" className="rounded-lg px-4 py-2 font-medium data-[state=active]:bg-card data-[state=active]:shadow-sm">
             <Palette className="h-4 w-4 mr-2" />
             Branding
           </TabsTrigger>
-          <TabsTrigger value="permissions" className="rounded-lg px-4 py-2 font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm">
+          <TabsTrigger value="permissions" className="rounded-lg px-4 py-2 font-medium data-[state=active]:bg-card data-[state=active]:shadow-sm">
             <Shield className="h-4 w-4 mr-2" />
             Roles & Permissions
           </TabsTrigger>
-          <TabsTrigger value="integrations" className="rounded-lg px-4 py-2 font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm">
+          <TabsTrigger value="integrations" className="rounded-lg px-4 py-2 font-medium data-[state=active]:bg-card data-[state=active]:shadow-sm">
             <LinkIcon className="h-4 w-4 mr-2" />
             Integrations
           </TabsTrigger>
@@ -88,7 +101,11 @@ export default function AdminSettingsPage() {
                   <CardDescription>Public information displayed on certificates and portals.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <FormInputField label="Institution Name" defaultValue="LISTA — Lorenz International Skills Training Academy" />
+                  <FormInputField
+                    label="Institution Name"
+                    value={settings.institutionName}
+                    onChange={(e) => setSettings((s) => ({ ...s, institutionName: e.target.value }))}
+                  />
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormInputField label="Support Email" defaultValue="admin@lorenzinternational.org" type="email" />
                     <FormInputField label="Phone Number" defaultValue="09051095284" />
@@ -229,7 +246,7 @@ export default function AdminSettingsPage() {
                     <div className="h-2 w-2 rounded-full bg-amber-500" />
                     <span className="text-sm font-medium text-amber-700">Action Required</span>
                   </div>
-                  <Button className="w-full font-semibold bg-slate-900 text-white hover:bg-slate-800" onClick={handleSave}>Connect Provider</Button>
+                  <Button className="w-full font-semibold bg-primary text-primary-foreground hover:bg-primary/90" onClick={handleSave}>Connect Provider</Button>
                 </CardContent>
               </Card>
 
@@ -240,10 +257,10 @@ export default function AdminSettingsPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center gap-2 mb-4">
-                    <div className="h-2 w-2 rounded-full bg-slate-300" />
+                    <div className="h-2 w-2 rounded-full bg-muted-foreground/40" />
                     <span className="text-sm font-medium text-muted-foreground">Not Connected</span>
                   </div>
-                  <Button className="w-full font-semibold bg-slate-900 text-white hover:bg-slate-800" onClick={handleSave}>Connect API</Button>
+                  <Button className="w-full font-semibold bg-primary text-primary-foreground hover:bg-primary/90" onClick={handleSave}>Connect API</Button>
                 </CardContent>
               </Card>
             </motion.div>

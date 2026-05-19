@@ -1,61 +1,73 @@
+import { useState } from "react";
 import { useAuth } from "@/context/auth-context";
 import { useLocation, Redirect } from "wouter";
-import SidebarTrainee from "@/components/sidebar-trainee";
 import { ModernSidebar } from "@/components/modern-sidebar";
 import BottomNavTrainee from "@/components/bottom-nav-trainee";
 import AvatarInitials from "@/components/avatar-initials";
-import { LogOut, Bell, Menu, Home, ClipboardList, Calendar, Award, BookOpen } from "lucide-react";
+import { LogOut, Bell, Menu } from "lucide-react";
+import {
+  traineeModernSidebarMenu,
+  traineePreferencesNavItems,
+  traineeSecondarySidebarMenu,
+} from "@/lib/trainee-nav";
 import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
-const TRAINEE_MENU = [
-  { href: "/trainee", label: "Dashboard", icon: Home },
-  { href: "/trainee/application", label: "Courses", icon: BookOpen },
-  { href: "/trainee/tracking", label: "My Applications", icon: ClipboardList },
-  { href: "/trainee/schedule", label: "Schedule", icon: Calendar },
-  { href: "/trainee/certificate", label: "Certificates", icon: Award },
-];
+const traineeSidebarProps = {
+  menuItems: traineeModernSidebarMenu(),
+  secondaryMenuItems: traineeSecondarySidebarMenu(),
+  roleName: "Trainee",
+  logoHref: "/trainee",
+  announcementRole: "trainee" as const,
+  profileHref: "/trainee/profile",
+};
 
 export default function TraineeLayout({ children }: { children: React.ReactNode }) {
   const { user, logout, isRegistered } = useAuth();
   const [location, setLocation] = useLocation();
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
-  // Only trainees complete the TESDA profile/application — never staff or admin
   if (user?.role === "trainee" && !isRegistered && location !== "/trainee/register") {
     return <Redirect to="/trainee/register" />;
   }
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     setLocation("/");
   };
 
+  const accountItems = traineePreferencesNavItems();
+
   return (
     <div className="flex h-screen bg-muted/30 overflow-hidden">
-      {/* Desktop Sidebar */}
       <aside className="hidden md:flex h-full shrink-0">
-        <ModernSidebar
-          menuItems={TRAINEE_MENU}
-          roleName="Trainee"
-          logoHref="/trainee"
-          announcementRole="trainee"
-        />
+        <ModernSidebar {...traineeSidebarProps} />
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Top Bar */}
-        <header className="h-16 bg-white border-b border-card-border flex items-center justify-between px-4 md:px-8 shrink-0">
+        <header className="h-16 bg-card border-b border-card-border flex items-center justify-between px-4 md:px-8 shrink-0">
           <div className="flex items-center gap-4">
             <div className="md:hidden">
-               <Sheet>
+              <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
                 <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-10 w-10">
+                  <Button variant="ghost" size="icon" className="h-10 w-10" aria-label="Open menu">
                     <Menu className="h-5 w-5" />
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="left" className="p-0 w-64">
-                  <SidebarTrainee />
+                <SheetContent side="left" className="p-0 w-[min(100vw,280px)] border-0">
+                  <ModernSidebar
+                    {...traineeSidebarProps}
+                    variant="drawer"
+                    onNavigate={() => setMobileNavOpen(false)}
+                  />
                 </SheetContent>
               </Sheet>
             </div>
@@ -63,33 +75,48 @@ export default function TraineeLayout({ children }: { children: React.ReactNode 
           </div>
 
           <div className="flex items-center gap-3">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="text-muted-foreground relative hover:bg-indigo-50 hover:text-indigo-600 rounded-full transition-all"
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-muted-foreground relative hover:bg-primary/10 hover:text-primary rounded-full transition-colors"
+              aria-label="Announcements"
               onClick={() => setLocation("/trainee/announcements")}
             >
               <Bell className="h-5 w-5" />
-              <span className="absolute top-2.5 right-2.5 h-2 w-2 bg-indigo-600 rounded-full border-2 border-white" />
+              <span className="absolute top-2.5 right-2.5 h-2 w-2 bg-primary rounded-full border-2 border-white" />
             </Button>
-            
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                <button
+                  type="button"
+                  className="flex items-center gap-2 rounded-full p-0.5 pr-2 hover:bg-muted/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  aria-label="Account menu"
+                >
                   <AvatarInitials name={user?.name || "Trainee"} size="sm" />
                   <div className="hidden sm:block text-left">
-                    <p className="text-sm font-bold leading-none">{user?.name}</p>
-                    <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mt-0.5">Trainee</p>
+                    <p className="text-sm font-semibold leading-none">{user?.name}</p>
+                    <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mt-0.5">
+                      Trainee
+                    </p>
                   </div>
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56 mt-2 rounded-xl">
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setLocation("/trainee/application")}>My Application</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setLocation("/trainee/certificate")}>Certificates</DropdownMenuItem>
+                {accountItems.map((item) => (
+                  <DropdownMenuItem
+                    key={item.href}
+                    onClick={() => setLocation(item.href)}
+                    className="rounded-lg"
+                  >
+                    <item.icon className="mr-2 h-4 w-4 text-muted-foreground" />
+                    {item.label}
+                  </DropdownMenuItem>
+                ))}
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout} className="text-destructive font-bold">
+                <DropdownMenuItem onClick={handleLogout} className="text-destructive font-semibold rounded-lg">
                   <LogOut className="mr-2 h-4 w-4" />
                   Sign out
                 </DropdownMenuItem>
@@ -98,15 +125,11 @@ export default function TraineeLayout({ children }: { children: React.ReactNode 
           </div>
         </header>
 
-        {/* Main Content */}
         <main className="flex-1 overflow-y-auto p-4 md:p-8 pb-24 md:pb-8">
-          <div className="max-w-7xl mx-auto">
-            {children}
-          </div>
+          <div className="max-w-7xl mx-auto">{children}</div>
         </main>
       </div>
 
-      {/* Mobile Bottom Nav */}
       <BottomNavTrainee />
     </div>
   );

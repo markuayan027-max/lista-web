@@ -26,6 +26,8 @@ import {
   countInLastDays,
   isFormalEnrollment,
 } from "@/lib/analytics-utils";
+import { AnalyticsSkeleton } from "@/components/skeletons";
+import { ContentFadeIn } from "@/components/skeletons/primitives";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -115,11 +117,13 @@ export default function AdminAnalyticsPage() {
 
   const hasEnrollmentChartData = enrollmentData.some((d) => d.enrollments > 0);
 
+  if (enrollmentsLoading) {
+    return <AnalyticsSkeleton />;
+  }
+
   return (
+    <ContentFadeIn>
     <motion.div className="space-y-6" variants={containerVariants} initial="hidden" animate="show">
-      {enrollmentsLoading && (
-        <p className="text-sm text-muted-foreground">Loading live enrollment data…</p>
-      )}
 
       <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
@@ -127,9 +131,9 @@ export default function AdminAnalyticsPage() {
           value={totalEnrollments}
           trend={enrollmentTrend}
           icon={BookOpen}
-          accent="bg-blue-100"
+          accent="bg-primary-electric/15"
         />
-        <StatCard label="Active Trainees" value={activeTrainees} icon={Users} accent="bg-indigo-100" />
+        <StatCard label="Active Trainees" value={activeTrainees} icon={Users} accent="bg-primary-indigo/15" />
         <StatCard
           label="Pending Applications"
           value={pendingApplications}
@@ -354,5 +358,6 @@ export default function AdminAnalyticsPage() {
         </motion.div>
       </div>
     </motion.div>
+    </ContentFadeIn>
   );
 }

@@ -15,6 +15,8 @@ const TRAINEE_ROUTES = [
   "/trainee/certificate",
   "/trainee/announcements",
   "/trainee/help",
+  "/trainee/register",
+  "/trainee/enroll?course=bookkeeping-nc3",
 ] as const;
 
 const STAFF_ROUTES = [

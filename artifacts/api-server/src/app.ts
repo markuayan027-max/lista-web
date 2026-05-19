@@ -20,6 +20,14 @@ const limiter = rateLimit({
 app.use(
   pinoHttp({
     logger,
+    customLogLevel(_req, res, err) {
+      if (err) return "error";
+      // Client navigated away or HMR cancelled the fetch — not a server failure.
+      if (!res.statusCode) return "debug";
+      if (res.statusCode >= 500) return "error";
+      if (res.statusCode >= 400) return "warn";
+      return "info";
+    },
     serializers: {
       req(req) {
         return {

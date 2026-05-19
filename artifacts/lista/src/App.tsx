@@ -2,6 +2,7 @@ import { Switch, Route, Router as WouterRouter, Redirect, useLocation } from "wo
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { type ComponentType, type ReactNode, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
+import { Toaster as SonnerToaster } from "sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/context/auth-context";
 import NotFound from "@/pages/not-found";
@@ -73,13 +74,20 @@ function Protected({
     if (loading) return;
     if (user) return;
     if (import.meta.env.DEV && localStorage.getItem("TEST_MODE") === "true") return;
-    setLocation("/login");
+    const returnTo = encodeURIComponent(
+      `${window.location.pathname}${window.location.search}`,
+    );
+    setLocation(`/login?redirect=${returnTo}`);
   }, [user, loading, setLocation]);
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center" data-testid="auth-loading">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+      <div className="flex h-screen items-center justify-center bg-background" data-testid="auth-loading">
+        <div className="w-full max-w-sm px-6 space-y-4" aria-busy="true" aria-label="Loading session">
+          <div className="h-10 w-10 rounded-xl skeleton-shimmer mx-auto" />
+          <div className="h-3 w-32 skeleton-shimmer mx-auto rounded-md" />
+          <div className="h-2 w-48 skeleton-shimmer mx-auto rounded-md" />
+        </div>
       </div>
     );
   }
@@ -121,7 +129,9 @@ function Router() {
       <Route path="/assessment"><PublicLayout><AssessmentPage /></PublicLayout></Route>
       <Route path="/scholarships"><PublicLayout><ScholarshipsPage /></PublicLayout></Route>
       {/* 2026-05-13: consolidate enrollment entrypoint to trainee registration */}
-      <Route path="/enroll"><Redirect to="/trainee/register" /></Route>
+      <Route path="/enroll">
+        <Redirect to="/login?redirect=%2Ftrainee%2Fregister" />
+      </Route>
       <Route path="/login"><AuthLayout><LoginPage /></AuthLayout></Route>
       <Route path="/news/:id"><PublicLayout><NewsDetailPage /></PublicLayout></Route>
       <Route path="/signup"><AuthLayout><SignupPage /></AuthLayout></Route>
@@ -182,6 +192,7 @@ function App() {
           <Router />
         </WouterRouter>
         <Toaster />
+        <SonnerToaster position="top-center" richColors closeButton theme="light" />
       </TooltipProvider>
     </QueryClientProvider>
   );

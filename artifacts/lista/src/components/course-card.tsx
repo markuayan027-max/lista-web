@@ -1,8 +1,8 @@
 import { Link } from "wouter";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { withBase } from "@/lib/with-base";
 import { resolveCourseCoverImage } from "@/lib/course-images";
+import OptimizedImage from "@/components/optimized-image";
 import { BookOpen, ArrowRight, CheckCircle2, Lock } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -25,8 +25,10 @@ interface CourseCardProps {
 
 export default function CourseCard({ course, hideLockOverlay = false }: CourseCardProps) {
   const [imageError, setImageError] = useState(false);
-  const coverSrc = withBase(
-    resolveCourseCoverImage(course.slug, course.sector, course.coverImageUrl),
+  const coverPath = resolveCourseCoverImage(
+    course.slug,
+    course.sector,
+    course.coverImageUrl,
   );
 
   const canNavigate = !course.isFrozen || hideLockOverlay;
@@ -63,12 +65,11 @@ export default function CourseCard({ course, hideLockOverlay = false }: CourseCa
             
             <div className="relative w-full aspect-[16/10] bg-slate-100 flex items-center justify-center border-b border-slate-200 overflow-hidden shrink-0">
               {!imageError ? (
-                <img
-                  src={coverSrc}
+                <OptimizedImage
+                  src={coverPath}
                   alt={course.name}
-                  className="h-full w-full object-cover"
-                  loading="lazy"
-                  decoding="async"
+                  className="absolute inset-0 h-full w-full"
+                  imgClassName="h-full w-full object-cover"
                   onError={() => setImageError(true)}
                 />
               ) : (

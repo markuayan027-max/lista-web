@@ -129,7 +129,7 @@ export default function AdminCertificatesPage() {
                 <div className="space-y-1.5">
                   <label className="text-sm font-semibold tracking-tight">Trainee</label>
                   <Select value={form.userId} onValueChange={(v) => setForm({...form, userId: v})}>
-                    <SelectTrigger className="bg-white">
+                    <SelectTrigger className="bg-card">
                       <SelectValue placeholder="Select trainee" />
                     </SelectTrigger>
                     <SelectContent>
@@ -143,7 +143,7 @@ export default function AdminCertificatesPage() {
                 <div className="space-y-1.5">
                   <label className="text-sm font-semibold tracking-tight">Completed Course</label>
                   <Select value={form.courseSlug} onValueChange={(v) => setForm({...form, courseSlug: v})}>
-                    <SelectTrigger className="bg-white">
+                    <SelectTrigger className="bg-card">
                       <SelectValue placeholder="Select course" />
                     </SelectTrigger>
                     <SelectContent>

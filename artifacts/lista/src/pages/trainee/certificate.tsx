@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { useCourses, useDerivedCertificates } from "@/hooks/use-lista-data";
+import { useCourses, useTraineeDerivedCertificates } from "@/hooks/use-lista-data";
 import { courseTitleBySlug } from "@/lib/lista-insforge-data";
 import StatusBadge from "@/components/status-badge";
 import { Download, Eye, Award } from "lucide-react";
@@ -25,9 +25,8 @@ const item = {
 
 export default function TraineeCertificatePage() {
   const { user } = useAuth();
-  const { data: certificates = [] } = useDerivedCertificates();
+  const { data: myCerts = [] } = useTraineeDerivedCertificates(user?.email);
   const { data: courses = [] } = useCourses();
-  const myCerts = certificates.filter((c) => !c.userId || c.userId === user?.id);
   const [previewCert, setPreviewCert] = useState<any>(null);
 
   return (

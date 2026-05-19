@@ -94,9 +94,9 @@ export default function AdminSchedulePage() {
 
   const getCourseColor = (slug: string) => {
     const colors = [
-      "bg-blue-100 text-blue-800 border-blue-200",
+      "bg-primary-electric/15 text-primary-electric border-primary-electric/30",
       "bg-emerald-100 text-emerald-800 border-emerald-200",
-      "bg-indigo-100 text-indigo-800 border-indigo-200",
+      "bg-primary-indigo/15 text-primary-indigo border-primary-indigo/30",
       "bg-rose-100 text-rose-800 border-rose-200",
       "bg-amber-100 text-amber-800 border-amber-200",
       "bg-purple-100 text-purple-800 border-purple-200",
@@ -123,7 +123,7 @@ export default function AdminSchedulePage() {
             <Button 
               variant={view === "week" ? "secondary" : "ghost"} 
               size="sm" 
-              className={`text-xs px-4 h-7 ${view === "week" ? "bg-white shadow-sm" : ""}`}
+              className={`text-xs px-4 h-7 ${view === "week" ? "bg-card shadow-sm" : ""}`}
               onClick={() => setView("week")}
             >
               Week
@@ -131,7 +131,7 @@ export default function AdminSchedulePage() {
             <Button 
               variant={view === "month" ? "secondary" : "ghost"} 
               size="sm" 
-              className={`text-xs px-4 h-7 ${view === "month" ? "bg-white shadow-sm" : ""}`}
+              className={`text-xs px-4 h-7 ${view === "month" ? "bg-card shadow-sm" : ""}`}
               onClick={() => setView("month")}
             >
               Month

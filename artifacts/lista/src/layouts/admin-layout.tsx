@@ -23,8 +23,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const { user, logout } = useAuth();
   const [location, setLocation] = useLocation();
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     setLocation("/");
   };
 
@@ -49,7 +49,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Top Bar */}
-        <header className="h-16 bg-white border-b border-card-border flex items-center justify-between px-4 md:px-8 shrink-0">
+        <header className="h-16 bg-card border-b border-card-border flex items-center justify-between px-4 md:px-8 shrink-0">
           <div className="flex items-center gap-4">
             <div className="md:hidden">
               <Sheet>
@@ -70,11 +70,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <Button 
               variant="ghost" 
               size="icon" 
-              className="text-muted-foreground relative hover:bg-indigo-50 hover:text-indigo-600 rounded-full transition-all"
+              className="text-muted-foreground relative hover:bg-primary-indigo/10 hover:text-primary-indigo rounded-full transition-all"
               onClick={() => setLocation("/admin/announcements")}
             >
               <Bell className="h-5 w-5" />
-              <span className="absolute top-2.5 right-2.5 h-2 w-2 bg-indigo-600 rounded-full border-2 border-white" />
+              <span className="absolute top-2.5 right-2.5 h-2 w-2 bg-primary-indigo rounded-full border-2 border-card" />
             </Button>
             
             <DropdownMenu>

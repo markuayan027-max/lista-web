@@ -78,11 +78,11 @@ export default function StaffSchedulePage() {
 
   const getCategoryColor = (category?: string) => {
     switch (category) {
-      case "Technology": return "border-blue-500 bg-blue-50 text-blue-800";
+      case "Technology": return "border-primary-electric/40 bg-primary-electric/10 text-primary-electric";
       case "Data": return "border-emerald-500 bg-emerald-50 text-emerald-800";
       case "Design": return "border-purple-500 bg-purple-50 text-purple-800";
       case "Healthcare": return "border-rose-500 bg-rose-50 text-rose-800";
-      default: return "border-slate-500 bg-slate-50 text-slate-800";
+      default: return "border-border bg-muted text-foreground";
     }
   };
 
@@ -99,7 +99,7 @@ export default function StaffSchedulePage() {
         </div>
         
         <div className="flex items-center gap-3">
-          <div className="flex items-center border border-card-border rounded-md bg-white">
+          <div className="flex items-center border border-card-border rounded-md bg-card">
             <Button variant="ghost" size="icon" className="rounded-none rounded-l-md h-10" onClick={prevWeek}>
               <ChevronLeft className="h-4 w-4" />
             </Button>
@@ -219,7 +219,7 @@ export default function StaffSchedulePage() {
 
           return (
             <div key={i} className="flex flex-col gap-3">
-              <div className={`p-3 rounded-xl text-center shadow-sm ${isTodayDate ? 'bg-primary text-primary-foreground' : 'bg-white border border-card-border'}`}>
+              <div className={`p-3 rounded-xl text-center shadow-sm ${isTodayDate ? 'bg-primary text-primary-foreground' : 'bg-card border border-card-border'}`}>
                 <p className={`text-xs font-bold uppercase tracking-wider ${isTodayDate ? 'text-primary-foreground/80' : 'text-muted-foreground'}`}>
                   {format(day, "EEE")}
                 </p>

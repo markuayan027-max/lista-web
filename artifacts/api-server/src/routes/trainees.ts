@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
-import { enrollments } from "@workspace/db/schema";
+import { enrollments, users } from "@workspace/db/schema";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { logger } from "../lib/logger";
@@ -58,6 +58,7 @@ const registerSchema = z.object({
   preferredSchedule: z.string().optional(),
   enrollmentType: z.string().min(1),
   scholarshipApplication: z.string().optional(),
+  consent: z.boolean().optional(),
   status: z.enum(["Pending", "Confirmed", "Rejected", "Waitlisted", "Review", "Interview", "Enrolled", "Cancelled", "Completed", "Ready to Apply"]).default("Pending")
 });
 
@@ -83,71 +84,125 @@ function supplementalEnrollmentNotes(data: {
   return JSON.stringify(payload);
 }
 
+type RegisterBody = z.infer<typeof registerSchema>;
+
+function isUniqueViolation(error: unknown): boolean {
+  const err = error as { code?: string; cause?: { code?: string } };
+  return err?.code === "23505" || err?.cause?.code === "23505";
+}
+
+function enrollmentValuesFromRegister(data: RegisterBody, notesExtra?: string) {
+  return {
+    refNo: data.refNo,
+    firstName: data.firstName,
+    middleName: data.middleName,
+    lastName: data.lastName,
+    extensionName: data.extensionName,
+    traineeName:
+      data.traineeName || `${data.lastName}, ${data.firstName} ${data.middleName || ""}`.trim(),
+    dob: data.dob,
+    birthPlace: data.birthPlace,
+    age: data.age,
+    gender: data.gender,
+    civilStatus: data.civilStatus,
+    nationality: data.nationality,
+    email: data.traineeEmail.trim().toLowerCase(),
+    contact: data.contactNumber,
+    telephone: data.telephone,
+    address: data.homeAddress,
+    barangay: data.barangay,
+    district: data.district,
+    city: data.city,
+    province: data.province,
+    region: data.region,
+    zipCode: data.zipCode,
+    education: data.education,
+    school: data.schoolLastAttended,
+    yearGraduated: data.yearGraduated,
+    course: data.courseSlug,
+    schedule: data.preferredSchedule,
+    enrollType: data.enrollmentType,
+    scholarship: data.scholarshipApplication,
+    employment: data.employmentStatus,
+    employmentType: data.employmentType,
+    companyName: data.companyName,
+    notes: notesExtra,
+    uli: data.uli,
+    voucherNo: data.voucherNo,
+    psaNo: data.psaNo,
+    learnerClassification: data.learnerClassification,
+    clientType: data.clientType,
+    qualificationType: data.qualificationType,
+    motherMaidenName: data.motherMaidenName,
+    fatherName: data.fatherName,
+    isIP: data.isIP,
+    indigenousGroup: data.indigenousGroup,
+    motherTongue: data.motherTongue,
+    consent: data.consent ?? false,
+    status: data.status,
+  };
+}
+
 router.post("/register", async (req, res) => {
   try {
-    const data = registerSchema.parse(req.body) as any;
+    const data = registerSchema.parse(req.body);
     if (!assertEmailAccess(req, data.traineeEmail)) {
       return res.status(403).json({ success: false, error: "Cannot register for another user's email" });
     }
 
+    const email = data.traineeEmail.trim().toLowerCase();
     const notesExtra = supplementalEnrollmentNotes(data);
+    const values = enrollmentValuesFromRegister(data, notesExtra);
 
-    const [enrollment] = await db.insert(enrollments).values({
-      refNo: data.refNo,
-      firstName: data.firstName,
-      middleName: data.middleName,
-      lastName: data.lastName,
-      extensionName: data.extensionName,
-      traineeName: data.traineeName || `${data.lastName}, ${data.firstName} ${data.middleName || ""}`.trim(),
-      dob: data.dob,
-      birthPlace: data.birthPlace,
-      age: data.age,
-      gender: data.gender,
-      civilStatus: data.civilStatus,
-      nationality: data.nationality,
-      email: data.traineeEmail,
-      contact: data.contactNumber,
-      telephone: data.telephone,
-      address: data.homeAddress,
-      barangay: data.barangay,
-      district: data.district,
-      city: data.city,
-      province: data.province,
-      region: data.region,
-      zipCode: data.zipCode,
-      education: data.education,
-      school: data.schoolLastAttended,
-      yearGraduated: data.yearGraduated,
-      course: data.courseSlug,
-      schedule: data.preferredSchedule,
-      enrollType: data.enrollmentType,
-      scholarship: data.scholarshipApplication,
-      employment: data.employmentStatus,
-      employmentType: data.employmentType,
-      companyName: data.companyName,
-      notes: notesExtra,
-      uli: data.uli,
-      voucherNo: data.voucherNo,
-      psaNo: data.psaNo,
-      learnerClassification: data.learnerClassification,
-      clientType: data.clientType,
-      qualificationType: data.qualificationType,
-      motherMaidenName: data.motherMaidenName,
-      fatherName: data.fatherName,
-      isIP: data.isIP,
-      indigenousGroup: data.indigenousGroup,
-      motherTongue: data.motherTongue,
-      // Omit status since the database has a default value for it
-    }).returning();
+    const [pubUser] = await db.select({ id: users.id }).from(users).where(eq(users.email, email)).limit(1);
+    const valuesWithUser = { ...values, userId: pubUser?.id ?? null };
 
-    return res.status(201).json({ success: true, data: enrollment });
+    const [existing] = await db
+      .select()
+      .from(enrollments)
+      .where(eq(enrollments.email, email))
+      .limit(1);
+
+    if (existing) {
+      const { refNo: _keepRef, ...patch } = values;
+      const [updated] = await db
+        .update(enrollments)
+        .set({ ...patch, updatedAt: new Date() })
+        .where(eq(enrollments.id, existing.id))
+        .returning();
+      logger.info({ email }, "Enrollment updated via register (existing email)");
+      return res.status(200).json({ success: true, data: updated, updated: true });
+    }
+
+    try {
+      const [enrollment] = await db.insert(enrollments).values(valuesWithUser).returning();
+      return res.status(201).json({ success: true, data: enrollment });
+    } catch (insertError) {
+      if (!isUniqueViolation(insertError)) {
+        throw insertError;
+      }
+      const [updated] = await db
+        .update(enrollments)
+        .set({ ...valuesWithUser, updatedAt: new Date() })
+        .where(eq(enrollments.email, email))
+        .returning();
+      if (!updated) {
+        throw insertError;
+      }
+      logger.info({ email }, "Enrollment updated via register (unique conflict)");
+      return res.status(200).json({ success: true, data: updated, updated: true });
+    }
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ success: false, error: "Validation Error", details: error.errors });
     }
-    
+
     console.error("Error registering trainee:", error);
-    return res.status(500).json({ success: false, error: "Internal Server Error" });
+    const message =
+      error instanceof Error && error.message.includes("timeout")
+        ? "Database connection timed out — try again in a moment"
+        : "Internal Server Error";
+    return res.status(500).json({ success: false, error: message });
   }
 });
 
@@ -160,8 +215,14 @@ router.get("/profile", async (req, res) => {
     return res.status(403).json({ success: false, error: "Forbidden" });
   }
 
+  const normalizedEmail = email.trim().toLowerCase();
+
   try {
-    const [enrollment] = await db.select().from(enrollments).where(eq(enrollments.email, email)).limit(1);
+    const [enrollment] = await db
+      .select()
+      .from(enrollments)
+      .where(eq(enrollments.email, normalizedEmail))
+      .limit(1);
     if (!enrollment) {
       return res.status(404).json({ success: false, error: "Profile not found" });
     }
@@ -210,6 +271,7 @@ const updateSchema = z.object({
   preferredSchedule: z.string().min(1).optional(),
   enrollmentType: z.string().min(1).optional(),
   scholarshipApplication: z.string().optional(),
+  consent: z.boolean().optional(),
   status: z.preprocess((val) => {
     if (typeof val === 'string') {
       const s = val.toLowerCase();
@@ -229,6 +291,8 @@ router.put("/profile", async (req, res) => {
     return res.status(403).json({ success: false, error: "Forbidden" });
   }
 
+  const normalizedEmail = email.trim().toLowerCase();
+
   try {
     const parsedData = updateSchema.parse(req.body) as any;
 
@@ -245,7 +309,7 @@ router.put("/profile", async (req, res) => {
 
     const notesExtra = supplementalEnrollmentNotes(parsedData);
 
-    const updatePayload: Partial<typeof enrollments.$inferInsert> = {
+    const updatePayload = {
       firstName: parsedData.firstName,
       middleName: parsedData.middleName,
       lastName: parsedData.lastName,
@@ -289,6 +353,7 @@ router.put("/profile", async (req, res) => {
       isIP: parsedData.isIP,
       indigenousGroup: parsedData.indigenousGroup,
       motherTongue: parsedData.motherTongue,
+      consent: parsedData.consent,
       status: parsedData.status,
     };
 
@@ -303,7 +368,7 @@ router.put("/profile", async (req, res) => {
     const [updated] = await db
       .update(enrollments)
       .set(filteredPayload)
-      .where(eq(enrollments.email, email))
+      .where(eq(enrollments.email, normalizedEmail))
       .returning();
 
     if (!updated) {

@@ -1,16 +1,20 @@
 import { useParams, Link } from "wouter";
 import { useCourses, useSchedules } from "@/hooks/use-lista-data";
 import { withBase } from "@/lib/with-base";
+import OptimizedImage from "@/components/optimized-image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import AvatarInitials from "@/components/avatar-initials";
 import PrimaryButton from "@/components/primary-button";
-import { Clock, BarChart, Calendar, ChevronLeft, CheckCircle2, ArrowRight, ChevronRight, Loader2 } from "lucide-react";
+import { Clock, BarChart, Calendar, ChevronLeft, CheckCircle2, ArrowRight, ChevronRight } from "lucide-react";
+import { CourseDetailSkeleton } from "@/components/skeletons";
+import { ContentFadeIn } from "@/components/skeletons/primitives";
 import useEmblaCarousel from 'embla-carousel-react';
 import { useState, useEffect, useCallback } from "react";
 import NotFound from "@/pages/not-found";
+import { getPublicEnrollHref } from "@/lib/enroll-entry";
 
 export default function CourseDetailPage() {
   const { slug } = useParams();
@@ -19,12 +23,7 @@ export default function CourseDetailPage() {
   const course = courses.find((c) => c.slug === slug);
 
   if (isLoading) {
-    return (
-      <div className="flex justify-center py-24 text-muted-foreground gap-2">
-        <Loader2 className="h-6 w-6 animate-spin" />
-        Loading course…
-      </div>
-    );
+    return <CourseDetailSkeleton />;
   }
 
   if (!course) {
@@ -34,7 +33,7 @@ export default function CourseDetailPage() {
   const courseSchedules = schedules.filter((s) => s.courseSlug === course.slug);
 
   return (
-    <div className="w-full bg-slate-50 min-h-screen pb-24">
+    <ContentFadeIn className="w-full bg-slate-50 min-h-screen pb-24 block">
       {/* Breadcrumb & Hero */}
       <div className="bg-white border-b border-card-border pb-12">
         <div className="container mx-auto px-4 md:px-6">
@@ -152,7 +151,7 @@ export default function CourseDetailPage() {
                              </p>
                           </div>
                           {/* 2026-05-13: single application entrypoint */}
-                          <Link href={`/trainee/register?course=${course.slug}`}>
+                          <Link href={getPublicEnrollHref({ course: course.slug })}>
                              <Button variant="outline" className="w-full md:w-auto font-semibold">
                                 Select Date
                              </Button>
@@ -176,9 +175,9 @@ export default function CourseDetailPage() {
                  <p className="text-muted-foreground font-medium">TESDA Accredited</p>
               </div>
               <CardContent className="p-8 space-y-6">
-                <Link href={`/trainee/register?course=${course.slug}`}>
+                <Link href={getPublicEnrollHref({ course: course.slug })}>
                   <PrimaryButton size="lg" className="w-full h-14 text-lg group">
-                    Enroll now
+                    Sign in to enroll
                     <ArrowRight className="ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
                   </PrimaryButton>
                 </Link>
@@ -216,7 +215,7 @@ export default function CourseDetailPage() {
           </div>
         </div>
       </div>
-    </div>
+    </ContentFadeIn>
   );
 }
 function CourseImageSlider({ images, title }: { images: string[], title: string }) {
@@ -243,12 +242,11 @@ function CourseImageSlider({ images, title }: { images: string[], title: string 
         <div className="flex h-full">
           {images.map((src, index) => (
             <div key={index} className="flex-[0_0_100%] min-w-0 h-full relative">
-              <img
-                src={withBase(src)}
+              <OptimizedImage
+                src={src}
                 alt={`${title} - image ${index + 1}`}
-                className="w-full h-full object-cover"
-                loading="lazy"
-                decoding="async"
+                imgClassName="w-full h-full object-cover"
+                priority={index === 0}
               />
               <div className="absolute inset-0 bg-black/5" />
             </div>

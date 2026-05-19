@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import FormInputField from "@/components/form-input-field";
+import PasswordRequirements from "@/components/password-requirements";
+import { getPasswordValidationError, isPasswordValid } from "@/lib/password-policy";
 import PrimaryButton from "@/components/primary-button";
 import { ChevronLeft, Mail, Loader2, CheckCircle2 } from "lucide-react";
-import { lista } from "@/lib/insforge";
+import { authApiRequest } from "@/lib/auth-api";
 import { toast } from "sonner";
 
 // ---------------------------------------------------------------------------
@@ -43,12 +45,15 @@ export default function ForgotPasswordPage() {
     if (!email) return;
     setIsSending(true);
     try {
-      const { error } = await lista.auth.sendResetPasswordEmail({ email });
-      if (error) throw error;
+      await authApiRequest("/api/auth/email/send-reset-password", {
+        method: "POST",
+        body: { email: email.trim().toLowerCase() },
+      });
       toast.success("Reset code sent! Check your inbox.");
       setStep("reset");
-    } catch (err: any) {
-      toast.error(err?.message || "Failed to send reset code. Try again.");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to send reset code. Try again.";
+      toast.error(message);
     } finally {
       setIsSending(false);
     }
@@ -57,11 +62,14 @@ export default function ForgotPasswordPage() {
   const handleResend = async () => {
     setIsSending(true);
     try {
-      const { error } = await lista.auth.sendResetPasswordEmail({ email });
-      if (error) throw error;
+      await authApiRequest("/api/auth/email/send-reset-password", {
+        method: "POST",
+        body: { email: email.trim().toLowerCase() },
+      });
       toast.success("Code resent!");
-    } catch (err: any) {
-      toast.error(err?.message || "Failed to resend code.");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to resend code.";
+      toast.error(message);
     } finally {
       setIsSending(false);
     }
@@ -84,15 +92,25 @@ export default function ForgotPasswordPage() {
       return;
     }
     setIsResetting(true);
+    const normalizedEmail = email.trim().toLowerCase();
+    const code = otp.trim();
     try {
-      const { error } = await (lista.auth as any).resetPassword({
-        newPassword,
-        otp: otp.trim(),
+      const { token } = await authApiRequest<{ token: string }>(
+        "/api/auth/email/exchange-reset-password-token",
+        {
+          method: "POST",
+          body: { email: normalizedEmail, code },
+        },
+      );
+      await authApiRequest("/api/auth/email/reset-password", {
+        method: "POST",
+        body: { newPassword, otp: token },
       });
-      if (error) throw error;
       setStep("done");
-    } catch (err: any) {
-      toast.error(err?.message || "Invalid or expired code. Please try again.");
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : "Invalid or expired code. Please try again.";
+      toast.error(message);
     } finally {
       setIsResetting(false);
     }
@@ -159,15 +177,23 @@ export default function ForgotPasswordPage() {
             autoFocus
           />
 
-          <FormInputField
-            label=""
-            type="password"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            placeholder="New password (min. 6 characters)"
-            required
-            className="h-14 text-base rounded-xl"
-          />
+          <div className="space-y-2">
+            <FormInputField
+              label=""
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="New password"
+              required
+              autoComplete="new-password"
+              aria-describedby="reset-password-requirements"
+              className="h-14 text-base rounded-xl"
+            />
+            <PasswordRequirements
+              password={newPassword}
+              id="reset-password-requirements"
+            />
+          </div>
 
           <FormInputField
             label=""

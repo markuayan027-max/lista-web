@@ -31,16 +31,23 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { useCourses } from "@/hooks/use-lista-data";
+import { useCourses, useTraineeProfile } from "@/hooks/use-lista-data";
 import type { Enrollment } from "@/lib/institutional-data";
 import { exportSingleTraineeToExcel, exportSingleTraineeToWord } from "@/lib/export-utils";
-import { fetchTraineeEnrollmentByEmail, registerTraineeFromForm } from "@/lib/trainee-enrollment-insforge";
-import { 
-  saveLocalProfile, 
-  loadLocalProfile, 
+import {
+  prepareEnrollmentForInsforge,
+  registerTraineeFromForm,
+} from "@/lib/trainee-enrollment-insforge";
+import {
+  saveLocalProfile,
+  loadLocalProfile,
   buildRegistrationDraft,
+  buildRegistrationCloudPayload,
   isRegistrationStepComplete,
+  loadRegistrationMaxStep,
   maxCompletedRegistrationStep,
+  resolveRegistrationPersistStep,
+  saveRegistrationMaxStep,
 } from "@/lib/profile-utils";
 
 const STEPS = [
@@ -51,8 +58,9 @@ const STEPS = [
 ];
 
 export default function TraineeRegistrationPage() {
-  const { user, completeRegistration } = useAuth();
+  const { user, completeRegistration, markRegistrationPartial } = useAuth();
   const { data: courses = [] } = useCourses();
+  const { data: cloudProfile } = useTraineeProfile(user?.email);
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(1);
@@ -173,100 +181,110 @@ export default function TraineeRegistrationPage() {
   
   // Handle data loading and course parameter from URL
   useEffect(() => {
-    const draft = loadLocalProfile();
+    const draft = loadLocalProfile(user?.id);
     const searchParams = new URLSearchParams(window.location.search);
     const urlCourse = searchParams.get('course');
+    const fromProfile = searchParams.get('from') === 'profile';
     
-    const fetchExistingProfile = async () => {
-      // Step 1: Initialize with defaults from auth
+    const buildInitialFromAuth = () => {
       const userName = user?.name || "";
-      const nameParts = userName.split(' ');
-      let initialData = { 
+      const nameParts = userName.split(" ");
+      let initialData = {
         ...formData,
         traineeEmail: user?.email || "",
         firstName: nameParts[0] || "",
-        lastName: nameParts.length > 1 ? nameParts.slice(1).join(' ') : "",
+        lastName: nameParts.length > 1 ? nameParts.slice(1).join(" ") : "",
       };
 
-      // Step 2: Try to fetch from database if user is logged in
-      if (user?.email) {
-        try {
-          const data = await fetchTraineeEnrollmentByEmail(user.email!);
-          if (data.success && data.data) {
-            const dbData = data.data as unknown as Enrollment;
-            
-            // Check if user has an active enrollment (blocking ones)
-            const status = String(dbData.status).toLowerCase();
-            // We allow 'ready_to_apply' to be resumed/updated
-            if (!["completed", "cancelled", "rejected", "ready_to_apply"].includes(status)) {
-              toast({ title: "Active Enrollment", description: "You already have an active application. Please complete or cancel it first.", variant: "destructive" });
-              setLocation("/trainee/application");
-              return;
-            }
-
-            // Clean up DB data - ONLY merge fields that actually have content
-            const cleanDbData = Object.fromEntries(
-              Object.entries(dbData).filter(([k, v]) => 
-                v !== null && v !== undefined && v !== "" && v !== "null" &&
-                !["id", "status", "createdAt"].includes(k)
-              )
-            );
-
-            initialData = {
-              ...initialData,
-              ...cleanDbData,
-            };
-          }
-        } catch (error) {
-          console.error("Error fetching database profile:", error);
-        }
-      }
-
-      // Step 3: Merge with local draft
-      // We only let draft fields override if they are NOT empty, 
-      // ensuring that a blank draft doesn't wipe out the Profile data fetched from DB.
       if (draft) {
         const meaningfulDraft = Object.fromEntries(
-          Object.entries(draft).filter(([_, v]) => v !== "" && v !== null && v !== undefined)
+          Object.entries(draft).filter(([_, v]) => v !== "" && v !== null && v !== undefined),
         );
         initialData = { ...initialData, ...meaningfulDraft };
       }
 
-      // Step 4: URL course parameter takes priority
       if (urlCourse) {
         initialData.courseSlug = urlCourse;
       }
 
       const completed = maxCompletedRegistrationStep(initialData);
-      const scoped = buildRegistrationDraft(initialData as Enrollment, completed, {
-        authEmail: user?.email,
-      });
-      initialData = { ...initialData, ...scoped } as Enrollment;
+      const visited = loadRegistrationMaxStep(user?.id);
+      return {
+        data: initialData as Enrollment,
+        completed,
+        visited,
+      };
+    };
 
-      // Step 5: Update state and mark as loaded
-      setFormData(initialData as Enrollment);
+    const applyInitial = (
+      initialData: Enrollment,
+      completed: number,
+      visited: number,
+    ) => {
+      setFormData(initialData);
       setIsLoaded(true);
-
-      // Step 6: Smart Step Navigation — only when each phase was actually completed
       if (completed >= 3) {
-        // If they have a course intent (from URL or saved), go to Step 4 (Program Selection/Confirmation)
-        if (urlCourse || initialData.courseSlug) {
-          setCurrentStep(4);
-        } else {
-          // If no course but profile is done, start at Step 4 anyway
-          setCurrentStep(4);
-        }
+        setCurrentStep(4);
+      } else if (visited >= 1 && visited <= 3) {
+        setCurrentStep(visited);
       }
     };
 
-    fetchExistingProfile();
-  }, [user?.email]);
+    const { data: quickData, completed: quickCompleted, visited: quickVisited } =
+      buildInitialFromAuth();
+    applyInitial(quickData, quickCompleted, quickVisited);
+  }, [user?.email, user?.id, user?.name]);
 
-  // Auto-save only fields for steps the user has reached (avoids phantom step-2+ prefills)
+  useEffect(() => {
+    if (!cloudProfile) return;
+
+    const searchParams = new URLSearchParams(window.location.search);
+    const fromProfile = searchParams.get("from") === "profile";
+    const dbData = cloudProfile as Enrollment;
+    const status = String(dbData.status).toLowerCase().replace(/\s+/g, "_");
+    if (
+      !fromProfile &&
+      !["completed", "cancelled", "rejected", "ready_to_apply"].includes(status)
+    ) {
+      toast({
+        title: "Active Enrollment",
+        description:
+          "You already have an active application. Please complete or cancel it first.",
+        variant: "destructive",
+      });
+      setLocation("/trainee/application");
+      return;
+    }
+
+    const cleanDbData = Object.fromEntries(
+      Object.entries(dbData).filter(
+        ([k, v]) =>
+          v !== null &&
+          v !== undefined &&
+          v !== "" &&
+          v !== "null" &&
+          !["id", "status", "createdAt"].includes(k),
+      ),
+    );
+
+    setFormData((prev) => {
+      const merged = { ...prev, ...cleanDbData } as Enrollment;
+      const completed = maxCompletedRegistrationStep(merged);
+      if (completed >= 3) {
+        setCurrentStep(4);
+      }
+      return merged;
+    });
+  }, [cloudProfile, setLocation, toast]);
+
+  // Auto-save fields for steps the user has reached (including partial step data)
   useEffect(() => {
     if (isLoaded) {
+      const persistStep = resolveRegistrationPersistStep(formData, currentStep, user?.id);
+      saveRegistrationMaxStep(persistStep, user?.id);
       saveLocalProfile(
-        buildRegistrationDraft(formData, currentStep, { authEmail: user?.email }),
+        buildRegistrationDraft(formData, persistStep, { authEmail: user?.email }),
+        user?.id,
       );
     }
     // Expose formData to window for Playwright debugging in test mode
@@ -302,9 +320,29 @@ export default function TraineeRegistrationPage() {
   };
 
   const persistDraft = (maxStep: number) => {
+    const capped = Math.min(3, Math.max(0, maxStep));
+    saveRegistrationMaxStep(capped, user?.id);
     saveLocalProfile(
-      buildRegistrationDraft(formData, maxStep, { authEmail: user?.email }),
+      buildRegistrationDraft(formData, capped, { authEmail: user?.email }),
+      user?.id,
     );
+  };
+
+  const syncProfileToCloud = async (
+    maxStep: number,
+  ): Promise<{ success: boolean; error?: string }> => {
+    if (!user?.email) return { success: true };
+    const payload = buildRegistrationCloudPayload(formData, maxStep, {
+      authEmail: user.email,
+    });
+    const result = await registerTraineeFromForm(
+      prepareEnrollmentForInsforge({ ...payload, status: "ready_to_apply" }, user.email),
+      user.id,
+    );
+    if (!result.success) {
+      console.error("[Registration] Cloud sync failed:", result.error);
+    }
+    return result;
   };
 
   const nextStep = async () => {
@@ -324,37 +362,74 @@ export default function TraineeRegistrationPage() {
 
     // Auto-save to cloud as "ready_to_apply" once basic profile (Step 1-3) is complete
     if (currentStep === 3 && user?.email) {
-      try {
-        await registerTraineeFromForm({ ...formData, status: "ready_to_apply" }, user.id);
-        console.info("Profile partially saved to cloud as 'ready_to_apply'");
-      } catch (e) {
-        console.warn("Silent partial save failed:", e);
+      const partial = await registerTraineeFromForm(
+        prepareEnrollmentForInsforge({ ...formData, status: "ready_to_apply" }, user.email),
+        user.id,
+      );
+      if (!partial.success) {
+        toast({
+          title: "Cloud sync issue",
+          description: partial.error ?? "Could not save to InsForge. Data is kept on this device.",
+          variant: "destructive",
+        });
       }
     }
 
-    if (currentStep < 4) setCurrentStep(prev => prev + 1);
+    if (currentStep < 4) {
+      const next = currentStep + 1;
+      saveRegistrationMaxStep(next, user?.id);
+      setCurrentStep(next);
+    }
   };
 
   const prevStep = () => {
     if (currentStep > 1) setCurrentStep(prev => prev - 1);
   };
 
-  const handleSkipForNow = () => {
-    const completed = maxCompletedRegistrationStep(formData);
-    if (completed === 0) {
+  const handleSkipForNow = async () => {
+    if (currentStep === 1 && !isStepValid()) {
       toast({
         title: "Complete Step 1 First",
-        description: "Fill in your identity details before leaving, or use Save & Exit after step 1 is complete.",
+        description: "Fill in your identity details before leaving.",
         variant: "destructive",
       });
       return;
     }
-    persistDraft(completed);
-    completeRegistration();
+
+    const persistStep = resolveRegistrationPersistStep(formData, currentStep, user?.id);
+    if (persistStep === 0) {
+      toast({
+        title: "Complete Step 1 First",
+        description: "Fill in your identity details before leaving.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    persistDraft(persistStep);
+
+    if (isRegistrationStepComplete(1, formData)) {
+      const { success, error } = await syncProfileToCloud(persistStep);
+      if (success) {
+        toast({
+          title: "Profile synced",
+          description: "Your registration is saved to the cloud. You can continue anytime from Profile.",
+        });
+      } else {
+        toast({
+          title: "Saved on this device only",
+          description:
+            error ?? "Cloud sync failed. Your entries are kept locally — try again from Profile.",
+          variant: "destructive",
+        });
+      }
+    }
+
+    markRegistrationPartial();
     setLocation("/trainee");
   };
 
-  const handleSaveAndExit = () => {
+  const handleSaveAndExit = async () => {
     if (currentStep === 1 && !isStepValid()) {
       toast({
         title: "Required Info Missing",
@@ -363,9 +438,27 @@ export default function TraineeRegistrationPage() {
       });
       return;
     }
-    const completed = isStepValid() ? currentStep : Math.max(0, currentStep - 1);
-    persistDraft(completed);
-    completeRegistration();
+
+    const persistStep = resolveRegistrationPersistStep(formData, currentStep, user?.id);
+    persistDraft(persistStep);
+
+    if (isRegistrationStepComplete(1, formData)) {
+      const { success, error } = await syncProfileToCloud(persistStep);
+      if (success) {
+        toast({
+          title: "Profile synced",
+          description: "Your progress is saved to InsForge.",
+        });
+      } else {
+        toast({
+          title: "Saved on this device only",
+          description: error ?? "Cloud sync failed. Try again from Profile.",
+          variant: "destructive",
+        });
+      }
+    }
+
+    markRegistrationPartial();
     setLocation("/trainee");
   };
 
@@ -384,6 +477,7 @@ export default function TraineeRegistrationPage() {
       setFormData(submissionData);
       saveLocalProfile(
         buildRegistrationDraft(submissionData, 3, { authEmail: user?.email }),
+        user?.id,
       );
       
       completeRegistration();
@@ -393,13 +487,14 @@ export default function TraineeRegistrationPage() {
         title: "Registration Complete!",
         description: "Your info is now saved and pre-filled for future applications.",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Cloud sync failed";
       toast({
-        title: "Cloud Sync Failed",
-        description: "Your registration was NOT saved to the cloud. Please check your InsForge connection and policies.",
-        variant: "destructive"
+        title: "Cloud sync failed",
+        description: message,
+        variant: "destructive",
       });
-      console.error("Enrollment sync error:", error);
+      console.error("[Registration] Enrollment sync error:", error);
     } finally {
       setIsSubmitting(false);
     }
@@ -420,36 +515,70 @@ export default function TraineeRegistrationPage() {
   };
 
   if (isFinished) {
+    const courseSlug = formData.courseSlug?.trim();
+    const primaryHref = courseSlug
+      ? `/trainee/enroll?course=${encodeURIComponent(courseSlug)}`
+      : "/trainee/application";
+    const primaryLabel = courseSlug
+      ? "Continue course application"
+      : "Browse courses & apply";
+
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center p-6">
-        <motion.div 
+      <div className="min-h-screen bg-background flex items-center justify-center p-6">
+        <motion.div
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.2, ease: "easeOut" }}
           className="max-w-md w-full"
         >
           <div className="text-center">
-            <div className="w-12 h-12 bg-zinc-900 rounded-2xl flex items-center justify-center mx-auto mb-8">
-              <CheckCircle2 className="h-6 w-6 text-white" />
+            <div className="w-12 h-12 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-6">
+              <CheckCircle2 className="h-6 w-6 text-primary-foreground" />
             </div>
-            <h1 className="text-3xl font-black text-zinc-900 tracking-tight mb-3 uppercase">Registration Complete</h1>
-            <p className="text-zinc-500 text-sm leading-relaxed mb-10 font-medium">
-              Your profile information has been securely saved and will be used to pre-fill your course applications.
+            <h1 className="text-3xl font-black text-foreground tracking-tight mb-3 uppercase">
+              Profile saved
+            </h1>
+            <p className="text-muted-foreground text-sm leading-relaxed mb-6 font-medium">
+              Your TESDA learner profile is on file. This is not a course enrollment yet — choose a
+              program next to submit an application.
             </p>
 
-            <Button 
-              className="w-full h-14 bg-zinc-900 text-white hover:bg-zinc-800 rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-xl shadow-zinc-100 transition-all active:scale-[0.98]" 
-              onClick={() => setLocation("/trainee/application")}
+            <div className="rounded-2xl border border-border bg-card p-4 text-left mb-8 space-y-3">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                What happens next
+              </p>
+              <ol className="space-y-2 text-sm text-foreground list-none">
+                <li className="flex gap-2">
+                  <span className="font-bold text-primary shrink-0">1.</span>
+                  <span>
+                    <strong className="font-semibold">Profile complete</strong> — saved to InsForge
+                  </span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="font-bold text-primary shrink-0">2.</span>
+                  <span>Pick a course and submit your application</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="font-bold text-primary shrink-0">3.</span>
+                  <span>Track status and print your official form anytime</span>
+                </li>
+              </ol>
+            </div>
+
+            <Button
+              className="w-full h-14 bg-primary text-primary-foreground hover:bg-primary/90 rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-xl shadow-muted/30 transition-all active:scale-[0.98]"
+              onClick={() => setLocation(primaryHref)}
             >
-              Browse Available Courses
+              {primaryLabel}
+              <ArrowRight className="ml-2 h-4 w-4 inline" />
             </Button>
-            
-            <Button 
+
+            <Button
               variant="ghost"
-              className="w-full h-14 mt-2 text-zinc-500 hover:text-zinc-900 rounded-2xl font-bold text-[11px] uppercase tracking-widest transition-all" 
+              className="w-full h-14 mt-2 text-muted-foreground hover:text-foreground rounded-2xl font-bold text-[11px] uppercase tracking-widest transition-all"
               onClick={() => setLocation("/trainee")}
             >
-              Go to Dashboard
+              Go to dashboard
             </Button>
           </div>
         </motion.div>
@@ -461,35 +590,35 @@ export default function TraineeRegistrationPage() {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-zinc-100 border-t-zinc-900 rounded-full animate-spin" />
-          <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Loading Enrollment Data...</p>
+          <div className="w-12 h-12 border-4 border-border border-t-primary rounded-full animate-spin" />
+          <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Loading Enrollment Data...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-white flex flex-col md:flex-row font-sans text-zinc-900 selection:bg-zinc-900 selection:text-white">
+    <div className="min-h-screen bg-background flex flex-col md:flex-row font-sans text-foreground selection:bg-primary selection:text-primary-foreground">
       {/* Sidebar */}
-      <div className="w-full md:w-80 bg-white md:fixed md:h-full flex flex-col border-r border-zinc-100 z-10">
+      <div className="w-full md:w-80 bg-card md:fixed md:h-full flex flex-col border-r border-border z-10">
         <div className="p-8 pb-4">
           <div className="flex items-center gap-3 mb-10">
-            <div className="w-8 h-8 bg-zinc-900 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
               <GraduationCap className="h-4 w-4 text-white" />
             </div>
-            <h1 className="text-sm font-black tracking-tight text-zinc-900 uppercase">Lista</h1>
+            <h1 className="text-sm font-black tracking-tight text-foreground uppercase">Lista</h1>
           </div>
           
           <div className="mb-8 space-y-1">
-            <div className="flex justify-between items-center text-[10px] font-bold text-zinc-400 uppercase tracking-widest px-1">
+            <div className="flex justify-between items-center text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-1">
               <span>Overall Progress</span>
-              <span className="text-zinc-900">{stepProgress}%</span>
+              <span className="text-foreground">{stepProgress}%</span>
             </div>
-            <div className="h-1 bg-zinc-100 rounded-full overflow-hidden">
+            <div className="h-1 bg-muted rounded-full overflow-hidden">
               <motion.div 
                 initial={{ width: 0 }}
                 animate={{ width: `${stepProgress}%` }}
-                className="h-full bg-zinc-900 transition-all duration-300 ease-out" 
+                className="h-full bg-primary transition-all duration-300 ease-out" 
               />
             </div>
           </div>
@@ -503,16 +632,16 @@ export default function TraineeRegistrationPage() {
               <button 
                 key={step.id} 
                 className={`w-full text-left px-4 py-3 rounded-xl flex items-center gap-4 transition-all duration-200 group ${
-                  isActive ? 'bg-zinc-50 text-zinc-900' : 
-                  isCompleted ? 'hover:bg-zinc-50 text-zinc-400 hover:text-zinc-900' : 'text-zinc-300 cursor-not-allowed'
+                  isActive ? 'bg-muted/50 text-foreground' : 
+                  isCompleted ? 'hover:bg-muted/50 text-muted-foreground hover:text-foreground' : 'text-muted-foreground/60 cursor-not-allowed'
                 }`}
                 onClick={() => step.id < currentStep && setCurrentStep(step.id)}
                 disabled={step.id > currentStep}
               >
                 <div className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center border text-[11px] font-bold transition-colors ${
-                  isActive ? 'bg-zinc-900 border-zinc-900 text-white' : 
-                  isCompleted ? 'bg-zinc-50 text-zinc-900 border-zinc-100 group-hover:border-zinc-200' : 
-                  'border-zinc-100 text-zinc-200'
+                  isActive ? 'bg-primary border-primary text-white' : 
+                  isCompleted ? 'bg-muted/50 text-foreground border-border group-hover:border-border' : 
+                  'border-border text-muted-foreground/40'
                 }`}>
                   {isCompleted ? <CheckCircle2 className="w-4 h-4" /> : step.id}
                 </div>
@@ -525,10 +654,10 @@ export default function TraineeRegistrationPage() {
           })}
         </div>
         
-        <div className="p-8 border-t border-zinc-100">
+        <div className="p-8 border-t border-border">
            <Button 
             variant="ghost" 
-            className="w-full justify-start text-zinc-400 hover:text-zinc-900 gap-3 text-xs font-semibold"
+            className="w-full justify-start text-muted-foreground hover:text-foreground gap-3 text-xs font-semibold"
             onClick={handleSaveAndExit}
            >
              <ArrowLeft className="h-4 w-4" /> Save & Exit
@@ -547,12 +676,12 @@ export default function TraineeRegistrationPage() {
                  transition={{ duration: 0.2 }}
                >
                  <div className="flex items-center gap-2 mb-4">
-                   <span className="text-[10px] font-black text-zinc-900 bg-zinc-100 px-2 py-0.5 rounded uppercase tracking-wider">Step 0{currentStep}</span>
-                   <div className="h-px w-8 bg-zinc-200" />
-                   <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Registry Flow</span>
+                   <span className="text-[10px] font-black text-foreground bg-muted px-2 py-0.5 rounded uppercase tracking-wider">Step 0{currentStep}</span>
+                   <div className="h-px w-8 bg-border" />
+                   <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Registry Flow</span>
                  </div>
-                 <h2 className="text-5xl font-black text-zinc-900 tracking-tight leading-none mb-4">{STEPS.find(s => s.id === currentStep)?.title}</h2>
-                 <p className="text-lg text-zinc-500 font-medium max-w-md leading-relaxed">{STEPS.find(s => s.id === currentStep)?.description}. Please provide accurate information as per your official documents.</p>
+                 <h2 className="text-5xl font-black text-foreground tracking-tight leading-none mb-4">{STEPS.find(s => s.id === currentStep)?.title}</h2>
+                 <p className="text-lg text-muted-foreground font-medium max-w-md leading-relaxed">{STEPS.find(s => s.id === currentStep)?.description}. Please provide accurate information as per your official documents.</p>
                </motion.div>
                
                {/* Mobile progress bar */}
@@ -561,8 +690,8 @@ export default function TraineeRegistrationPage() {
                     <span>Progress</span>
                     <span>{stepProgress}%</span>
                   </div>
-                  <div className="h-1 bg-zinc-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-zinc-900" style={{ width: `${stepProgress}%` }} />
+                  <div className="h-1 bg-muted rounded-full overflow-hidden">
+                    <div className="h-full bg-primary" style={{ width: `${stepProgress}%` }} />
                   </div>
                </div>
             </div>
@@ -582,30 +711,30 @@ export default function TraineeRegistrationPage() {
                       <div className="space-y-6">
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                           <div className="space-y-2">
-                            <label className="text-xs font-semibold text-zinc-700">First Name</label>
+                            <label className="text-xs font-semibold text-foreground/90">First Name</label>
                             <Input 
                                name="firstName"
-                               className="h-10 border-zinc-200 focus:border-zinc-900 focus:ring-zinc-900 rounded-md"
+                               className="h-10 border-border focus:border-primary focus:ring-ring rounded-md"
                                placeholder="Given name"
                                value={formData.firstName} 
                                onChange={handleChange} 
                              />
                           </div>
                           <div className="space-y-2">
-                            <label className="text-xs font-semibold text-zinc-700">Middle Name</label>
+                            <label className="text-xs font-semibold text-foreground/90">Middle Name</label>
                             <Input 
                                name="middleName"
-                               className="h-10 border-zinc-200 focus:border-zinc-900 focus:ring-zinc-900 rounded-md"
+                               className="h-10 border-border focus:border-primary focus:ring-ring rounded-md"
                                placeholder="Optional"
                                value={formData.middleName} 
                                onChange={handleChange} 
                              />
                           </div>
                           <div className="space-y-2">
-                            <label className="text-xs font-semibold text-zinc-700">Last Name</label>
+                            <label className="text-xs font-semibold text-foreground/90">Last Name</label>
                             <Input 
                                name="lastName"
-                               className="h-10 border-zinc-200 focus:border-zinc-900 focus:ring-zinc-900 rounded-md"
+                               className="h-10 border-border focus:border-primary focus:ring-ring rounded-md"
                                placeholder="Surname"
                                value={formData.lastName} 
                                onChange={handleChange} 
@@ -615,20 +744,20 @@ export default function TraineeRegistrationPage() {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                           <div className="space-y-2">
-                            <label className="text-xs font-semibold text-zinc-700">Name Extension</label>
+                            <label className="text-xs font-semibold text-foreground/90">Name Extension</label>
                             <Input 
                               name="extensionName"
-                              className="h-10 border-zinc-200 focus:border-zinc-900 focus:ring-zinc-900 rounded-md"
+                              className="h-10 border-border focus:border-primary focus:ring-ring rounded-md"
                               placeholder="e.g., Jr., Sr., III" 
                               value={formData.extensionName} 
                               onChange={handleChange} 
                             />
                           </div>
                           <div className="space-y-2">
-                            <label className="text-xs font-semibold text-zinc-700">Nationality</label>
+                            <label className="text-xs font-semibold text-foreground/90">Nationality</label>
                             <Input 
                               name="nationality"
-                              className="h-10 border-zinc-200 focus:border-zinc-900 focus:ring-zinc-900 rounded-md"
+                              className="h-10 border-border focus:border-primary focus:ring-ring rounded-md"
                               placeholder="e.g., Filipino"
                               value={formData.nationality} 
                               onChange={handleChange} 
@@ -638,11 +767,11 @@ export default function TraineeRegistrationPage() {
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                           <div className="space-y-2">
-                            <label className="text-xs font-semibold text-zinc-700">Date of Birth</label>
+                            <label className="text-xs font-semibold text-foreground/90">Date of Birth</label>
                             <Input 
                               name="dob"
                               type="date" 
-                              className="h-10 border-zinc-200 focus:border-zinc-900 focus:ring-zinc-900 rounded-md"
+                              className="h-10 border-border focus:border-primary focus:ring-ring rounded-md"
                               value={formData.dob} 
                               onChange={(e) => {
                                 const dob = e.target.value;
@@ -656,15 +785,15 @@ export default function TraineeRegistrationPage() {
                             />
                           </div>
                           <div className="space-y-2">
-                            <label className="text-xs font-semibold text-zinc-700">Age</label>
-                            <div className="h-10 flex items-center px-3 bg-zinc-50 border border-zinc-200 rounded-md text-sm text-zinc-500">
+                            <label className="text-xs font-semibold text-foreground/90">Age</label>
+                            <div className="h-10 flex items-center px-3 bg-muted/50 border border-border rounded-md text-sm text-muted-foreground">
                               {formData.age || '0'} years
                             </div>
                           </div>
                           <div className="space-y-2">
-                            <label className="text-xs font-semibold text-zinc-700">Birth Place</label>
+                            <label className="text-xs font-semibold text-foreground/90">Birth Place</label>
                             <Input 
-                              className="h-10 border-zinc-200 focus:border-zinc-900 focus:ring-zinc-900 rounded-md"
+                              className="h-10 border-border focus:border-primary focus:ring-ring rounded-md"
                               placeholder="City/Province" 
                               value={formData.birthPlace} 
                               onChange={e => updateForm({ birthPlace: e.target.value })} 
@@ -674,8 +803,8 @@ export default function TraineeRegistrationPage() {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                           <div className="space-y-2">
-                            <label className="text-xs font-semibold text-zinc-700">Gender</label>
-                            <div className="flex gap-2 p-1 bg-zinc-100 rounded-md border border-zinc-200">
+                            <label className="text-xs font-semibold text-foreground/90">Gender</label>
+                            <div className="flex gap-2 p-1 bg-muted rounded-md border border-border">
                               {['Male', 'Female'].map((g) => (
                                 <button
                                   key={g}
@@ -683,8 +812,8 @@ export default function TraineeRegistrationPage() {
                                   onClick={() => updateForm({ gender: g as any })}
                                   className={`flex-1 h-8 rounded-sm text-xs font-medium transition-all ${
                                     formData.gender === g 
-                                      ? 'bg-white text-zinc-900 shadow-sm' 
-                                      : 'text-zinc-500 hover:text-zinc-700'
+                                      ? 'bg-white text-foreground shadow-sm' 
+                                      : 'text-muted-foreground hover:text-foreground/90'
                                   }`}
                                 >
                                   {g}
@@ -693,9 +822,9 @@ export default function TraineeRegistrationPage() {
                             </div>
                           </div>
                           <div className="space-y-2">
-                            <label className="text-xs font-semibold text-zinc-700">Civil Status</label>
+                            <label className="text-xs font-semibold text-foreground/90">Civil Status</label>
                             <Select value={formData.civilStatus} onValueChange={val => updateForm({ civilStatus: val as any })}>
-                              <SelectTrigger className="h-10 border-zinc-200 focus:ring-zinc-900 rounded-md">
+                              <SelectTrigger className="h-10 border-border focus:ring-ring rounded-md">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent className="rounded-md">
@@ -714,52 +843,52 @@ export default function TraineeRegistrationPage() {
                       <div className="space-y-5">
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                           <div className="space-y-2">
-                            <label className="text-xs font-semibold text-zinc-700">Mobile Number</label>
-                            <Input name="mobileNumber" className="h-10 border-zinc-200 rounded-md" placeholder="09XX-XXX-XXXX" value={formData.mobileNumber} onChange={handleChange} />
+                            <label className="text-xs font-semibold text-foreground/90">Mobile Number</label>
+                            <Input name="mobileNumber" className="h-10 border-border rounded-md" placeholder="09XX-XXX-XXXX" value={formData.mobileNumber} onChange={handleChange} />
                           </div>
                           <div className="space-y-2">
-                            <label className="text-xs font-semibold text-zinc-700">Telephone</label>
-                            <Input name="telephone" className="h-10 border-zinc-200 rounded-md" placeholder="(088) XXX-XXXX" value={formData.telephone} onChange={handleChange} />
+                            <label className="text-xs font-semibold text-foreground/90">Telephone</label>
+                            <Input name="telephone" className="h-10 border-border rounded-md" placeholder="(088) XXX-XXXX" value={formData.telephone} onChange={handleChange} />
                           </div>
                           <div className="space-y-2">
-                            <label className="text-xs font-semibold text-zinc-700">Email</label>
-                            <Input name="traineeEmail" className="h-10 border-zinc-200 rounded-md" type="email" value={formData.traineeEmail} onChange={handleChange} />
+                            <label className="text-xs font-semibold text-foreground/90">Email</label>
+                            <Input name="traineeEmail" className="h-10 border-border rounded-md" type="email" value={formData.traineeEmail} onChange={handleChange} />
                           </div>
                         </div>
-                        <div className="border-t border-zinc-100 pt-5 mt-2">
-                          <h4 className="text-sm font-semibold text-zinc-900 mb-4">Complete Mailing Address</h4>
+                        <div className="border-t border-border pt-5 mt-2">
+                          <h4 className="text-sm font-semibold text-foreground mb-4">Complete Mailing Address</h4>
                           <div className="space-y-5">
                             <div className="space-y-2">
-                              <label className="text-xs font-semibold text-zinc-700">House No. / Street / Purok</label>
-                              <Input name="homeAddress" className="h-10 border-zinc-200 rounded-md" placeholder="e.g., Purok 3, Mahogany Street" value={formData.homeAddress} onChange={handleChange} />
+                              <label className="text-xs font-semibold text-foreground/90">House No. / Street / Purok</label>
+                              <Input name="homeAddress" className="h-10 border-border rounded-md" placeholder="e.g., Purok 3, Mahogany Street" value={formData.homeAddress} onChange={handleChange} />
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                               <div className="space-y-2">
-                                <label className="text-xs font-semibold text-zinc-700">Barangay</label>
-                                <Input name="barangay" className="h-10 border-zinc-200 rounded-md" placeholder="e.g., Barangay 24-A" value={formData.barangay} onChange={handleChange} />
+                                <label className="text-xs font-semibold text-foreground/90">Barangay</label>
+                                <Input name="barangay" className="h-10 border-border rounded-md" placeholder="e.g., Barangay 24-A" value={formData.barangay} onChange={handleChange} />
                               </div>
                               <div className="space-y-2">
-                                <label className="text-xs font-semibold text-zinc-700">District</label>
-                                <Input name="district" className="h-10 border-zinc-200 rounded-md" placeholder="e.g., District 1" value={formData.district} onChange={handleChange} />
+                                <label className="text-xs font-semibold text-foreground/90">District</label>
+                                <Input name="district" className="h-10 border-border rounded-md" placeholder="e.g., District 1" value={formData.district} onChange={handleChange} />
                               </div>
                               <div className="space-y-2">
-                                <label className="text-xs font-semibold text-zinc-700">Zip Code</label>
-                                <Input name="zipCode" className="h-10 border-zinc-200 rounded-md" value={formData.zipCode} onChange={handleChange} />
+                                <label className="text-xs font-semibold text-foreground/90">Zip Code</label>
+                                <Input name="zipCode" className="h-10 border-border rounded-md" value={formData.zipCode} onChange={handleChange} />
                               </div>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                               <div className="space-y-2">
-                                <label className="text-xs font-semibold text-zinc-700">City/Municipality</label>
-                                <Input className="h-10 border-zinc-200 rounded-md" placeholder="e.g., Gingoog City" value={formData.city} onChange={e => updateForm({ city: e.target.value })} />
+                                <label className="text-xs font-semibold text-foreground/90">City/Municipality</label>
+                                <Input className="h-10 border-border rounded-md" placeholder="e.g., Gingoog City" value={formData.city} onChange={e => updateForm({ city: e.target.value })} />
                               </div>
                               <div className="space-y-2">
-                                <label className="text-xs font-semibold text-zinc-700">Province</label>
-                                <Input className="h-10 border-zinc-200 rounded-md" placeholder="e.g., Misamis Oriental" value={formData.province} onChange={e => updateForm({ province: e.target.value })} />
+                                <label className="text-xs font-semibold text-foreground/90">Province</label>
+                                <Input className="h-10 border-border rounded-md" placeholder="e.g., Misamis Oriental" value={formData.province} onChange={e => updateForm({ province: e.target.value })} />
                               </div>
                               <div className="space-y-2">
-                                <label className="text-xs font-semibold text-zinc-700">Region</label>
+                                <label className="text-xs font-semibold text-foreground/90">Region</label>
                                 <Select value={formData.region} onValueChange={val => updateForm({ region: val })}>
-                                  <SelectTrigger className="h-10 border-zinc-200 rounded-md"><SelectValue /></SelectTrigger>
+                                  <SelectTrigger className="h-10 border-border rounded-md"><SelectValue /></SelectTrigger>
                                   <SelectContent className="rounded-md">
                                     <SelectItem value="Region I — Ilocos">Region I — Ilocos</SelectItem>
                                     <SelectItem value="Region II — Cagayan Valley">Region II — Cagayan Valley</SelectItem>
@@ -790,12 +919,12 @@ export default function TraineeRegistrationPage() {
                     {currentStep === 3 && (
                       <div className="space-y-6">
                         <div>
-                          <h4 className="text-sm font-semibold text-zinc-900 mb-4">Educational Background</h4>
+                          <h4 className="text-sm font-semibold text-foreground mb-4">Educational Background</h4>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                             <div className="space-y-2">
-                              <label className="text-xs font-semibold text-zinc-700">Highest Education</label>
+                              <label className="text-xs font-semibold text-foreground/90">Highest Education</label>
                               <Select value={formData.education} onValueChange={val => updateForm({ education: val })}>
-                                <SelectTrigger className="h-10 border-zinc-200 rounded-md"><SelectValue /></SelectTrigger>
+                                <SelectTrigger className="h-10 border-border rounded-md"><SelectValue /></SelectTrigger>
                                 <SelectContent className="rounded-md">
                                   <SelectItem value="Elementary Graduate">Elementary Graduate</SelectItem>
                                   <SelectItem value="High School Graduate">High School Graduate</SelectItem>
@@ -807,23 +936,23 @@ export default function TraineeRegistrationPage() {
                               </Select>
                             </div>
                             <div className="space-y-2">
-                              <label className="text-xs font-semibold text-zinc-700">Year Graduated</label>
-                              <Input name="yearGraduated" className="h-10 border-zinc-200 rounded-md" placeholder="e.g., 2020" value={formData.yearGraduated} onChange={handleChange} />
+                              <label className="text-xs font-semibold text-foreground/90">Year Graduated</label>
+                              <Input name="yearGraduated" className="h-10 border-border rounded-md" placeholder="e.g., 2020" value={formData.yearGraduated} onChange={handleChange} />
                             </div>
                           </div>
                           <div className="space-y-2 mt-5">
-                            <label className="text-xs font-semibold text-zinc-700">School Last Attended</label>
-                            <Input name="schoolLastAttended" className="h-10 border-zinc-200 rounded-md" placeholder="Complete school name" value={formData.schoolLastAttended} onChange={handleChange} />
+                            <label className="text-xs font-semibold text-foreground/90">School Last Attended</label>
+                            <Input name="schoolLastAttended" className="h-10 border-border rounded-md" placeholder="Complete school name" value={formData.schoolLastAttended} onChange={handleChange} />
                           </div>
                         </div>
 
-                        <div className="border-t border-zinc-100 pt-5">
-                          <h4 className="text-sm font-semibold text-zinc-900 mb-4">Employment Status</h4>
+                        <div className="border-t border-border pt-5">
+                          <h4 className="text-sm font-semibold text-foreground mb-4">Employment Status</h4>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                             <div className="space-y-2">
-                              <label className="text-xs font-semibold text-zinc-700">Current Status</label>
+                              <label className="text-xs font-semibold text-foreground/90">Current Status</label>
                               <Select value={formData.employmentStatus} onValueChange={val => updateForm({ employmentStatus: val as any })}>
-                                <SelectTrigger className="h-10 border-zinc-200 rounded-md"><SelectValue /></SelectTrigger>
+                                <SelectTrigger className="h-10 border-border rounded-md"><SelectValue /></SelectTrigger>
                                 <SelectContent className="rounded-md">
                                   <SelectItem value="Unemployed">Unemployed</SelectItem>
                                   <SelectItem value="Underemployed">Underemployed</SelectItem>
@@ -833,9 +962,9 @@ export default function TraineeRegistrationPage() {
                               </Select>
                             </div>
                             <div className="space-y-2">
-                              <label className="text-xs font-semibold text-zinc-700">Employment Type</label>
+                              <label className="text-xs font-semibold text-foreground/90">Employment Type</label>
                               <Select value={formData.employmentType} onValueChange={val => updateForm({ employmentType: val })}>
-                                <SelectTrigger className="h-10 border-zinc-200 rounded-md"><SelectValue placeholder="If employed..." /></SelectTrigger>
+                                <SelectTrigger className="h-10 border-border rounded-md"><SelectValue placeholder="If employed..." /></SelectTrigger>
                                 <SelectContent className="rounded-md">
                                   <SelectItem value="Casual">Casual</SelectItem>
                                   <SelectItem value="Contractual">Contractual</SelectItem>
@@ -849,17 +978,17 @@ export default function TraineeRegistrationPage() {
                             </div>
                           </div>
                           <div className="space-y-2 mt-5">
-                            <label className="text-xs font-semibold text-zinc-700">Company Name</label>
-                            <Input className="h-10 border-zinc-200 rounded-md" placeholder="Employer/Company name (if applicable)" value={formData.companyName} onChange={e => updateForm({ companyName: e.target.value })} />
+                            <label className="text-xs font-semibold text-foreground/90">Company Name</label>
+                            <Input className="h-10 border-border rounded-md" placeholder="Employer/Company name (if applicable)" value={formData.companyName} onChange={e => updateForm({ companyName: e.target.value })} />
                           </div>
                         </div>
 
-                        <div className="border-t border-zinc-100 pt-5">
-                          <h4 className="text-sm font-semibold text-zinc-900 mb-1">Work Experience</h4>
-                          <p className="text-[10px] text-zinc-500 mb-4">List up to 3 relevant work experiences</p>
+                        <div className="border-t border-border pt-5">
+                          <h4 className="text-sm font-semibold text-foreground mb-1">Work Experience</h4>
+                          <p className="text-[10px] text-muted-foreground mb-4">List up to 3 relevant work experiences</p>
                           <div className="space-y-4">
                             {[0, 1, 2].map((i) => (
-                              <div key={i} className="p-3 border border-zinc-200 rounded-md bg-zinc-50/50 space-y-3">
+                              <div key={i} className="p-3 border border-border rounded-md bg-muted/50/50 space-y-3">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                   <Input 
                                     className="h-9 text-sm bg-white" placeholder="Company Name" 
@@ -927,52 +1056,52 @@ export default function TraineeRegistrationPage() {
 
                     {currentStep === 4 && (
                       <div className="space-y-6">
-                        <div className="border border-zinc-200 rounded-lg overflow-hidden bg-zinc-50">
-                          <div className="bg-zinc-100 px-4 py-3 border-b border-zinc-200">
-                            <h3 className="text-sm font-semibold text-zinc-900">Review Information</h3>
+                        <div className="border border-border rounded-lg overflow-hidden bg-muted/50">
+                          <div className="bg-muted px-4 py-3 border-b border-border">
+                            <h3 className="text-sm font-semibold text-foreground">Review Information</h3>
                           </div>
                           <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-6 text-sm">
                             <div>
-                              <span className="block text-xs text-zinc-500 mb-1">Full Name</span>
-                              <span className="font-medium text-zinc-900">{formData.lastName}, {formData.firstName} {formData.middleName} {formData.extensionName}</span>
+                              <span className="block text-xs text-muted-foreground mb-1">Full Name</span>
+                              <span className="font-medium text-foreground">{formData.lastName}, {formData.firstName} {formData.middleName} {formData.extensionName}</span>
                             </div>
                             <div>
-                              <span className="block text-xs text-zinc-500 mb-1">Date of Birth</span>
-                              <span className="font-medium text-zinc-900">{formData.dob} ({formData.age} yrs)</span>
+                              <span className="block text-xs text-muted-foreground mb-1">Date of Birth</span>
+                              <span className="font-medium text-foreground">{formData.dob} ({formData.age} yrs)</span>
                             </div>
                             <div>
-                              <span className="block text-xs text-zinc-500 mb-1">ULI</span>
-                              <span className="font-mono font-medium text-zinc-900">{formData.uli || "NEW LEARNER"}</span>
+                              <span className="block text-xs text-muted-foreground mb-1">ULI</span>
+                              <span className="font-mono font-medium text-foreground">{formData.uli || "NEW LEARNER"}</span>
                             </div>
                             <div>
-                              <span className="block text-xs text-zinc-500 mb-1">Email</span>
-                              <span className="font-medium text-zinc-900">{formData.traineeEmail}</span>
+                              <span className="block text-xs text-muted-foreground mb-1">Email</span>
+                              <span className="font-medium text-foreground">{formData.traineeEmail}</span>
                             </div>
                             <div className="sm:col-span-2">
-                              <span className="block text-xs text-zinc-500 mb-1">Address</span>
-                              <span className="font-medium text-zinc-900">{formData.homeAddress}, {formData.barangay}, {formData.city}</span>
+                              <span className="block text-xs text-muted-foreground mb-1">Address</span>
+                              <span className="font-medium text-foreground">{formData.homeAddress}, {formData.barangay}, {formData.city}</span>
                             </div>
                           </div>
                         </div>
 
-                        <label className="flex items-start gap-3 p-6 border border-zinc-100 rounded-3xl cursor-pointer hover:bg-zinc-50 transition-colors">
+                        <label className="flex items-start gap-3 p-6 border border-border rounded-3xl cursor-pointer hover:bg-muted/50 transition-colors">
                           <Checkbox 
-                            className="mt-0.5 border-zinc-300 data-[state=checked]:bg-zinc-900 data-[state=checked]:border-zinc-900"
+                            className="mt-0.5 border-border data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                             checked={formData.consent} 
                             onCheckedChange={(checked) => updateForm({ consent: checked as boolean })}
                           />
-                          <p className="text-[13px] text-zinc-500 font-medium leading-relaxed">
+                          <p className="text-[13px] text-muted-foreground font-medium leading-relaxed">
                             I certify that the information above is true and correct, and I consent to the processing of my data for TESDA T2MIS registration in accordance with the Data Privacy Act of 2012.
                           </p>
                         </label>
                       </div>
                     )}
 
-                    <div className="flex items-center gap-4 pt-12 border-t border-zinc-50">
+                    <div className="flex items-center gap-4 pt-12 border-t border-border/50">
                       {currentStep > 1 && (
                         <Button 
                           variant="ghost" 
-                          className="h-14 px-8 text-zinc-400 hover:text-zinc-900 font-black text-[11px] uppercase tracking-widest rounded-2xl" 
+                          className="h-14 px-8 text-muted-foreground hover:text-foreground font-black text-[11px] uppercase tracking-widest rounded-2xl" 
                           onClick={prevStep}
                         >
                           <ArrowLeft className="mr-2 h-3.5 w-3.5" /> Previous
@@ -984,7 +1113,7 @@ export default function TraineeRegistrationPage() {
                       {currentStep > 1 && (
                         <Button 
                           variant="ghost" 
-                          className="h-14 px-6 text-zinc-500 hover:text-zinc-900 font-bold text-[11px] uppercase tracking-widest rounded-2xl hidden sm:flex" 
+                          className="h-14 px-6 text-muted-foreground hover:text-foreground font-bold text-[11px] uppercase tracking-widest rounded-2xl hidden sm:flex" 
                           onClick={handleSkipForNow}
                         >
                           Skip for now
@@ -996,8 +1125,8 @@ export default function TraineeRegistrationPage() {
                           className={cn(
                             "h-14 px-12 rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all",
                             isStepValid() 
-                              ? "bg-zinc-900 text-white hover:bg-zinc-800 shadow-xl shadow-zinc-100 active:scale-[0.98]" 
-                              : "bg-zinc-100 text-zinc-400 cursor-not-allowed opacity-50"
+                              ? "bg-primary text-white hover:bg-primary/90 shadow-xl shadow-muted/30 active:scale-[0.98]" 
+                              : "bg-muted text-muted-foreground cursor-not-allowed opacity-50"
                           )}
                           disabled={!isStepValid()}
                           onClick={nextStep}
@@ -1006,7 +1135,7 @@ export default function TraineeRegistrationPage() {
                         </Button>
                       ) : (
                         <Button 
-                          className="h-14 px-12 bg-zinc-900 text-white hover:bg-zinc-800 rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-xl shadow-zinc-100 transition-all active:scale-[0.98]" 
+                          className="h-14 px-12 bg-primary text-white hover:bg-primary/90 rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-xl shadow-muted/30 transition-all active:scale-[0.98]" 
                           onClick={handleSubmit}
                           disabled={!formData.consent || isSubmitting}
                         >

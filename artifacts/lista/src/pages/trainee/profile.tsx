@@ -1,18 +1,14 @@
 import { useEffect, useMemo, useState, memo, useCallback, useRef } from "react";
+import { Link, useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  User, Mail, MapPin, BookOpen, Calendar,
-  Download, FileSpreadsheet, FileText, ShieldCheck, CreditCard, GraduationCap,
+  User, Mail, MapPin, BookOpen, Calendar, Phone,
+  FileText, ShieldCheck, CreditCard, GraduationCap,
   Globe, Hash, ArrowUpRight,
   Clock, CheckCircle, Search, Upload, UserCheck, GraduationCap as EnrolledIcon, Camera, Pencil
 } from "lucide-react";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   Select,
   SelectContent,
@@ -24,11 +20,24 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/auth-context";
 import { useCourses } from "@/hooks/use-lista-data";
 import type { Enrollment } from "@/lib/institutional-data";
-import { exportSingleTraineeToExcel, exportSingleTraineeToWord } from "@/lib/export-utils";
+import PrintModal from "@/components/print-modal";
 import StatusBadge from "@/components/status-badge";
 import { cn } from "@/lib/utils";
-import { fetchTraineeEnrollmentByEmail, updateTraineeEnrollmentByEmail } from "@/lib/trainee-enrollment-insforge";
-import { loadLocalProfile, saveLocalProfile, calculateProfileCompletion, clearLocalProfile, saveProfilePic, loadProfilePic } from "@/lib/profile-utils";
+import {
+  fetchTraineeProfileBundle,
+  updateTraineeEnrollmentByEmail,
+  canCancelCourseApplication,
+} from "@/lib/trainee-enrollment-insforge";
+import {
+  loadLocalProfile,
+  getProfileIntegrityBreakdown,
+  seedRegistrationDraftFromProfile,
+  saveProfilePic,
+  loadProfilePic,
+} from "@/lib/profile-utils";
+import { ProfileSkeleton } from "@/components/skeletons";
+import TraineeProfileIntegrityCard from "@/components/trainee-profile-integrity-card";
+import { ProfileFieldValue, ProfileTableEmpty } from "@/components/profile-empty-field";
 
 const container = {
   hidden: { opacity: 0 },
@@ -77,15 +86,15 @@ const InfoRow = ({
   onChange,
   options,
 }: InfoRowProps) => (
-  <div className={cn("flex flex-col gap-1.5 p-3 rounded-lg border border-zinc-200 bg-white", className)}>
-    <div className="flex items-center gap-2 text-zinc-500">
+  <div className={cn("flex flex-col gap-1.5 p-3 rounded-lg border border-border bg-card", className)}>
+    <div className="flex items-center gap-2 text-muted-foreground">
       {Icon && <Icon className="h-3.5 w-3.5" />}
       <p className="text-xs font-medium">{label}</p>
     </div>
     {isEditing && fieldKey ? (
       options ? (
         <Select value={inputValue || ""} onValueChange={(val) => onChange(fieldKey, val)}>
-          <SelectTrigger className="h-8 text-sm font-medium border-zinc-200 bg-zinc-50 focus:bg-white focus:ring-1 focus:ring-zinc-900 transition-colors">
+          <SelectTrigger className="h-8 text-sm font-medium border-border bg-muted focus:bg-background focus:ring-1 focus:ring-ring transition-colors">
             <SelectValue placeholder={`Select ${label}`} />
           </SelectTrigger>
           <SelectContent>
@@ -99,40 +108,43 @@ const InfoRow = ({
       ) : (
         <input
           type="text"
-          className="w-full bg-zinc-50 border border-zinc-200 rounded-md px-2.5 py-1.5 text-sm font-medium text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900 focus:bg-white transition-colors"
+          className="w-full bg-muted border border-border rounded-md px-2.5 py-1.5 text-sm font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-ring focus:bg-background transition-colors"
           value={inputValue || ""}
           onChange={(e) => onChange(fieldKey, e.target.value)}
         />
       )
     ) : (
-      <p className="text-sm font-semibold text-zinc-900 pl-5">{value || "—"}</p>
+      <ProfileFieldValue value={typeof value === "string" ? value : undefined} />
     )}
   </div>
 );
 
 const MemoizedInfoRow = memo(InfoRow);
 
+const noopChange = () => {};
+
 export default function TraineeProfilePage() {
   const { user } = useAuth();
+  const [, setLocation] = useLocation();
   const { toast } = useToast();
   const { data: courses = [] } = useCourses();
   const [activeTab, setActiveTab] = useState("personal");
 
   const [existing, setExisting] = useState<Enrollment | null>(null);
+  const [profileSource, setProfileSource] = useState<"cloud" | "local" | "merged" | "none">("none");
+  const [cloudSyncHint, setCloudSyncHint] = useState<string | undefined>();
   const [isLoading, setIsLoading] = useState(true);
 
-  const [isEditing, setIsEditing] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-
   const [form, setForm] = useState<Partial<EditableEnrollment>>({});
+  const [printTarget, setPrintTarget] = useState<Enrollment | null>(null);
 
   // ── Profile picture ──────────────────────────────────────────────────────
   const [profilePic, setProfilePic] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    setProfilePic(loadProfilePic());
-  }, []);
+    setProfilePic(loadProfilePic(user?.id));
+  }, [user?.id]);
 
   const handleAvatarChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -156,7 +168,7 @@ export default function TraineeProfilePage() {
         canvas.getContext("2d")?.drawImage(img, 0, 0, canvas.width, canvas.height);
         const compressed = canvas.toDataURL("image/jpeg", 0.75);
         setProfilePic(compressed);
-        saveProfilePic(compressed);
+        saveProfilePic(compressed, user?.id);
         toast({ title: "Photo updated", description: "Your profile picture has been saved." });
       };
       img.src = original;
@@ -164,7 +176,7 @@ export default function TraineeProfilePage() {
     reader.readAsDataURL(file);
     // Reset input so the same file can be chosen again
     e.target.value = "";
-  }, [toast]);
+  }, [toast, user?.id]);
 
   useEffect(() => {
     if (!user?.email) {
@@ -173,29 +185,26 @@ export default function TraineeProfilePage() {
 
     const fetchProfile = async () => {
       try {
-        const data = await fetchTraineeEnrollmentByEmail(user.email!);
-        const draft = loadLocalProfile();
-        
-        if (data.success && data.data) {
-          const dbData = data.data as unknown as Enrollment;
-          
-          const finalData = { 
-            ...dbData, 
-            ...Object.fromEntries(
-              Object.entries(draft || {}).filter(([_, v]) => v !== "" && v !== null && v !== undefined && v !== "null")
-            )
-          };
-          
-          setExisting(finalData as unknown as Enrollment);
-          setForm(finalData as unknown as EditableEnrollment);
-        } else if (draft) {
-          setExisting(draft as unknown as Enrollment);
-          setForm(draft as unknown as EditableEnrollment);
+        const { enrollment, source, cloudError } = await fetchTraineeProfileBundle(
+          user.email!,
+          user?.id,
+        );
+        setProfileSource(source);
+        setCloudSyncHint(cloudError);
+
+        if (enrollment) {
+          const asEnrollment = enrollment as Enrollment;
+          setExisting(asEnrollment);
+          setForm(asEnrollment as unknown as EditableEnrollment);
+        } else {
+          setExisting(null);
+          setForm({});
         }
       } catch (err) {
         console.error("Error fetching profile", err);
-        const draft = loadLocalProfile();
+        const draft = loadLocalProfile(user?.id);
         if (draft) {
+          setProfileSource("local");
           setExisting(draft as unknown as Enrollment);
           setForm(draft as unknown as EditableEnrollment);
         }
@@ -204,14 +213,8 @@ export default function TraineeProfilePage() {
       }
     };
 
-    fetchProfile();
-  }, [user?.email]);
-
-  useEffect(() => {
-    if (isEditing && Object.keys(form).length > 0) {
-      saveLocalProfile(form);
-    }
-  }, [form, isEditing]);
+    void fetchProfile();
+  }, [user?.email, user?.id]);
 
   const course = useMemo(
     () => (existing?.courseSlug ? courses.find((c) => c.slug === existing.courseSlug) : null),
@@ -223,88 +226,61 @@ export default function TraineeProfilePage() {
     [existing, form]
   );
 
-  const integrity = useMemo(() => calculateProfileCompletion(mergedEnrollment), [mergedEnrollment]);
+  const integrityBreakdown = useMemo(
+    () => getProfileIntegrityBreakdown(mergedEnrollment),
+    [mergedEnrollment],
+  );
+  const hasProfileData = useMemo(
+    () =>
+      Boolean(
+        mergedEnrollment.firstName?.trim() ||
+          mergedEnrollment.contactNumber?.trim() ||
+          mergedEnrollment.mobileNumber?.trim(),
+      ),
+    [mergedEnrollment],
+  );
+  const displayContact = form.contactNumber?.trim() || form.mobileNumber?.trim() || "";
+  /** Profile edits happen in the registration wizard (`/trainee/register?from=profile`). */
+  const isEditing = false;
 
+  const handleOpenRegistrationWizard = useCallback(() => {
+    if (!user?.id || !user.email) return;
+    seedRegistrationDraftFromProfile(mergedEnrollment, user.id, user.email);
+    setLocation("/trainee/register?from=profile");
+  }, [mergedEnrollment, setLocation, user?.email, user?.id]);
 
-  const handleChange = useCallback((key: keyof EditableEnrollment, value: string) => {
-    setForm((prev) => ({ ...prev, [key]: value }));
-  }, []);
-
-  const handleSave = async () => {
-    if (!user?.email) return;
-
-    // Validation
-    if (!form.firstName?.trim() || !form.lastName?.trim() || !form.contactNumber?.trim()) {
-      toast({ title: "Validation Error", description: "First Name, Last Name, and Contact Number are required.", variant: "destructive" });
+  const handleOpenTesdaFormPdf = () => {
+    if (!hasProfileData) {
+      toast({
+        title: "Profile incomplete",
+        description: "Add your name and contact details before opening the TESDA form.",
+        variant: "destructive",
+      });
       return;
     }
-
-    const contactPattern = /^(09|\+639)\d{9}$/;
-    if (form.contactNumber && !contactPattern.test(form.contactNumber)) {
-      toast({ title: "Validation Error", description: "Invalid contact number. Please use 09XXXXXXXXX format.", variant: "destructive" });
-      return;
-    }
-
-    setIsSaving(true);
-    try {
-      // Ensure age is a number before sending if it exists
-      const payload: Partial<Enrollment> = { ...form } as Partial<Enrollment>;
-      if (payload.age !== undefined && typeof payload.age === 'string') {
-        payload.age = parseInt(payload.age, 10) || 0;
-      }
-
-      // If user selected a new course while status was cancelled or rejected, reset to pending
-      if (payload.courseSlug && existing && (existing.status === "cancelled" || existing.status === "rejected")) {
-        payload.status = "pending";
-      }
-      
-      const data = await updateTraineeEnrollmentByEmail(user.email, payload);
-      if (data.success) {
-        setExisting(prev => ({ ...prev, ...payload }) as Enrollment);
-        setIsEditing(false);
-        clearLocalProfile();
-        toast({ title: "Profile Updated", description: "Your information has been saved." });
-      } else {
-        toast({ title: "Update Failed", description: data.error || "Failed to save profile.", variant: "destructive" });
-      }
-    } catch (error) {
-      toast({ title: "Error", description: "Network error occurred.", variant: "destructive" });
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleDiscard = () => {
-    setForm(existing as unknown as EditableEnrollment);
-    setIsEditing(false);
-    clearLocalProfile();
-    toast({ title: "Changes Discarded", description: "Your profile has been reset." });
-  };
-
-  const handleExportExcel = () => {
-    try {
-      exportSingleTraineeToExcel(mergedEnrollment);
-      toast({ title: "Excel Downloaded", description: "Your profile has been exported as .xlsx" });
-    } catch {
-      toast({ title: "Export Failed", description: "Could not generate Excel file.", variant: "destructive" });
-    }
-  };
-
-  const handleExportWord = async () => {
-    try {
-      await exportSingleTraineeToWord(mergedEnrollment);
-      toast({ title: "Word Downloaded", description: "Your admission form has been exported as .docx" });
-    } catch {
-      toast({ title: "Export Failed", description: "Could not generate Word document.", variant: "destructive" });
-    }
+    const forPrint = {
+      ...mergedEnrollment,
+      refNo: mergedEnrollment.refNo || `LISTA-${new Date().getFullYear()}-DRAFT`,
+      traineeEmail: mergedEnrollment.traineeEmail || user?.email || "",
+      contactNumber: displayContact,
+      mobileNumber: displayContact,
+    } as Enrollment;
+    setPrintTarget(forPrint);
   };
 
   if (isLoading) {
-    return <div className="flex items-center justify-center min-h-[50vh]"><div className="w-5 h-5 border-2 border-zinc-900 border-t-transparent rounded-full animate-spin"></div></div>;
+    return <ProfileSkeleton />;
   }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6 pb-16 px-4 sm:px-6">
+    <motion.div className="max-w-7xl mx-auto space-y-6 pb-16 px-4 sm:px-6">
+      <AnimatePresence>
+        {printTarget && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <PrintModal enrollment={printTarget} onClose={() => setPrintTarget(null)} />
+          </motion.div>
+        )}
+      </AnimatePresence>
       {/* Header Section */}
       <motion.div 
         initial={{ opacity: 0, y: -5 }}
@@ -324,7 +300,7 @@ export default function TraineeProfilePage() {
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="group relative w-16 h-16 rounded-full overflow-hidden border-2 border-zinc-200 hover:border-blue-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 transition-all shadow-sm"
+              className="group relative w-16 h-16 rounded-full overflow-hidden border-2 border-border hover:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-all shadow-sm"
               title="Click to change profile photo"
             >
               {profilePic ? (
@@ -334,7 +310,7 @@ export default function TraineeProfilePage() {
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full bg-zinc-100 flex items-center justify-center text-zinc-800">
+                <div className="w-full h-full bg-muted flex items-center justify-center text-foreground">
                   <span className="text-xl font-semibold">{user?.name?.charAt(0) || "U"}</span>
                 </div>
               )}
@@ -347,19 +323,20 @@ export default function TraineeProfilePage() {
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="absolute bottom-0 right-0 w-5 h-5 bg-white rounded-full border border-zinc-200 shadow-sm flex items-center justify-center hover:bg-blue-50 hover:border-blue-300 transition-colors"
+              className="absolute bottom-0 right-0 w-5 h-5 bg-card rounded-full border border-border shadow-sm flex items-center justify-center hover:bg-primary/10 hover:border-primary/30 transition-colors"
               title="Change photo"
             >
-              <Camera className="h-2.5 w-2.5 text-zinc-600" />
+              <Camera className="h-2.5 w-2.5 text-muted-foreground" />
             </button>
           </div>
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold tracking-tight text-zinc-900">
-                {isEditing ? "Edit Profile" : `${form.firstName || user?.name?.split(' ')[0]}'s Profile`}
+              <h1 className="text-2xl font-bold tracking-tight text-foreground">
+                {form.firstName || form.lastName
+                  ? `${[form.firstName, form.lastName].filter(Boolean).join(" ")}`
+                  : `${user?.name?.split(" ")[0] || "Your"}'s Profile`}
               </h1>
-              {!isEditing && (
-                <StatusBadge
+              <StatusBadge
                   status={
                     existing?.status === "confirmed" || existing?.status === "enrolled"
                       ? "confirmed"
@@ -372,13 +349,12 @@ export default function TraineeProfilePage() {
                             : "pending"
                   }
                 />
-              )}
             </div>
-            <div className="flex items-center gap-3 text-zinc-500 text-xs font-medium">
+            <div className="flex items-center gap-3 text-muted-foreground text-xs font-medium">
               <span className="flex items-center gap-1">
                 <Mail className="h-3.5 w-3.5" /> {user?.email}
               </span>
-              <span className="text-zinc-300">•</span>
+              <span className="text-muted-foreground/50">•</span>
               <span className="flex items-center gap-1">
                 <Hash className="h-3.5 w-3.5" /> {existing?.refNo || "LISTA-2026-PENDING"}
               </span>
@@ -386,51 +362,30 @@ export default function TraineeProfilePage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          {!isEditing ? (
-            <>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="h-9 gap-1.5 shadow-none border-zinc-200">
-                    <Download className="h-3.5 w-3.5" /> Export
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem onClick={handleExportExcel} className="gap-2 cursor-pointer">
-                    <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
-                    <div className="flex flex-col">
-                      <span className="text-sm font-medium">Spreadsheet</span>
-                      <span className="text-[10px] text-zinc-500">Excel format</span>
-                    </div>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleExportWord} className="gap-2 cursor-pointer">
-                    <FileText className="h-4 w-4 text-blue-600" />
-                    <div className="flex flex-col">
-                      <span className="text-sm font-medium">Admission Form</span>
-                      <span className="text-[10px] text-zinc-500">Word format</span>
-                    </div>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              <Button size="sm" onClick={() => setIsEditing(true)} className="h-9 gap-1.5 shadow-none">
-                <Pencil className="h-3.5 w-3.5" /> Edit Profile
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button variant="ghost" size="sm" onClick={handleDiscard} className="h-9 text-zinc-600">
-                Discard
-              </Button>
-              <Button size="sm" onClick={handleSave} disabled={isSaving} className="h-9 gap-1.5 shadow-none">
-                {isSaving ? "Saving..." : "Save Profile"}
-              </Button>
-            </>
-          )}
-        </div>
+        <motion.div className="flex flex-col gap-2 w-full sm:w-auto sm:flex-row">
+          <Button
+            size="sm"
+            className="h-11 gap-2 shadow-md w-full sm:w-auto rounded-xl font-semibold"
+            onClick={handleOpenTesdaFormPdf}
+            disabled={!hasProfileData}
+          >
+            <FileText className="h-4 w-4 shrink-0" />
+            TESDA Form (PDF)
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-11 gap-2 w-full sm:w-auto rounded-xl border-border"
+            onClick={handleOpenRegistrationWizard}
+          >
+            <Pencil className="h-4 w-4 shrink-0" />
+            Edit profile
+          </Button>
+        </motion.div>
       </motion.div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-1 border-b border-zinc-200 w-full overflow-x-auto no-scrollbar">
+      <div className="flex items-center gap-1 border-b border-border w-full overflow-x-auto no-scrollbar">
         {TABS.map((tab) => (
           <button
             key={tab.id}
@@ -438,8 +393,8 @@ export default function TraineeProfilePage() {
             className={cn(
               "flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors whitespace-nowrap border-b-2 -mb-px",
               activeTab === tab.id 
-                ? "border-zinc-900 text-zinc-900" 
-                : "border-transparent text-zinc-500 hover:text-zinc-800 hover:border-zinc-300"
+                ? "border-primary text-foreground" 
+                : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
             )}
           >
             <tab.icon className="h-4 w-4" />
@@ -448,10 +403,26 @@ export default function TraineeProfilePage() {
         ))}
       </div>
 
-      {isEditing && (
-        <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 flex items-center justify-between">
-          <span className="font-medium">You are in edit mode. Changes won't apply until you save.</span>
-        </div>
+      {!hasProfileData && (
+        <motion.div variants={item} className="rounded-xl border border-dashed border-border bg-muted/40 px-4 py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <p className="text-sm font-semibold text-foreground">Complete your learner profile</p>
+            <p className="text-xs text-muted-foreground max-w-md">
+              {cloudSyncHint === "Profile not found"
+                ? "No cloud record yet — finish registration or save from Edit Profile to sync with InsForge."
+                : "Your TESDA profile is empty. Continue registration to pre-fill this page."}
+            </p>
+          </div>
+          <Button size="sm" className="shrink-0 h-9" onClick={handleOpenRegistrationWizard}>
+            Continue registration
+          </Button>
+        </motion.div>
+      )}
+
+      {hasProfileData && profileSource === "local" && (
+        <motion.div variants={item} className="rounded-md border border-amber-200/80 bg-amber-50/80 px-3 py-2 text-xs text-amber-950">
+          Showing data saved on this device. Save your profile to sync with InsForge.
+        </motion.div>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -469,28 +440,27 @@ export default function TraineeProfilePage() {
               {activeTab === "personal" && (
                 <>
                   <motion.div variants={item} className="space-y-3">
-                    <h3 className="text-sm font-semibold text-zinc-900 border-b border-zinc-100 pb-1.5">Basic Information</h3>
+                    <h3 className="text-sm font-semibold text-foreground border-b border-border/60 pb-1.5">Basic Information</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-                      {isEditing ? (
-                        <>
-                          <MemoizedInfoRow label="First Name" value={form.firstName || ""} icon={User} fieldKey="firstName" isEditing={isEditing} inputValue={form.firstName || ""} onChange={handleChange} />
-                          <MemoizedInfoRow label="Middle Name" value={form.middleName || ""} icon={User} fieldKey="middleName" isEditing={isEditing} inputValue={form.middleName || ""} onChange={handleChange} />
-                          <MemoizedInfoRow label="Last Name" value={form.lastName || ""} icon={User} fieldKey="lastName" isEditing={isEditing} inputValue={form.lastName || ""} onChange={handleChange} />
-                          <MemoizedInfoRow label="Name Extension" value={form.extensionName || ""} icon={User} fieldKey="extensionName" isEditing={isEditing} inputValue={form.extensionName || ""} onChange={handleChange} />
-                        </>
-                      ) : (
-                        <MemoizedInfoRow label="Full Name" value={`${form.firstName || ""} ${form.middleName || ""} ${form.lastName || ""} ${form.extensionName || ""}`.trim()} icon={User} className="md:col-span-2 xl:col-span-3" isEditing={isEditing} inputValue="" onChange={handleChange} />
-                      )}
-                      <MemoizedInfoRow label="Date of Birth" value={form.dob || ""} icon={Calendar} fieldKey="dob" isEditing={isEditing} inputValue={form.dob || ""} onChange={handleChange} />
-                      <MemoizedInfoRow label="Birth Place" value={form.birthPlace || ""} icon={MapPin} fieldKey="birthPlace" isEditing={isEditing} inputValue={form.birthPlace || ""} onChange={handleChange} />
+                      <MemoizedInfoRow
+                        label="Full Name"
+                        value={`${form.firstName || ""} ${form.middleName || ""} ${form.lastName || ""} ${form.extensionName || ""}`.trim()}
+                        icon={User}
+                        className="md:col-span-2 xl:col-span-3"
+                        isEditing={false}
+                        inputValue=""
+                        onChange={noopChange}
+                      />
+                      <MemoizedInfoRow label="Date of Birth" value={form.dob || ""} icon={Calendar} fieldKey="dob" isEditing={false} inputValue={form.dob || ""} onChange={noopChange} />
+                      <MemoizedInfoRow label="Birth Place" value={form.birthPlace || ""} icon={MapPin} fieldKey="birthPlace" isEditing={false} inputValue={form.birthPlace || ""} onChange={noopChange} />
                       <MemoizedInfoRow 
                         label="Civil Status" 
                         value={form.civilStatus || ""} 
                         icon={Hash} 
                         fieldKey="civilStatus" 
-                        isEditing={isEditing} 
+                        isEditing={false} 
                         inputValue={form.civilStatus || ""} 
-                        onChange={handleChange} 
+                        onChange={noopChange} 
                         options={[
                           { label: "Single", value: "Single" },
                           { label: "Married", value: "Married" },
@@ -503,28 +473,31 @@ export default function TraineeProfilePage() {
                         value={form.gender || ""} 
                         icon={User} 
                         fieldKey="gender" 
-                        isEditing={isEditing} 
+                        isEditing={false} 
                         inputValue={form.gender || ""} 
-                        onChange={handleChange} 
+                        onChange={noopChange} 
                         options={[
                           { label: "Male", value: "Male" },
                           { label: "Female", value: "Female" },
                           { label: "Prefer not to say", value: "Prefer not to say" },
                         ]}
                       />
-                      <MemoizedInfoRow label="Nationality" value={form.nationality || "Filipino"} icon={Globe} fieldKey="nationality" isEditing={isEditing} inputValue={form.nationality || ""} onChange={handleChange} />
+                      <MemoizedInfoRow label="Nationality" value={form.nationality || "Filipino"} icon={Globe} fieldKey="nationality" isEditing={false} inputValue={form.nationality || ""} onChange={noopChange} />
+                      <MemoizedInfoRow label="Contact Number (Mobile)" value={displayContact} icon={Phone} fieldKey="contactNumber" isEditing={false} inputValue={form.contactNumber || form.mobileNumber || ""} onChange={noopChange} />
+                      <MemoizedInfoRow label="Landline (Tel)" value={form.telephone || ""} icon={Phone} fieldKey="telephone" isEditing={false} inputValue={form.telephone || ""} onChange={noopChange} />
+                      <MemoizedInfoRow label="Email" value={form.traineeEmail || user?.email || ""} icon={Mail} isEditing={false} inputValue="" onChange={noopChange} />
                     </div>
                   </motion.div>
 
                   <motion.div variants={item} className="space-y-3">
-                    <h3 className="text-sm font-semibold text-zinc-900 border-b border-zinc-100 pb-1.5">Location Details</h3>
+                    <h3 className="text-sm font-semibold text-foreground border-b border-border/60 pb-1.5">Location Details</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <MemoizedInfoRow label="Residential Address" value={form.homeAddress || ""} icon={MapPin} className="md:col-span-2" fieldKey="homeAddress" isEditing={isEditing} inputValue={form.homeAddress || ""} onChange={handleChange} />
-                      <MemoizedInfoRow label="Barangay" value={form.barangay || ""} icon={MapPin} fieldKey="barangay" isEditing={isEditing} inputValue={form.barangay || ""} onChange={handleChange} />
-                      <MemoizedInfoRow label="City / Municipality" value={form.city || ""} icon={MapPin} fieldKey="city" isEditing={isEditing} inputValue={form.city || ""} onChange={handleChange} />
-                      <MemoizedInfoRow label="Province" value={form.province || ""} icon={MapPin} fieldKey="province" isEditing={isEditing} inputValue={form.province || ""} onChange={handleChange} />
-                      <MemoizedInfoRow label="Region" value={form.region || ""} icon={MapPin} fieldKey="region" isEditing={isEditing} inputValue={form.region || ""} onChange={handleChange} />
-                      <MemoizedInfoRow label="Zip Code" value={form.zipCode || ""} icon={MapPin} fieldKey="zipCode" isEditing={isEditing} inputValue={form.zipCode || ""} onChange={handleChange} />
+                      <MemoizedInfoRow label="Residential Address" value={form.homeAddress || ""} icon={MapPin} className="md:col-span-2" fieldKey="homeAddress" isEditing={false} inputValue={form.homeAddress || ""} onChange={noopChange} />
+                      <MemoizedInfoRow label="Barangay" value={form.barangay || ""} icon={MapPin} fieldKey="barangay" isEditing={false} inputValue={form.barangay || ""} onChange={noopChange} />
+                      <MemoizedInfoRow label="City / Municipality" value={form.city || ""} icon={MapPin} fieldKey="city" isEditing={false} inputValue={form.city || ""} onChange={noopChange} />
+                      <MemoizedInfoRow label="Province" value={form.province || ""} icon={MapPin} fieldKey="province" isEditing={false} inputValue={form.province || ""} onChange={noopChange} />
+                      <MemoizedInfoRow label="Region" value={form.region || ""} icon={MapPin} fieldKey="region" isEditing={false} inputValue={form.region || ""} onChange={noopChange} />
+                      <MemoizedInfoRow label="Zip Code" value={form.zipCode || ""} icon={MapPin} fieldKey="zipCode" isEditing={false} inputValue={form.zipCode || ""} onChange={noopChange} />
                     </div>
                   </motion.div>
                 </>
@@ -533,17 +506,17 @@ export default function TraineeProfilePage() {
               {activeTab === "registry" && (
                 <motion.div variants={item} className="space-y-6">
                   <div className="space-y-3">
-                    <h3 className="text-sm font-semibold text-zinc-900 border-b border-zinc-100 pb-1.5">TESDA Registry</h3>
+                    <h3 className="text-sm font-semibold text-foreground border-b border-border/60 pb-1.5">TESDA Registry</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <MemoizedInfoRow label="Unique Learner Identifier (ULI)" value={form.uli || ""} icon={Hash} fieldKey="uli" isEditing={isEditing} inputValue={form.uli || ""} onChange={handleChange} />
+                      <MemoizedInfoRow label="Unique Learner Identifier (ULI)" value={form.uli || ""} icon={Hash} fieldKey="uli" isEditing={false} inputValue={form.uli || ""} onChange={noopChange} />
                       <MemoizedInfoRow 
                         label="Client Type" 
                         value={form.clientType || ""} 
                         icon={User} 
                         fieldKey="clientType" 
-                        isEditing={isEditing} 
+                        isEditing={false} 
                         inputValue={form.clientType || ""} 
-                        onChange={handleChange}
+                        onChange={noopChange}
                         options={[
                           { label: "TVET Student", value: "TVET Student" },
                           { label: "Worker", value: "Worker" },
@@ -556,9 +529,9 @@ export default function TraineeProfilePage() {
                         value={form.learnerClassification || ""} 
                         icon={User} 
                         fieldKey="learnerClassification" 
-                        isEditing={isEditing} 
+                        isEditing={false} 
                         inputValue={form.learnerClassification || ""} 
-                        onChange={handleChange}
+                        onChange={noopChange}
                         options={[
                           { label: "Student", value: "Student" },
                           { label: "Unemployed", value: "Unemployed" },
@@ -570,9 +543,9 @@ export default function TraineeProfilePage() {
                         value={form.qualificationType || ""} 
                         icon={BookOpen} 
                         fieldKey="qualificationType" 
-                        isEditing={isEditing} 
+                        isEditing={false} 
                         inputValue={form.qualificationType || ""} 
-                        onChange={handleChange}
+                        onChange={noopChange}
                         options={[
                           { label: "Full Qualification", value: "Full Qualification" },
                           { label: "COC", value: "COC" },
@@ -582,10 +555,10 @@ export default function TraineeProfilePage() {
                   </div>
                   
                   <div className="space-y-3">
-                    <h3 className="text-sm font-semibold text-zinc-900 border-b border-zinc-100 pb-1.5">Family Details</h3>
+                    <h3 className="text-sm font-semibold text-foreground border-b border-border/60 pb-1.5">Family Details</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <MemoizedInfoRow label="Father's Name" value={form.fatherName || ""} icon={User} fieldKey="fatherName" isEditing={isEditing} inputValue={form.fatherName || ""} onChange={handleChange} />
-                      <MemoizedInfoRow label="Mother's Maiden Name" value={form.motherMaidenName || ""} icon={User} fieldKey="motherMaidenName" isEditing={isEditing} inputValue={form.motherMaidenName || ""} onChange={handleChange} />
+                      <MemoizedInfoRow label="Father's Name" value={form.fatherName || ""} icon={User} fieldKey="fatherName" isEditing={false} inputValue={form.fatherName || ""} onChange={noopChange} />
+                      <MemoizedInfoRow label="Mother's Maiden Name" value={form.motherMaidenName || ""} icon={User} fieldKey="motherMaidenName" isEditing={false} inputValue={form.motherMaidenName || ""} onChange={noopChange} />
                     </div>
                   </div>
                 </motion.div>
@@ -594,60 +567,36 @@ export default function TraineeProfilePage() {
               {activeTab === "academic" && (
                 <motion.div variants={item} className="space-y-6">
                     <div className="space-y-3">
-                      <h3 className="text-sm font-semibold text-zinc-900 border-b border-zinc-100 pb-1.5">Education Profile</h3>
+                      <h3 className="text-sm font-semibold text-foreground border-b border-border/60 pb-1.5">Education Profile</h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div className="p-3 rounded-lg border border-zinc-200 bg-white">
-                          <p className="text-xs font-medium text-zinc-500 mb-1">Highest Attainment</p>
-                          {isEditing ? (
-                            <Input className="h-8 text-sm" value={form.education || ""} onChange={e => handleChange("education", e.target.value)} />
-                          ) : (
-                            <p className="text-sm font-semibold text-zinc-900">{form.education || "Not specified"}</p>
-                          )}
+                        <div className="p-3 rounded-lg border border-border bg-card">
+                          <p className="text-xs font-medium text-muted-foreground mb-1">Highest Attainment</p>
+                          <ProfileFieldValue value={form.education || undefined} />
                         </div>
-                        <div className="p-3 rounded-lg border border-zinc-200 bg-white">
-                          <p className="text-xs font-medium text-zinc-500 mb-1">Employment Status</p>
-                          {isEditing ? (
-                            <Select value={form.employmentStatus || ""} onValueChange={(val) => handleChange("employmentStatus", val)}>
-                              <SelectTrigger className="h-8 text-sm font-medium border-zinc-200 bg-zinc-50 focus:bg-white focus:ring-1 focus:ring-zinc-900 transition-colors">
-                                <SelectValue placeholder="Select status" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {[
-                                  "Unemployed",
-                                  "Underemployed",
-                                  "Employed (seeking skills upgrade)",
-                                  "Student",
-                                ].map((s) => (
-                                  <SelectItem key={s} value={s}>
-                                    {s}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          ) : (
-                            <Badge variant="secondary" className="bg-zinc-100 text-zinc-700 hover:bg-zinc-100 rounded-md font-medium">
-                              {form.employmentStatus || "Not specified"}
+                        <div className="p-3 rounded-lg border border-border bg-card">
+                          <p className="text-xs font-medium text-muted-foreground mb-1">Employment Status</p>
+                          {form.employmentStatus?.trim() ? (
+                            <Badge variant="secondary" className="ml-5 bg-muted text-foreground/90 hover:bg-muted rounded-md font-medium">
+                              {form.employmentStatus}
                             </Badge>
+                          ) : (
+                            <ProfileFieldValue value={undefined} />
                           )}
                         </div>
-                        <div className="p-3 rounded-lg border border-zinc-200 bg-white md:col-span-2">
-                          <p className="text-xs font-medium text-zinc-500 mb-1">Last Institution Attended</p>
-                          {isEditing ? (
-                            <Input className="h-8 text-sm" value={form.schoolLastAttended || ""} onChange={e => handleChange("schoolLastAttended", e.target.value)} />
-                          ) : (
-                            <p className="text-sm font-semibold text-zinc-900">{form.schoolLastAttended || "Not specified"}</p>
-                          )}
+                        <div className="p-3 rounded-lg border border-border bg-card md:col-span-2">
+                          <p className="text-xs font-medium text-muted-foreground mb-1">Last Institution Attended</p>
+                          <ProfileFieldValue value={form.schoolLastAttended || undefined} />
                         </div>
                       </div>
                     </div>
 
                     {/* Section 4: Other Trainings */}
                     <div className="space-y-2">
-                      <h3 className="text-sm font-semibold text-zinc-900">Other Training/Seminars Attended</h3>
-                      <div className="rounded-lg border border-zinc-200 overflow-hidden">
+                      <h3 className="text-sm font-semibold text-foreground">Other Training/Seminars Attended</h3>
+                      <div className="rounded-lg border border-border overflow-hidden">
                         <div className="overflow-x-auto">
                           <table className="w-full text-sm text-left">
-                            <thead className="bg-zinc-50 text-xs font-medium text-zinc-500 border-b border-zinc-200">
+                            <thead className="bg-muted text-xs font-medium text-muted-foreground border-b border-border">
                               <tr>
                                 <th className="px-4 py-2 font-medium">Title</th>
                                 <th className="px-4 py-2 font-medium">Venue</th>
@@ -656,21 +605,24 @@ export default function TraineeProfilePage() {
                                 <th className="px-4 py-2 font-medium">Conducted By</th>
                               </tr>
                             </thead>
-                            <tbody className="divide-y divide-zinc-100 bg-white">
+                            <tbody className="divide-y divide-border/60 bg-card">
                               {(form.otherTrainings || []).length > 0 ? (
                                 form.otherTrainings?.map((t, idx) => (
-                                  <tr key={idx} className="hover:bg-zinc-50/50 transition-colors">
-                                    <td className="px-4 py-2 text-zinc-900">{t.title}</td>
-                                    <td className="px-4 py-2 text-zinc-600">{t.venue}</td>
-                                    <td className="px-4 py-2 text-zinc-600">{t.inclusiveDates}</td>
-                                    <td className="px-4 py-2 text-zinc-600">{t.noOfHours}</td>
-                                    <td className="px-4 py-2 text-zinc-600">{t.conductedBy}</td>
+                                  <tr key={idx} className="hover:bg-muted/50 transition-colors">
+                                    <td className="px-4 py-2 text-foreground">{t.title}</td>
+                                    <td className="px-4 py-2 text-muted-foreground">{t.venue}</td>
+                                    <td className="px-4 py-2 text-muted-foreground">{t.inclusiveDates}</td>
+                                    <td className="px-4 py-2 text-muted-foreground">{t.noOfHours}</td>
+                                    <td className="px-4 py-2 text-muted-foreground">{t.conductedBy}</td>
                                   </tr>
                                 ))
                               ) : (
-                                <tr>
-                                  <td colSpan={5} className="px-4 py-6 text-center text-xs text-zinc-500">No training records found.</td>
-                                </tr>
+                                <ProfileTableEmpty
+                                  colSpan={5}
+                                  message="No training records yet. Add them in the registration wizard."
+                                  actionLabel="Edit profile"
+                                  onAction={handleOpenRegistrationWizard}
+                                />
                               )}
                             </tbody>
                           </table>
@@ -680,11 +632,11 @@ export default function TraineeProfilePage() {
 
                     {/* Section 5: Licensure Exams */}
                     <div className="space-y-2">
-                      <h3 className="text-sm font-semibold text-zinc-900">Licensure Examination(s) Passed</h3>
-                      <div className="rounded-lg border border-zinc-200 overflow-hidden">
+                      <h3 className="text-sm font-semibold text-foreground">Licensure Examination(s) Passed</h3>
+                      <div className="rounded-lg border border-border overflow-hidden">
                         <div className="overflow-x-auto">
                           <table className="w-full text-sm text-left">
-                            <thead className="bg-zinc-50 text-xs font-medium text-zinc-500 border-b border-zinc-200">
+                            <thead className="bg-muted text-xs font-medium text-muted-foreground border-b border-border">
                               <tr>
                                 <th className="px-4 py-2 font-medium">Title</th>
                                 <th className="px-4 py-2 font-medium">Year Taken</th>
@@ -694,22 +646,25 @@ export default function TraineeProfilePage() {
                                 <th className="px-4 py-2 font-medium">Expiry Date</th>
                               </tr>
                             </thead>
-                            <tbody className="divide-y divide-zinc-100 bg-white">
+                            <tbody className="divide-y divide-border/60 bg-card">
                               {(form.licensureExams || []).length > 0 ? (
                                 form.licensureExams?.map((e, idx) => (
-                                  <tr key={idx} className="hover:bg-zinc-50/50 transition-colors">
-                                    <td className="px-4 py-2 text-zinc-900">{e.title}</td>
-                                    <td className="px-4 py-2 text-zinc-600">{e.yearTaken}</td>
-                                    <td className="px-4 py-2 text-zinc-600">{e.examinationVenue}</td>
-                                    <td className="px-4 py-2 text-zinc-600">{e.rating}</td>
-                                    <td className="px-4 py-2 text-zinc-600">{e.remarks}</td>
-                                    <td className="px-4 py-2 text-zinc-600">{e.expiryDate}</td>
+                                  <tr key={idx} className="hover:bg-muted/50 transition-colors">
+                                    <td className="px-4 py-2 text-foreground">{e.title}</td>
+                                    <td className="px-4 py-2 text-muted-foreground">{e.yearTaken}</td>
+                                    <td className="px-4 py-2 text-muted-foreground">{e.examinationVenue}</td>
+                                    <td className="px-4 py-2 text-muted-foreground">{e.rating}</td>
+                                    <td className="px-4 py-2 text-muted-foreground">{e.remarks}</td>
+                                    <td className="px-4 py-2 text-muted-foreground">{e.expiryDate}</td>
                                   </tr>
                                 ))
                               ) : (
-                                <tr>
-                                  <td colSpan={6} className="px-4 py-6 text-center text-xs text-zinc-500">No licensure exams found.</td>
-                                </tr>
+                                <ProfileTableEmpty
+                                  colSpan={6}
+                                  message="No licensure exams on file yet."
+                                  actionLabel="Continue registration"
+                                  onAction={handleOpenRegistrationWizard}
+                                />
                               )}
                             </tbody>
                           </table>
@@ -719,11 +674,11 @@ export default function TraineeProfilePage() {
 
                     {/* Section 6: Competency Assessments */}
                     <div className="space-y-2">
-                      <h3 className="text-sm font-semibold text-zinc-900">Competency Assessment(s) Passed</h3>
-                      <div className="rounded-lg border border-zinc-200 overflow-hidden">
+                      <h3 className="text-sm font-semibold text-foreground">Competency Assessment(s) Passed</h3>
+                      <div className="rounded-lg border border-border overflow-hidden">
                         <div className="overflow-x-auto">
                           <table className="w-full text-sm text-left">
-                            <thead className="bg-zinc-50 text-xs font-medium text-zinc-500 border-b border-zinc-200">
+                            <thead className="bg-muted text-xs font-medium text-muted-foreground border-b border-border">
                               <tr>
                                 <th className="px-4 py-2 font-medium">Title</th>
                                 <th className="px-4 py-2 font-medium">Qual. Level</th>
@@ -733,22 +688,25 @@ export default function TraineeProfilePage() {
                                 <th className="px-4 py-2 font-medium">Expiration Date</th>
                               </tr>
                             </thead>
-                            <tbody className="divide-y divide-zinc-100 bg-white">
+                            <tbody className="divide-y divide-border/60 bg-card">
                               {(form.competencyAssessments || []).length > 0 ? (
                                 form.competencyAssessments?.map((c, idx) => (
-                                  <tr key={idx} className="hover:bg-zinc-50/50 transition-colors">
-                                    <td className="px-4 py-2 text-zinc-900">{c.title}</td>
-                                    <td className="px-4 py-2 text-zinc-600">{c.qualificationLevel}</td>
-                                    <td className="px-4 py-2 text-zinc-600">{c.industrySector}</td>
-                                    <td className="px-4 py-2 text-zinc-600">{c.certificateNumber}</td>
-                                    <td className="px-4 py-2 text-zinc-600">{c.dateOfIssuance}</td>
-                                    <td className="px-4 py-2 text-zinc-600">{c.expirationDate}</td>
+                                  <tr key={idx} className="hover:bg-muted/50 transition-colors">
+                                    <td className="px-4 py-2 text-foreground">{c.title}</td>
+                                    <td className="px-4 py-2 text-muted-foreground">{c.qualificationLevel}</td>
+                                    <td className="px-4 py-2 text-muted-foreground">{c.industrySector}</td>
+                                    <td className="px-4 py-2 text-muted-foreground">{c.certificateNumber}</td>
+                                    <td className="px-4 py-2 text-muted-foreground">{c.dateOfIssuance}</td>
+                                    <td className="px-4 py-2 text-muted-foreground">{c.expirationDate}</td>
                                   </tr>
                                 ))
                               ) : (
-                                <tr>
-                                  <td colSpan={6} className="px-4 py-6 text-center text-xs text-zinc-500">No competency assessments found.</td>
-                                </tr>
+                                <ProfileTableEmpty
+                                  colSpan={6}
+                                  message="No competency assessments on file yet."
+                                  actionLabel="Continue registration"
+                                  onAction={handleOpenRegistrationWizard}
+                                />
                               )}
                             </tbody>
                           </table>
@@ -760,97 +718,24 @@ export default function TraineeProfilePage() {
 
               {activeTab === "program" && (
                 <motion.div variants={item} className="space-y-6">
-                  {isEditing ? (
-                    <div className="space-y-4 bg-white p-5 rounded-xl border border-zinc-200">
-                      <div className="space-y-2">
-                        <label className="text-sm font-semibold text-zinc-900 flex items-center gap-1.5">
-                          <BookOpen className="h-4 w-4 text-zinc-500" /> Select Program
-                        </label>
-                        <Select value={form.courseSlug || "none"} onValueChange={(val) => handleChange("courseSlug", val === "none" ? "" : val)}>
-                          <SelectTrigger className="w-full h-10 bg-zinc-50 border-zinc-200">
-                            <SelectValue placeholder="Select a program to enroll in..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="none" className="text-zinc-500 italic">No program selected</SelectItem>
-                            {courses.filter(c => c.isAvailable !== false).map((c) => (
-                              <SelectItem key={c.slug} value={c.slug}>
-                                {c.title} ({c.ncLevel})
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-4 border-t border-zinc-100">
-                        <div className="space-y-4">
-                          <div className="space-y-2">
-                            <label className="text-xs font-semibold text-zinc-700 flex items-center gap-1.5">
-                              <Calendar className="h-3.5 w-3.5 text-zinc-500" /> Preferred Schedule
-                            </label>
-                            <Select value={form.preferredSchedule || ""} onValueChange={(val) => handleChange("preferredSchedule", val)}>
-                              <SelectTrigger className="h-9 text-sm font-medium border-zinc-200 bg-zinc-50">
-                                <SelectValue placeholder="Select schedule" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {[
-                                  "Morning (8:00 AM – 12:00 PM)",
-                                  "Afternoon (1:00 PM – 5:00 PM)",
-                                  "Full Day (8:00 AM – 5:00 PM)",
-                                ].map((s) => (
-                                  <SelectItem key={s} value={s}>{s}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div className="space-y-2">
-                            <label className="text-xs font-semibold text-zinc-700 flex items-center gap-1.5">
-                              <CreditCard className="h-3.5 w-3.5 text-zinc-500" /> Scholarship Status
-                            </label>
-                            <Select value={form.scholarshipApplication || ""} onValueChange={(val) => handleChange("scholarshipApplication", val)}>
-                              <SelectTrigger className="h-9 text-sm font-medium border-zinc-200 bg-zinc-50">
-                                <SelectValue placeholder="Select scholarship" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {[
-                                  "Yes, I want to apply for TWSP",
-                                  "No, self-funded enrollment",
-                                  "I need more information about scholarships",
-                                ].map((s) => (
-                                  <SelectItem key={s} value={s}>{s}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-xs font-semibold text-zinc-700">Trainee Notes</label>
-                          <Textarea 
-                            value={form.notes || ""} 
-                            onChange={e => handleChange("notes", e.target.value)} 
-                            className="min-h-[116px] text-sm bg-zinc-50 border-zinc-200" 
-                            placeholder="Add any additional notes here..."
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  ) : course ? (
-                    <div className="rounded-xl border border-zinc-200 overflow-hidden bg-white">
-                      <div className="bg-zinc-50 p-5 border-b border-zinc-200">
+                  {course ? (
+                    <div className="rounded-xl border border-border overflow-hidden bg-card">
+                      <div className="bg-muted p-5 border-b border-border">
                         <div className="space-y-3">
-                          <Badge variant="secondary" className="bg-zinc-200 text-zinc-800 hover:bg-zinc-200 rounded font-medium inline-flex items-center gap-1">
+                          <Badge variant="secondary" className="bg-muted text-foreground hover:bg-muted rounded font-medium inline-flex items-center gap-1">
                             <ShieldCheck className="h-3 w-3" /> Accredited Program
                           </Badge>
                           <div>
-                            <h3 className="text-lg font-bold text-zinc-900">{course.title}</h3>
-                            <p className="text-sm text-zinc-500">{course.shortDescription}</p>
+                            <h3 className="text-lg font-bold text-foreground">{course.title}</h3>
+                            <p className="text-sm text-muted-foreground">{course.shortDescription}</p>
                           </div>
                           <div className="flex gap-3 pt-1">
-                            <div className="flex items-center gap-1.5 text-sm text-zinc-600">
+                            <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                               <Clock className="h-4 w-4" />
                               <span className="font-medium">{course.durationHours} Hours</span>
                             </div>
-                            <span className="text-zinc-300">•</span>
-                            <div className="flex items-center gap-1.5 text-sm text-zinc-600">
+                            <span className="text-muted-foreground/50">•</span>
+                            <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                               <BookOpen className="h-4 w-4" />
                               <span className="font-medium">Level: {course.ncLevel}</span>
                             </div>
@@ -860,48 +745,50 @@ export default function TraineeProfilePage() {
                       <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-5">
                         <div className="space-y-4">
                           <div className="space-y-1">
-                            <p className="text-xs font-medium text-zinc-500 flex items-center gap-1.5">
+                            <p className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
                               <Calendar className="h-3.5 w-3.5" /> Preferred Schedule
                             </p>
-                            <p className="text-sm font-semibold text-zinc-900">{form.preferredSchedule || "Not specified"}</p>
+                            <p className="text-sm font-semibold text-foreground">{form.preferredSchedule || "Not specified"}</p>
                           </div>
                           <div className="space-y-1">
-                            <p className="text-xs font-medium text-zinc-500 flex items-center gap-1.5">
+                            <p className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
                               <CreditCard className="h-3.5 w-3.5" /> Scholarship Status
                             </p>
-                            <p className="text-sm font-semibold text-zinc-900">{form.scholarshipApplication || "Not specified"}</p>
+                            <p className="text-sm font-semibold text-foreground">{form.scholarshipApplication || "Not specified"}</p>
                           </div>
                         </div>
                         <div className="space-y-1">
-                          <p className="text-xs font-medium text-zinc-500">Trainee Notes</p>
-                          <p className="text-sm text-zinc-600 p-3 bg-zinc-50 rounded-md border border-zinc-100">
+                          <p className="text-xs font-medium text-muted-foreground">Trainee Notes</p>
+                          <p className="text-sm text-muted-foreground p-3 bg-muted rounded-md border border-border/60">
                             {form.notes || "No additional notes provided for this enrollment."}
                           </p>
                         </div>
                       </div>
                     </div>
                   ) : (
-                    <div className="bg-zinc-50 border border-dashed border-zinc-200 rounded-xl p-8 text-center space-y-3">
-                      <BookOpen className="h-8 w-8 text-zinc-400 mx-auto" />
+                    <div className="bg-muted border border-dashed border-border rounded-xl p-8 text-center space-y-3">
+                      <BookOpen className="h-8 w-8 text-muted-foreground mx-auto" />
                       <div>
-                        <h3 className="text-base font-semibold text-zinc-900">No Active Program</h3>
-                        <p className="text-sm text-zinc-500">You haven't enrolled in a technical qualification program yet.</p>
+                        <h3 className="text-base font-semibold text-foreground">No Active Program</h3>
+                        <p className="text-sm text-muted-foreground">You haven't enrolled in a technical qualification program yet.</p>
                       </div>
-                      <Button variant="outline" size="sm" className="rounded-md mt-2 h-8">Browse Courses</Button>
+                      <Button variant="outline" size="sm" className="rounded-md mt-2 h-8" asChild>
+                        <Link href="/courses">Browse courses</Link>
+                      </Button>
                     </div>
                   )}
                 </motion.div>
               )}
 
               {activeTab === "docs" && (
-                <motion.div variants={item} className="flex flex-col items-center justify-center py-12 text-center border border-dashed border-zinc-200 bg-zinc-50 rounded-xl">
-                  <FileText className="h-8 w-8 text-zinc-400 mb-3" />
-                  <h3 className="text-sm font-semibold text-zinc-900 mb-1">No documents uploaded</h3>
-                  <p className="text-xs text-zinc-500 max-w-xs mx-auto mb-4">
+                <motion.div variants={item} className="flex flex-col items-center justify-center py-12 text-center border border-dashed border-border bg-muted rounded-xl">
+                  <FileText className="h-8 w-8 text-muted-foreground mb-3" />
+                  <h3 className="text-sm font-semibold text-foreground mb-1">No documents uploaded</h3>
+                  <p className="text-xs text-muted-foreground max-w-xs mx-auto mb-4">
                     Upload your requirements to complete your profile and fast-track your enrollment.
                   </p>
-                  <Button variant="outline" size="sm" className="h-8 rounded-md bg-white">
-                    <Upload className="mr-2 h-3.5 w-3.5" /> Start Uploading
+                  <Button variant="outline" size="sm" className="h-8 rounded-md bg-card" onClick={handleOpenRegistrationWizard}>
+                    <Upload className="mr-2 h-3.5 w-3.5" /> Add via registration
                   </Button>
                 </motion.div>
               )}
@@ -911,47 +798,48 @@ export default function TraineeProfilePage() {
 
         {/* Sidebar: Status & Progress */}
         <div className="lg:col-span-4 xl:col-span-3 space-y-4">
-          {/* Profile Integrity Card */}
-          <motion.div 
+          <TraineeProfileIntegrityCard
+            breakdown={integrityBreakdown}
+            onContinueRegistration={handleOpenRegistrationWizard}
+          />
+
+          <motion.div
             initial={{ opacity: 0, x: 10 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.1 }}
-            className="bg-white rounded-xl border border-zinc-200 p-4 space-y-4"
+            transition={{ delay: 0.05 }}
+            className="rounded-2xl border border-primary/25 bg-primary/5 p-4 space-y-3"
           >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider">Profile Integrity</p>
-                <p className="text-xl font-bold text-zinc-900 leading-tight">{integrity}%</p>
+            <div className="flex items-start gap-3">
+              <motion.div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
+                <FileText className="h-5 w-5" />
+              </motion.div>
+              <div className="min-w-0 space-y-1">
+                <p className="text-sm font-semibold text-foreground">Official TESDA application</p>
+                <p className="text-xs text-muted-foreground leading-snug">
+                  Preview or download your filled registration form for printing and submission.
+                </p>
               </div>
-              <ShieldCheck className={cn("h-5 w-5", integrity === 100 ? "text-emerald-500" : "text-zinc-300")} />
             </div>
-            
-            <div className="h-1.5 w-full bg-zinc-100 rounded-full overflow-hidden">
-              <motion.div 
-                initial={{ width: 0 }}
-                animate={{ width: `${integrity}%` }}
-                transition={{ duration: 0.8, ease: "easeOut" }}
-                className="h-full bg-zinc-900 rounded-full"
-              />
-            </div>
-
-            <p className="text-xs text-zinc-500">
-              {integrity === 100 
-                ? "Your profile meets all requirements." 
-                : "Complete your profile to enable priority processing."}
-            </p>
+            <Button
+              className="w-full h-11 rounded-xl font-semibold shadow-md"
+              onClick={handleOpenTesdaFormPdf}
+              disabled={!hasProfileData}
+            >
+              <FileText className="h-4 w-4 mr-2 shrink-0" />
+              TESDA Form (PDF)
+            </Button>
           </motion.div>
 
           {/* Application Timeline */}
           <motion.div 
             initial={{ opacity: 0, x: 10 }}
             animate={{ opacity: 1, x: 0 }}
-            className="bg-white rounded-xl border border-zinc-200 p-4"
+            className="bg-card rounded-xl border border-border p-4"
           >
               <div className="mb-4">
-                <h3 className="text-xs font-semibold text-zinc-900 flex items-center justify-between gap-1.5 mb-1">
-                  <span className="flex items-center gap-1.5"><Clock className="h-3.5 w-3.5 text-zinc-500" /> Application Status</span>
-                  {existing && !["ready_to_apply", "enrolled", "confirmed", "completed", "cancelled", "rejected"].includes(existing.status.toLowerCase()) && (
+                <h3 className="text-xs font-semibold text-foreground flex items-center justify-between gap-1.5 mb-1">
+                  <span className="flex items-center gap-1.5"><Clock className="h-3.5 w-3.5 text-muted-foreground" /> Application Status</span>
+                  {canCancelCourseApplication(existing) && (
                     <Button 
                       variant="ghost" 
                       size="sm" 
@@ -978,31 +866,31 @@ export default function TraineeProfilePage() {
                   )}
                 </h3>
                 {existing?.refNo && (
-                  <p className="text-[10px] font-mono text-zinc-500 pl-5">Ref: {existing.refNo}</p>
+                  <p className="text-[10px] font-mono text-muted-foreground pl-5">Ref: {existing.refNo}</p>
                 )}
               </div>
 
             <div className="space-y-0 relative pl-1">
-              <div className="absolute left-[13px] top-2 bottom-3 w-px bg-zinc-100" />
+              <div className="absolute left-[13px] top-2 bottom-3 w-px bg-muted" />
               
               {[
-                { id: "submitted", label: "Submitted", sub: "Application received", icon: CheckCircle, active: !!existing && !["ready_to_apply"].includes(existing?.status?.toLowerCase()) },
-                { id: "review", label: "In Review", sub: "Verification in progress", icon: Search, active: !!existing && ["review", "interview", "enrolled", "completed", "confirmed"].includes(existing?.status?.toLowerCase()) },
-                { id: "interview", label: "Interview", sub: "Technical assessment", icon: UserCheck, active: !!existing && ["interview", "enrolled", "completed", "confirmed"].includes(existing?.status?.toLowerCase()) },
-                { id: "enrolled", label: "Enrolled", sub: "Admission complete", icon: EnrolledIcon, active: !!existing && ["enrolled", "completed", "confirmed"].includes(existing?.status?.toLowerCase()) }
+                { id: "submitted", label: "Submitted", sub: "Application received", icon: CheckCircle, active: !!existing && !["ready_to_apply"].includes((existing.status ?? "pending").toLowerCase()) },
+                { id: "review", label: "In Review", sub: "Verification in progress", icon: Search, active: !!existing && ["review", "interview", "enrolled", "completed", "confirmed"].includes((existing.status ?? "").toLowerCase()) },
+                { id: "interview", label: "Interview", sub: "Technical assessment", icon: UserCheck, active: !!existing && ["interview", "enrolled", "completed", "confirmed"].includes((existing.status ?? "").toLowerCase()) },
+                { id: "enrolled", label: "Enrolled", sub: "Admission complete", icon: EnrolledIcon, active: !!existing && ["enrolled", "completed", "confirmed"].includes((existing.status ?? "").toLowerCase()) }
               ].map((step) => (
                 <div key={step.id} className="relative flex gap-3 pb-4 last:pb-0">
                   <div className={cn(
                     "w-6 h-6 rounded-full flex items-center justify-center shrink-0 z-10 transition-colors duration-300",
-                    step.active ? "bg-zinc-900 text-white" : "bg-white border border-zinc-200 text-zinc-300"
+                    step.active ? "bg-primary text-primary-foreground" : "bg-card border border-border text-muted-foreground/50"
                   )}>
                     <step.icon className="h-3 w-3" />
                   </div>
                   <div className="pt-0.5">
-                    <p className={cn("text-xs font-medium", step.active ? "text-zinc-900" : "text-zinc-400")}>
+                    <p className={cn("text-xs font-medium", step.active ? "text-foreground" : "text-muted-foreground")}>
                       {step.label}
                     </p>
-                    <p className="text-[10px] text-zinc-500">
+                    <p className="text-[10px] text-muted-foreground">
                       {step.sub}
                     </p>
                   </div>
@@ -1018,25 +906,25 @@ export default function TraineeProfilePage() {
             transition={{ delay: 0.2 }}
             className="space-y-2"
           >
-            <h3 className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider px-1">Trainee Resources</h3>
+            <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider px-1">Trainee Resources</h3>
             <div className="grid grid-cols-1 gap-1.5">
               {[
                 { label: "TESDA Online Portal", icon: Globe },
                 { label: "Learning Materials", icon: BookOpen },
                 { label: "Academy Guidelines", icon: ShieldCheck },
               ].map((link) => (
-                <button key={link.label} className="flex items-center justify-between p-2.5 rounded-lg bg-white border border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50 transition-colors group">
+                <button key={link.label} className="flex items-center justify-between p-2.5 rounded-lg bg-card border border-border hover:border-border hover:bg-muted transition-colors group">
                   <div className="flex items-center gap-2.5">
-                    <link.icon className="h-3.5 w-3.5 text-zinc-400 group-hover:text-zinc-600 transition-colors" />
-                    <span className="text-xs font-medium text-zinc-700 group-hover:text-zinc-900 transition-colors">{link.label}</span>
+                    <link.icon className="h-3.5 w-3.5 text-muted-foreground group-hover:text-muted-foreground transition-colors" />
+                    <span className="text-xs font-medium text-foreground/90 group-hover:text-foreground transition-colors">{link.label}</span>
                   </div>
-                  <ArrowUpRight className="h-3.5 w-3.5 text-zinc-300 group-hover:text-zinc-500 transition-colors" />
+                  <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground/50 group-hover:text-muted-foreground transition-colors" />
                 </button>
               ))}
             </div>
           </motion.div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

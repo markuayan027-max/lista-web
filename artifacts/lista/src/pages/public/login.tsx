@@ -1,36 +1,59 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/context/auth-context";
 import FormInputField from "@/components/form-input-field";
+import PasswordRequirements from "@/components/password-requirements";
 import PrimaryButton from "@/components/primary-button";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { safeRedirectPath } from "@/lib/enroll-entry";
+import { getRoleHomePath } from "@/lib/role-navigation";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle, Loader2 } from "lucide-react";
 
 export default function LoginPage() {
   const [_, setLocation] = useLocation();
-  const { login, signUpWithOAuth, user } = useAuth();
+  const { login, signUpWithOAuth, user, loading: authLoading } = useAuth();
+
+  const postLoginPath = useMemo(() => {
+    const params = new URLSearchParams(window.location.search);
+    return safeRedirectPath(params.get("redirect"));
+  }, []);
    
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(() => {
+    const fromQuery = new URLSearchParams(window.location.search).get("email");
+    return fromQuery?.trim() ?? "";
+  });
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (user) {
-      if (user.role === "trainee") setLocation("/trainee");
-      else if (user.role === "staff") setLocation("/staff");
-      else if (user.role === "admin") setLocation("/admin");
-    }
-  }, [user, setLocation]);
+    const fromQuery = new URLSearchParams(window.location.search).get("email");
+    if (fromQuery?.trim()) setEmail(fromQuery.trim());
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    const destination = postLoginPath ?? getRoleHomePath(user.role);
+    setLocation(destination);
+  }, [user, setLocation, postLoginPath]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) return;
+    if (!email.trim() || !password) {
+      setFormError("Enter your email and password to continue.");
+      return;
+    }
+    setFormError(null);
     setIsLoading(true);
     try {
       await login(email, password);
       toast.success("Welcome back!");
-    } catch (err: any) {
-      toast.error(err.message || "Invalid credentials");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Could not sign in. Please try again.";
+      setFormError(message);
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }
@@ -48,6 +71,11 @@ export default function LoginPage() {
     <div className="w-full space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="text-center space-y-2">
         <h1 className="text-4xl font-extrabold tracking-tight text-foreground">Log in</h1>
+        {postLoginPath && (
+          <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+            Sign in to continue your enrollment. You will return to your application after login.
+          </p>
+        )}
       </div>
 
       <div className="space-y-4">
@@ -86,7 +114,15 @@ export default function LoginPage() {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+        {formError && (
+          <Alert variant="destructive" className="rounded-xl" role="alert">
+            <AlertCircle className="h-4 w-4" aria-hidden />
+            <AlertTitle>Could not sign in</AlertTitle>
+            <AlertDescription>{formError}</AlertDescription>
+          </Alert>
+        )}
+
         <FormInputField 
           label="Email" 
           type="email" 
@@ -108,7 +144,13 @@ export default function LoginPage() {
             onChange={(e) => setPassword(e.target.value)}
             placeholder="••••••••"
             required
+            autoComplete="current-password"
+            aria-describedby="login-password-requirements"
             className="h-14 text-base rounded-xl"
+          />
+          <PasswordRequirements
+            password={password}
+            id="login-password-requirements"
           />
           <div className="flex justify-end">
             <Link href="/forgot-password" title="Forget password ?" className="text-sm font-medium text-muted-foreground hover:text-primary hover:underline transition-colors">
@@ -117,8 +159,19 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <PrimaryButton type="submit" className="w-full h-14 text-lg font-bold rounded-xl mt-4 shadow-lg hover:shadow-xl transition-all">
-          Log in
+        <PrimaryButton
+          type="submit"
+          disabled={isLoading || authLoading}
+          className="w-full h-14 text-lg font-bold rounded-xl mt-4 shadow-lg hover:shadow-xl transition-all"
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="w-5 h-5 mr-2 animate-spin" aria-hidden />
+              Signing in…
+            </>
+          ) : (
+            "Log in"
+          )}
         </PrimaryButton>
       </form>
       

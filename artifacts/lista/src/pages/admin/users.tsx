@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Plus, Search, MoreHorizontal, Pencil, Loader2 } from "lucide-react";
+import { TableSkeleton } from "@/components/skeletons";
 import { format } from "date-fns";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -116,13 +117,13 @@ export default function AdminUsersPage() {
         return <Badge className="bg-primary hover:bg-primary">Admin</Badge>;
       case "staff":
         return (
-          <Badge variant="secondary" className="bg-indigo-100 text-indigo-700 hover:bg-indigo-100 border-indigo-200">
+          <Badge variant="secondary" className="bg-primary-indigo/15 text-primary-indigo hover:bg-primary-indigo/15 border-primary-indigo/30">
             Staff
           </Badge>
         );
       case "trainee":
         return (
-          <Badge variant="outline" className="bg-slate-100 text-slate-700 hover:bg-slate-100 border-slate-200">
+          <Badge variant="outline" className="bg-muted text-muted-foreground hover:bg-muted border-border">
             Trainee
           </Badge>
         );
@@ -145,7 +146,9 @@ export default function AdminUsersPage() {
       <motion.div variants={itemVariants} className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <motion.div variants={itemVariants}>
           <h1 className="text-2xl font-bold tracking-tight">Users</h1>
-          <p className="text-muted-foreground text-sm mt-1">Manage system access and roles (InsForge).</p>
+          <p className="text-muted-foreground text-sm mt-1">
+            InsForge Authentication accounts ({users.length} shown). Roles sync with <code className="text-xs">public.users</code> when present.
+          </p>
         </motion.div>
 
         <Dialog open={isInviteOpen} onOpenChange={setIsInviteOpen}>
@@ -224,7 +227,7 @@ export default function AdminUsersPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search users..."
-            className="pl-9 bg-white border-card-border"
+            className="pl-9 bg-card border-card-border"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -234,10 +237,7 @@ export default function AdminUsersPage() {
       <motion.div variants={itemVariants}>
         <Card className="border-card-border shadow-sm overflow-hidden">
           {isLoading ? (
-            <div className="flex items-center justify-center py-16 text-muted-foreground gap-2">
-              <Loader2 className="h-5 w-5 animate-spin" />
-              Loading users from InsForge…
-            </div>
+            <TableSkeleton rows={8} columns={4} className="py-2" />
           ) : isError ? (
             <motion.div variants={itemVariants} className="p-8 text-center text-destructive text-sm">
               {error instanceof Error ? error.message : "Failed to load users"}

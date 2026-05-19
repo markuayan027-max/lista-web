@@ -8,9 +8,58 @@ export type ListaSession = {
 };
 
 const SESSION_VERIFY_TTL_MS = 45_000;
+const VERIFY_CACHE_STORAGE_KEY = "lista_token_verify_cache";
 let verifyInFlight: Promise<string | null> | null = null;
+let refreshInFlight: Promise<ListaSession | null> | null = null;
 let lastVerifiedToken: string | null = null;
 let lastVerifiedAt = 0;
+
+function readVerifyCacheFromStorage(): { token: string; at: number } | null {
+  try {
+    const raw = sessionStorage.getItem(VERIFY_CACHE_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { token?: string; at?: number };
+    if (typeof parsed.token === "string" && typeof parsed.at === "number") {
+      return { token: parsed.token, at: parsed.at };
+    }
+  } catch {
+    // ignore
+  }
+  return null;
+}
+
+function writeVerifyCacheToStorage(token: string): void {
+  try {
+    sessionStorage.setItem(
+      VERIFY_CACHE_STORAGE_KEY,
+      JSON.stringify({ token, at: Date.now() }),
+    );
+  } catch {
+    // ignore
+  }
+}
+
+function clearVerifyCacheFromStorage(): void {
+  try {
+    sessionStorage.removeItem(VERIFY_CACHE_STORAGE_KEY);
+  } catch {
+    // ignore
+  }
+}
+
+function markTokenVerified(token: string): void {
+  lastVerifiedToken = token;
+  lastVerifiedAt = Date.now();
+  writeVerifyCacheToStorage(token);
+}
+
+function restoreVerifyCacheFromStorage(): void {
+  const stored = readVerifyCacheFromStorage();
+  if (!stored) return;
+  if (Date.now() - stored.at >= SESSION_VERIFY_TTL_MS) return;
+  lastVerifiedToken = stored.token;
+  lastVerifiedAt = stored.at;
+}
 
 function normalizeSession(payload: Record<string, unknown>): ListaSession {
   const accessToken = payload.accessToken ?? payload.access_token;
@@ -31,8 +80,18 @@ function persistSession(session: ListaSession): void {
 
 export function clearAccessTokenCache(): void {
   verifyInFlight = null;
+  refreshInFlight = null;
   lastVerifiedToken = null;
   lastVerifiedAt = 0;
+  clearVerifyCacheFromStorage();
+}
+
+function refreshSessionDeduped(session: ListaSession): Promise<ListaSession | null> {
+  if (refreshInFlight) return refreshInFlight;
+  refreshInFlight = refreshSession(session).finally(() => {
+    refreshInFlight = null;
+  });
+  return refreshInFlight;
 }
 
 async function refreshSession(session: ListaSession): Promise<ListaSession | null> {
@@ -86,17 +145,18 @@ async function verifyAccessTokenOnce(): Promise<string | null> {
         lastVerifiedAt = Date.now();
         return token;
       }
+      // Expired access token — refresh once; do not call /sessions/current again with the old token.
+      if (res.status !== 401 && res.status !== 403) {
+        return null;
+      }
     } catch {
       // Network blip — try refresh below
     }
   }
 
-  const refreshed = await refreshSession(session);
+  const refreshed = await refreshSessionDeduped(session);
   const token = refreshed?.accessToken ?? null;
-  if (token) {
-    lastVerifiedToken = token;
-    lastVerifiedAt = Date.now();
-  }
+  if (token) markTokenVerified(token);
   return token;
 }
 
@@ -126,6 +186,8 @@ export function authHeaders(): HeadersInit {
  * Deduped + cached so parallel hooks do not spam /api/auth/sessions/current.
  */
 export async function ensureAccessToken(): Promise<string | null> {
+  restoreVerifyCacheFromStorage();
+
   const session = getStoredSession();
   if (!session) {
     clearAccessTokenCache();
@@ -138,6 +200,7 @@ export async function ensureAccessToken(): Promise<string | null> {
     lastVerifiedToken === cached &&
     Date.now() - lastVerifiedAt < SESSION_VERIFY_TTL_MS
   ) {
+    lista.setAccessToken(cached);
     return cached;
   }
 

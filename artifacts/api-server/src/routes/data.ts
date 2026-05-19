@@ -1,6 +1,12 @@
-import { Router } from "express";
+import { Router, type Response } from "express";
 import { db, courses, announcements, faqs, testimonials, cases, incidents } from "@workspace/db";
 import { logger } from "../lib/logger";
+import {
+  COURSES_HTTP_CACHE_SECONDS,
+  getCachedCourses,
+  invalidateCoursesCache,
+  setCachedCourses,
+} from "../lib/courses-cache";
 
 const router = Router();
 
@@ -260,22 +266,62 @@ const MOCK_TESTIMONIALS = [
   }
 ];
 
+function sendCoursesJson(
+  res: Response,
+  data: unknown,
+  cacheStatus: "HIT" | "MISS",
+  source: "db" | "mock",
+) {
+  res.setHeader("Cache-Control", `public, max-age=${COURSES_HTTP_CACHE_SECONDS}, stale-while-revalidate=120`);
+  res.setHeader("X-Lista-Cache", cacheStatus);
+  res.setHeader("X-Lista-Source", source);
+  res.json(data);
+}
+
 router.get("/courses", async (req, res) => {
+  const forceRefresh = req.query.refresh === "1" || req.query.refresh === "true";
+  if (forceRefresh) invalidateCoursesCache();
+
+  const cached = !forceRefresh ? getCachedCourses() : null;
+  if (cached) {
+    return sendCoursesJson(res, cached.data, "HIT", cached.source);
+  }
+
   try {
     const data = await db.select().from(courses);
-    res.json(data);
+    setCachedCourses(data, "db");
+    sendCoursesJson(res, data, "MISS", "db");
   } catch (err) {
     logger.warn({ err }, "Database query failed for /courses, using mock data");
-    res.json(MOCK_COURSES);
+    setCachedCourses(MOCK_COURSES, "mock");
+    sendCoursesJson(res, MOCK_COURSES, "MISS", "mock");
   }
 });
 
+const ANNOUNCEMENTS_CACHE_TTL_MS = 60_000;
+let announcementsCache: { data: unknown; cachedAt: number } | null = null;
+
 router.get("/announcements", async (req, res) => {
+  const forceRefresh = req.query.refresh === "1" || req.query.refresh === "true";
+  if (forceRefresh) announcementsCache = null;
+
+  if (
+    !forceRefresh &&
+    announcementsCache &&
+    Date.now() - announcementsCache.cachedAt < ANNOUNCEMENTS_CACHE_TTL_MS
+  ) {
+    res.setHeader("X-Lista-Cache", "HIT");
+    return res.json(announcementsCache.data);
+  }
+
   try {
     const data = await db.select().from(announcements);
+    announcementsCache = { data, cachedAt: Date.now() };
+    res.setHeader("X-Lista-Cache", "MISS");
     res.json(data);
   } catch (err) {
     logger.warn({ err }, "Database query failed for /announcements, using empty array");
+    announcementsCache = { data: [], cachedAt: Date.now() };
     res.json([]);
   }
 });
