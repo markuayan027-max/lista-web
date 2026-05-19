@@ -1,6 +1,8 @@
 import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/context/auth-context";
 import { deriveCertificatesFromEnrollments } from "@/lib/lista-insforge-data";
+import { fetchTraineeEnrollmentByEmail } from "@/lib/trainee-enrollment-insforge";
 import {
   bulkUpdateEnrollmentStatus,
   createAnnouncement,
@@ -39,10 +41,13 @@ function unwrap<T>(result: { success: boolean; data?: T; error?: string }): T {
 }
 
 export function useUsers() {
+  const { user, isInitializing } = useAuth();
+  const canListUsers = user?.role === "staff" || user?.role === "admin";
   return useQuery({
     queryKey: listaKeys.users,
     queryFn: async () => unwrap(await fetchUsers()),
     staleTime: 60_000,
+    enabled: !isInitializing && canListUsers,
   });
 }
 
@@ -64,11 +69,18 @@ export function useUpdateUserRole() {
   });
 }
 
-export function useEnrollments() {
+export function useEnrollments(options?: { live?: boolean }) {
+  const { user } = useAuth();
+  const staffOrAdmin =
+    options?.live === true || user?.role === "staff" || user?.role === "admin";
+
   return useQuery({
     queryKey: listaKeys.enrollments,
     queryFn: async () => unwrap(await fetchAllEnrollments()),
-    staleTime: 30_000,
+    staleTime: staffOrAdmin ? 0 : 30_000,
+    refetchOnWindowFocus: staffOrAdmin,
+    refetchOnReconnect: staffOrAdmin,
+    refetchInterval: staffOrAdmin ? 10_000 : false,
   });
 }
 
@@ -95,6 +107,11 @@ export function useCourses() {
     queryKey: listaKeys.courses,
     queryFn: async () => unwrap(await fetchCourses()),
     staleTime: 5 * 60_000,
+    gcTime: 30 * 60_000,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+    retry: 2,
+    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 8_000),
   });
 }
 
@@ -138,6 +155,30 @@ export function useDerivedCertificates() {
     [enrollments, courses],
   );
   return { data: certificates, isLoading: enrollmentsLoading || coursesLoading };
+}
+
+/** Trainee-safe certificates — scopes to the signed-in user's enrollment via API, not all rows. */
+export function useTraineeDerivedCertificates(email: string | undefined) {
+  const { data: courses = [], isLoading: coursesLoading } = useCourses();
+  const selfEnrollmentQuery = useQuery({
+    queryKey: [...listaKeys.enrollments, "self", email?.toLowerCase() ?? ""] as const,
+    queryFn: async () => {
+      if (!email) return [] as Enrollment[];
+      const res = await fetchTraineeEnrollmentByEmail(email);
+      if (!res.success || !res.data) return [];
+      return [res.data as unknown as Enrollment];
+    },
+    enabled: Boolean(email),
+    staleTime: 30_000,
+  });
+  const certificates = useMemo(
+    () => deriveCertificatesFromEnrollments(selfEnrollmentQuery.data ?? [], courses),
+    [selfEnrollmentQuery.data, courses],
+  );
+  return {
+    data: certificates,
+    isLoading: selfEnrollmentQuery.isLoading || coursesLoading,
+  };
 }
 
 export function useCreateAnnouncement() {
