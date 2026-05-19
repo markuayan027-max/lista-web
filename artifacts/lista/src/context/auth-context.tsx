@@ -5,8 +5,15 @@ import { isTraineeRegistrationComplete, skipsTraineeApplication } from "../lib/r
 import { resolveTraineeRegistrationFromCloud } from "../lib/trainee-registration-state";
 import { clearLocalProfile, clearProfilePic } from "../lib/profile-utils";
 import { authApiRequest, authApiUrl } from "../lib/auth-api";
-import { ensureAccessToken, getStoredSession } from "../lib/auth-token";
+import {
+  clearAccessTokenCache,
+  ensureAccessToken,
+  getStoredSession,
+} from "../lib/auth-token";
 import { ensurePublicTraineeUser } from "../lib/ensure-public-trainee";
+
+let traineeSyncUserId: string | null = null;
+let traineeSyncInFlight: string | null = null;
 
 interface AuthContextType {
   user: User | null;
@@ -67,6 +74,29 @@ async function mapInsForgeUser(insUser: any): Promise<User | null> {
   };
 }
 
+/** One ensure-trainee + profile hydrate per user per page load (avoids HMR / remount spam). */
+async function syncTraineeSideEffects(
+  mapped: User,
+  setIsRegistered: (v: boolean) => void,
+): Promise<void> {
+  if (mapped.role !== "trainee") return;
+  if (traineeSyncUserId === mapped.id) return;
+  if (traineeSyncInFlight === mapped.id) return;
+
+  traineeSyncInFlight = mapped.id;
+  try {
+    await ensurePublicTraineeUser({
+      email: mapped.email,
+      firstName: mapped.name.split(" ")[0],
+      lastName: mapped.name.split(" ").slice(1).join(" ") || "-",
+    });
+    await hydrateTraineeRegistration(mapped, setIsRegistered);
+    traineeSyncUserId = mapped.id;
+  } finally {
+    if (traineeSyncInFlight === mapped.id) traineeSyncInFlight = null;
+  }
+}
+
 async function hydrateTraineeRegistration(
   mapped: User,
   setIsRegistered: (v: boolean) => void,
@@ -116,15 +146,7 @@ async function applySessionPayload(
   const mapped = await mapInsForgeUser(rawUser);
   setUser(mapped);
   if (mapped) {
-    if (mapped.role === "trainee") {
-      void ensurePublicTraineeUser({
-        email: mapped.email,
-        firstName: mapped.name.split(" ")[0],
-        lastName: mapped.name.split(" ").slice(1).join(" ") || "-",
-      });
-    }
-    // Do not block sign-in / verify on enrollment fetch — resolves in background.
-    void hydrateTraineeRegistration(mapped, setIsRegistered).catch(() => setIsRegistered(false));
+    void syncTraineeSideEffects(mapped, setIsRegistered).catch(() => setIsRegistered(false));
   }
 }
 
@@ -147,24 +169,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             typeof session.accessToken === "string" ? session.accessToken : null,
           );
 
-          // Optimistic UI from cache only — no protected API calls until token is valid.
-          if (session.user) {
-            const mapped = await mapInsForgeUser(session.user);
-            setUser(mapped);
-          }
-
           const token = await ensureAccessToken();
           if (!token) {
             throw new Error("Session expired");
           }
 
           const verified = getStoredSession();
-          if (verified) {
-            await applySessionPayload(
-              verified as Record<string, unknown>,
-              setUser,
-              setIsRegistered,
-            );
+          const rawUser = verified?.user as Record<string, unknown> | undefined;
+          if (rawUser) {
+            const mapped = await mapInsForgeUser(rawUser);
+            setUser(mapped);
+            if (mapped) {
+              void syncTraineeSideEffects(mapped, setIsRegistered).catch(() =>
+                setIsRegistered(false),
+              );
+            }
           }
           return;
         }
@@ -185,6 +204,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } catch (err) {
         console.error("[AuthProvider] Session restore failed:", err);
         localStorage.removeItem("lista_session");
+        clearAccessTokenCache();
+        traineeSyncUserId = null;
+        traineeSyncInFlight = null;
         lista.setAccessToken(null);
         setUser(null);
       } finally {
@@ -270,6 +292,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       const signingOutId = user?.id;
       localStorage.removeItem("lista_session");
+      clearAccessTokenCache();
+      traineeSyncUserId = null;
+      traineeSyncInFlight = null;
       clearLocalProfile(signingOutId);
       clearProfilePic(signingOutId);
       lista.setAccessToken(null);

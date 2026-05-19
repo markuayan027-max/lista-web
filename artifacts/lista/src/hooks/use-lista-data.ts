@@ -41,13 +41,13 @@ function unwrap<T>(result: { success: boolean; data?: T; error?: string }): T {
 }
 
 export function useUsers() {
-  const { user, isInitializing } = useAuth();
+  const { user, loading } = useAuth();
   const canListUsers = user?.role === "staff" || user?.role === "admin";
   return useQuery({
     queryKey: listaKeys.users,
     queryFn: async () => unwrap(await fetchUsers()),
     staleTime: 60_000,
-    enabled: !isInitializing && canListUsers,
+    enabled: !loading && canListUsers,
   });
 }
 
@@ -70,7 +70,7 @@ export function useUpdateUserRole() {
 }
 
 export function useEnrollments(options?: { live?: boolean }) {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const staffOrAdmin =
     options?.live === true || user?.role === "staff" || user?.role === "admin";
 
@@ -81,6 +81,7 @@ export function useEnrollments(options?: { live?: boolean }) {
     refetchOnWindowFocus: staffOrAdmin,
     refetchOnReconnect: staffOrAdmin,
     refetchInterval: staffOrAdmin ? 10_000 : false,
+    enabled: !loading,
   });
 }
 

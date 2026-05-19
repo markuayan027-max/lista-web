@@ -2,6 +2,7 @@
  * Live LISTA data from InsForge PostgREST — replaces mock arrays in institutional-data.
  */
 
+import { canUseInsforgeSdk } from "@/lib/insforge-env";
 import { lista } from "@/lib/insforge";
 import { authHeaders } from "@/lib/auth-token";
 import { insforgeEnrollmentRowToApiData } from "@/lib/trainee-enrollment-insforge";
@@ -18,6 +19,43 @@ export type ListaAnnouncement = {
 };
 
 export type ListaFetchResult<T> = { success: true; data: T } | { success: false; error: string };
+
+const FETCH_COURSES_MS = 12_000;
+
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(
+      () => reject(new Error(`${label} timed out after ${ms}ms`)),
+      ms,
+    );
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (err) => {
+        clearTimeout(timer);
+        reject(err);
+      },
+    );
+  });
+}
+
+/** PostgREST (snake) and Drizzle/API (camel) row shapes. */
+function normalizeCourseDbRow(row: Record<string, unknown>): Record<string, unknown> {
+  return {
+    ...row,
+    nc_level: row.nc_level ?? row.ncLevel,
+    short_description: row.short_description ?? row.shortDescription,
+    twsp_scholarship: row.twsp_scholarship ?? row.twspScholarship,
+    cover_image_url: row.cover_image_url ?? row.coverImageUrl,
+    is_bestseller: row.is_bestseller ?? row.isBestseller,
+    is_available: row.is_available ?? row.isAvailable ?? true,
+    fee_amount: row.fee_amount ?? row.feeAmount,
+    original_fee_amount: row.original_fee_amount ?? row.originalFeeAmount,
+    original_fee: row.original_fee ?? row.originalFee,
+  };
+}
 
 function str(v: unknown): string {
   return v === undefined || v === null ? "" : String(v);
@@ -218,8 +256,12 @@ export function rowToFaq(row: Record<string, unknown>): DbFaq {
 // ── Users ────────────────────────────────────────────────────────────────────
 
 export async function fetchUsers(): Promise<ListaFetchResult<User[]>> {
+  const headers = authHeaders();
+  if (!("Authorization" in headers)) {
+    return { success: false, error: "Sign in required to list users" };
+  }
   try {
-    const apiRes = await fetch("/api/users", { headers: authHeaders() });
+    const apiRes = await fetch("/api/users", { headers });
     const body = (await apiRes.json().catch(() => ({}))) as {
       success?: boolean;
       data?: Record<string, unknown>[];
@@ -294,7 +336,10 @@ export function userJoinedAt(row: Record<string, unknown>): string | null {
 // ── Enrollments ──────────────────────────────────────────────────────────────
 
 export async function fetchAllEnrollments(): Promise<ListaFetchResult<Enrollment[]>> {
-  const { data, error } = await lista.from("enrollments").select("*").order("submitted_at", { ascending: false });
+  const { data, error } = await lista
+    .from("enrollments")
+    .select("*")
+    .order("updated_at", { ascending: false });
   if (error) return { success: false, error: error.message };
   return {
     success: true,
@@ -325,18 +370,112 @@ export async function bulkUpdateEnrollmentStatus(
 
 // ── Courses ──────────────────────────────────────────────────────────────────
 
+async function fetchCoursesFromApi(): Promise<ListaFetchResult<Course[]>> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), FETCH_COURSES_MS);
+  try {
+    const res = await fetch("/api/courses", { signal: controller.signal });
+    if (!res.ok) {
+      return { success: false, error: `Courses API HTTP ${res.status}` };
+    }
+    const rows = (await res.json()) as unknown;
+    if (!Array.isArray(rows)) {
+      return { success: false, error: "Courses API returned invalid data" };
+    }
+    return {
+      success: true,
+      data: rows.map((row) => rowToCourse(normalizeCourseDbRow(row as Record<string, unknown>))),
+    };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    const timedOut = msg.toLowerCase().includes("abort");
+    return { success: false, error: timedOut ? "Courses request timed out" : msg };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export async function fetchCourses(): Promise<ListaFetchResult<Course[]>> {
-  const { data, error } = await lista.from("courses").select("*").order("name", { ascending: true });
-  if (error) return { success: false, error: error.message };
-  return { success: true, data: ((data as Record<string, unknown>[]) || []).map(rowToCourse) };
+  const api = await fetchCoursesFromApi();
+  if (api.success && api.data.length > 0) {
+    return api;
+  }
+
+  if (!canUseInsforgeSdk()) {
+    if (api.success) return api;
+    return api.success === false ? api : { success: true, data: [] };
+  }
+
+  try {
+    const { data, error } = await withTimeout(
+      (async () => lista.from("courses").select("*").order("name", { ascending: true }))(),
+      FETCH_COURSES_MS,
+      "InsForge courses",
+    );
+    if (error) {
+      if (api.success) return api;
+      return { success: false, error: error.message };
+    }
+    const mapped = ((data as Record<string, unknown>[]) || []).map((row) =>
+      rowToCourse(normalizeCourseDbRow(row)),
+    );
+    if (mapped.length > 0) {
+      return { success: true, data: mapped };
+    }
+    if (api.success) return api;
+    return { success: true, data: [] };
+  } catch (err) {
+    if (api.success) return api;
+    const msg = err instanceof Error ? err.message : String(err);
+    return {
+      success: false,
+      error: api.error ? `${api.error}; ${msg}` : msg,
+    };
+  }
 }
 
 // ── Announcements ────────────────────────────────────────────────────────────
 
+async function fetchAnnouncementsFromApi(): Promise<ListaFetchResult<ListaAnnouncement[]>> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), FETCH_COURSES_MS);
+  try {
+    const res = await fetch("/api/announcements", { signal: controller.signal });
+    if (!res.ok) {
+      return { success: false, error: `Announcements API HTTP ${res.status}` };
+    }
+    const rows = (await res.json()) as unknown;
+    if (!Array.isArray(rows)) {
+      return { success: false, error: "Announcements API returned invalid data" };
+    }
+    return {
+      success: true,
+      data: rows.map((row) => rowToAnnouncement(normalizeAnnouncementDbRow(row as Record<string, unknown>))),
+    };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    const timedOut = msg.toLowerCase().includes("abort");
+    return { success: false, error: timedOut ? "Announcements request timed out" : msg };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function normalizeAnnouncementDbRow(row: Record<string, unknown>): Record<string, unknown> {
+  return {
+    ...row,
+    target: row.target ?? row.targetRole,
+    created_at: row.created_at ?? row.createdAt,
+    author: row.author,
+  };
+}
+
 export async function fetchAnnouncements(): Promise<ListaFetchResult<ListaAnnouncement[]>> {
-  const { data, error } = await lista.from("announcements").select("*").order("created_at", { ascending: false });
-  if (error) return { success: false, error: error.message };
-  return { success: true, data: ((data as Record<string, unknown>[]) || []).map(rowToAnnouncement) };
+  const api = await fetchAnnouncementsFromApi();
+  if (api.success) {
+    return api;
+  }
+  return { success: true, data: [] };
 }
 
 // ── Schedules ────────────────────────────────────────────────────────────────
