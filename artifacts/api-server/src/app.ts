@@ -3,8 +3,8 @@ import express, { type Express } from "express";
 import cors from "cors";
 import pinoHttp from "pino-http";
 import rateLimit from "express-rate-limit";
-import router from "./routes";
-import { logger } from "./lib/logger";
+import router from "./routes/index.js";
+import { logger } from "./lib/logger.js";
 
 const app: Express = express();
 
@@ -15,13 +15,13 @@ const limiter = rateLimit({
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
   message: "Too many requests from this IP, please try again after 15 minutes",
-  skip: (req) => process.env.NODE_ENV === "development", // Skip rate limiting in development
+  skip: (_req: unknown) => process.env.NODE_ENV === "development", // Skip rate limiting in development
 });
 
 app.use(
   pinoHttp({
     logger,
-    customLogLevel(_req, res, err) {
+    customLogLevel(_req: unknown, res: { statusCode?: number }, err: unknown) {
       if (err) return "error";
       // Client navigated away or HMR cancelled the fetch — not a server failure.
       if (!res.statusCode) return "debug";
@@ -30,14 +30,14 @@ app.use(
       return "info";
     },
     serializers: {
-      req(req) {
+      req(req: { id?: unknown; method?: string; url?: string }) {
         return {
           id: req.id,
           method: req.method,
           url: req.url?.split("?")[0],
         };
       },
-      res(res) {
+      res(res: { statusCode?: number }) {
         return {
           statusCode: res.statusCode,
         };

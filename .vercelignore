@@ -13,3 +13,14 @@ test-results
 **/*.log
 .vercel
 **/graphify-out
+attached_assets
+promotional_materials
+scratch
+.agents
+.cursor
+.gemini
+.insforge
+.local
+.opencode
+.trae
+artifacts/mockup-sandbox
