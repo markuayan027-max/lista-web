@@ -18,7 +18,7 @@ import StatusBadge from "@/components/status-badge";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription
 } from "@/components/ui/dialog";
-import { useCourses, useEnrollments } from "@/hooks/use-lista-data";
+import { useCourseBatches, useCourses, useEnrollments } from "@/hooks/use-lista-data";
 import {
   exportTraineesToExcel,
   exportSingleTraineeToWord,
@@ -40,8 +40,10 @@ export default function AdminExportPage() {
   const { toast } = useToast();
   const { data: enrollments = [], isLoading } = useEnrollments();
   const { data: courses = [] } = useCourses();
+  const { data: courseBatches = [] } = useCourseBatches();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [batchFilter, setBatchFilter] = useState("all");
   const [exportingId, setExportingId] = useState<string | null>(null);
   const [batchLoading, setBatchLoading] = useState<string | null>(null);
   const [previewEnrollment, setPreviewEnrollment] = useState<Enrollment | null>(null);
@@ -53,7 +55,12 @@ export default function AdminExportPage() {
       e.traineeEmail.toLowerCase().includes(q) ||
       e.refNo.toLowerCase().includes(q);
     const matchesStatus = statusFilter === "all" || e.status === statusFilter;
-    return matchesSearch && matchesStatus;
+    const matchesBatch =
+      batchFilter === "all" ||
+      (batchFilter === "unbatched"
+        ? !e.batchCode
+        : String(e.batchCode || "") === batchFilter);
+    return matchesSearch && matchesStatus && matchesBatch;
   });
 
   const doExport = async (fn: () => Promise<void> | void, id: string) => {
@@ -138,6 +145,22 @@ export default function AdminExportPage() {
                 <SelectItem value="confirmed">Confirmed</SelectItem>
                 <SelectItem value="waitlisted">Waitlisted</SelectItem>
                 <SelectItem value="rejected">Rejected</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={batchFilter} onValueChange={setBatchFilter}>
+              <SelectTrigger className="w-full sm:w-56 bg-card border-card-border">
+                <SelectValue placeholder="All Batches" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Batches</SelectItem>
+                <SelectItem value="unbatched">Unassigned</SelectItem>
+                {Array.from(new Map(courseBatches.map((b) => [b.batchCode, b])).values())
+                  .filter((b) => b.batchCode)
+                  .map((b) => (
+                    <SelectItem key={b.id} value={b.batchCode}>
+                      {b.batchCode} — {b.batchName}
+                    </SelectItem>
+                  ))}
               </SelectContent>
             </Select>
           </motion.div>
@@ -308,9 +331,9 @@ export default function AdminExportPage() {
                     <Filter className="h-6 w-6 text-primary" />
                   </div>
                   <div>
-                    <CardTitle className="text-lg">Filtered / Custom Export</CardTitle>
+                    <CardTitle className="text-lg">Filtered / Custom Excel</CardTitle>
                     <CardDescription className="mt-1">
-                      Use the search and filter in the Trainees tab, then export only the matching records.
+                      Use the search, status, and batch filter in the Trainees tab, then export only the matching records.
                       Currently <strong>{filtered.length}</strong> record(s) match your current filter.
                     </CardDescription>
                   </div>
@@ -330,20 +353,7 @@ export default function AdminExportPage() {
                   ) : (
                     <FileSpreadsheet className="h-4 w-4 mr-2" />
                   )}
-                  Export Filtered — Excel
-                </Button>
-                <Button
-                  variant="outline"
-                  className="flex-1 font-semibold text-blue-700 border-blue-300 hover:bg-blue-50"
-                  disabled={batchLoading === "filtered-doc"}
-                  onClick={() => doBatch(() => exportAllTraineesToWord(filtered), "filtered-doc")}
-                >
-                  {batchLoading === "filtered-doc" ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <FileText className="h-4 w-4 mr-2" />
-                  )}
-                  Export Filtered — Word
+                  Download Batch Excel
                 </Button>
               </CardFooter>
             </Card>
@@ -385,24 +395,13 @@ export default function AdminExportPage() {
               <Button
                 variant="outline"
                 size="sm"
-                className="flex-1 text-emerald-700 border-emerald-300 hover:bg-emerald-50"
-                onClick={() => {
-                  exportSingleTraineeToExcel(previewEnrollment);
-                  setPreviewEnrollment(null);
-                }}
-              >
-                <FileSpreadsheet className="h-4 w-4 mr-2" /> Excel
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
                 className="flex-1 text-blue-700 border-blue-300 hover:bg-blue-50"
                 onClick={async () => {
                   await exportSingleTraineeToWord(previewEnrollment);
                   setPreviewEnrollment(null);
                 }}
               >
-                <FileText className="h-4 w-4 mr-2" /> Word
+                <FileText className="h-4 w-4 mr-2" /> PDF application form
               </Button>
             </div>
           </DialogContent>

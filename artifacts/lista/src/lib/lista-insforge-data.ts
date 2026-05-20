@@ -205,6 +205,34 @@ export interface DbSchedule {
   room: string;
 }
 
+export interface CourseBatchRow {
+  id: string;
+  courseSlug: string;
+  batchCode: string;
+  batchName: string;
+  capacity: number;
+  seatsTaken: number;
+  status: "open" | "closed" | "archived";
+  startDate: string;
+  endDate: string;
+  createdAt: string;
+}
+
+function rowToCourseBatch(row: Record<string, unknown>): CourseBatchRow {
+  return {
+    id: str(row.id),
+    courseSlug: str(row.course_slug ?? row.courseSlug),
+    batchCode: str(row.batch_code ?? row.batchCode),
+    batchName: str(row.batch_name ?? row.batchName),
+    capacity: Number(row.capacity ?? 25),
+    seatsTaken: Number(row.seats_taken ?? row.seatsTaken ?? 0),
+    status: (str(row.status) as CourseBatchRow["status"]) || "open",
+    startDate: str(row.start_date ?? row.startDate),
+    endDate: str(row.end_date ?? row.endDate),
+    createdAt: str(row.created_at ?? row.createdAt) || new Date().toISOString(),
+  };
+}
+
 export function rowToSchedule(row: Record<string, unknown>): DbSchedule {
   const start = row.start_date ? new Date(str(row.start_date)) : new Date();
   const slot = str(row.time_slot);
@@ -594,6 +622,99 @@ export async function fetchSchedules(): Promise<ListaFetchResult<DbSchedule[]>> 
   const { data, error } = await lista.from("schedules").select("*").order("start_date", { ascending: true });
   if (error) return { success: false, error: error.message };
   return { success: true, data: ((data as Record<string, unknown>[]) || []).map(rowToSchedule) };
+}
+
+export async function fetchCourseBatches(
+  courseSlug?: string,
+): Promise<ListaFetchResult<CourseBatchRow[]>> {
+  const headers = authHeaders();
+  if (!("Authorization" in headers)) {
+    return { success: false, error: "Sign in required to list batches" };
+  }
+  const query = courseSlug ? `?courseSlug=${encodeURIComponent(courseSlug)}` : "";
+  try {
+    const apiRes = await fetch(`/api/batches${query}`, { headers });
+    const body = (await apiRes.json().catch(() => ({}))) as {
+      success?: boolean;
+      data?: Record<string, unknown>[];
+      error?: string;
+    };
+    if (apiRes.ok && body.success && Array.isArray(body.data)) {
+      return { success: true, data: body.data.map(rowToCourseBatch) };
+    }
+    return { success: false, error: body.error || `Batch list failed (${apiRes.status})` };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Could not reach /api/batches",
+    };
+  }
+}
+
+export async function createCourseBatch(input: {
+  courseSlug: string;
+  batchCode: string;
+  batchName: string;
+  capacity: number;
+  startDate: string;
+  endDate: string;
+}): Promise<ListaFetchResult<CourseBatchRow>> {
+  const headers = authHeaders();
+  if (!("Authorization" in headers)) {
+    return { success: false, error: "Sign in required to create batch" };
+  }
+  try {
+    const apiRes = await fetch("/api/batches", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...headers },
+      body: JSON.stringify(input),
+    });
+    const body = (await apiRes.json().catch(() => ({}))) as {
+      success?: boolean;
+      data?: Record<string, unknown>;
+      error?: string;
+    };
+    if (apiRes.ok && body.success && body.data) {
+      return { success: true, data: rowToCourseBatch(body.data) };
+    }
+    return { success: false, error: body.error || `Batch create failed (${apiRes.status})` };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Could not reach /api/batches",
+    };
+  }
+}
+
+export async function updateCourseBatchStatus(
+  id: string,
+  status: CourseBatchRow["status"],
+): Promise<ListaFetchResult<CourseBatchRow>> {
+  const headers = authHeaders();
+  if (!("Authorization" in headers)) {
+    return { success: false, error: "Sign in required to update batch status" };
+  }
+  try {
+    const apiRes = await fetch(`/api/batches/${encodeURIComponent(id)}/status`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...headers },
+      body: JSON.stringify({ status }),
+    });
+    const body = (await apiRes.json().catch(() => ({}))) as {
+      success?: boolean;
+      data?: Record<string, unknown>;
+      error?: string;
+    };
+    if (apiRes.ok && body.success && body.data) {
+      return { success: true, data: rowToCourseBatch(body.data) };
+    }
+    return { success: false, error: body.error || `Batch update failed (${apiRes.status})` };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Could not reach /api/batches",
+    };
+  }
 }
 
 // ── Testimonials & FAQs ──────────────────────────────────────────────────────

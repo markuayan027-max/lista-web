@@ -296,6 +296,8 @@ export function insforgeEnrollmentRowToApiData(row: Record<string, unknown>): Re
     employmentStatus: r.employment,
     employmentType: r.employment_type,
     consent: r.consent === true || r.consent === "true" || r.consent === "t",
+    batchId: r.batch_id ?? r.batchId,
+    batchCode: r.batch_code ?? r.batchCode,
     documentStatus: "missing",
     createdAt: r.submitted_at ? str(r.submitted_at) : new Date().toISOString(),
     ...supplementalFieldsFromNotes(r.notes),

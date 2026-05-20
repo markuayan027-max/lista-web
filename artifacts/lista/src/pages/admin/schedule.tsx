@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import PrimaryButton from "@/components/primary-button";
 import FormInputField from "@/components/form-input-field";
-import { useCourses, useCreateSchedule, useSchedules } from "@/hooks/use-lista-data";
+import { useCourseBatches, useCourses, useCreateCourseBatch, useCreateSchedule, useSchedules, useUpdateCourseBatchStatus } from "@/hooks/use-lista-data";
 import { format, addDays, startOfWeek } from "date-fns";
 
 const containerVariants = {
@@ -28,10 +28,14 @@ const itemVariants = {
 export default function AdminSchedulePage() {
   const { toast } = useToast();
   const { data: schedules = [] } = useSchedules();
+  const { data: courseBatches = [] } = useCourseBatches();
   const { data: courseList = [] } = useCourses();
   const createSchedule = useCreateSchedule();
+  const createCourseBatch = useCreateCourseBatch();
+  const updateBatchStatus = useUpdateCourseBatchStatus();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isPeriodsDialogOpen, setIsPeriodsDialogOpen] = useState(false);
+  const [isBatchDialogOpen, setIsBatchDialogOpen] = useState(false);
   const [view, setView] = useState("week"); // week is functional
   
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -56,6 +60,15 @@ export default function AdminSchedulePage() {
     courseSlug: "",
     startDate: "",
     endDate: ""
+  });
+
+  const [batchForm, setBatchForm] = useState({
+    courseSlug: "",
+    batchCode: "",
+    batchName: "",
+    capacity: 25,
+    startDate: format(new Date(), "yyyy-MM-dd"),
+    endDate: format(addDays(new Date(), 30), "yyyy-MM-dd"),
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -90,6 +103,57 @@ export default function AdminSchedulePage() {
       title: "Course period noted",
       description: `Period dates saved locally for ${courseList.find((c) => c.slug === periodForm.courseSlug)?.title ?? periodForm.courseSlug}. Course date fields are not yet stored in InsForge.`,
     });
+  };
+
+  const handleCreateBatch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!batchForm.courseSlug || !batchForm.batchCode || !batchForm.batchName) {
+      toast({ title: "Validation Error", description: "Course, batch code, and batch name are required.", variant: "destructive" });
+      return;
+    }
+    if (batchForm.capacity < 1) {
+      toast({ title: "Validation Error", description: "Capacity must be at least 1.", variant: "destructive" });
+      return;
+    }
+    try {
+      await createCourseBatch.mutateAsync({
+        courseSlug: batchForm.courseSlug,
+        batchCode: batchForm.batchCode.trim(),
+        batchName: batchForm.batchName.trim(),
+        capacity: Number(batchForm.capacity),
+        startDate: batchForm.startDate,
+        endDate: batchForm.endDate,
+      });
+      setIsBatchDialogOpen(false);
+      setBatchForm({
+        courseSlug: "",
+        batchCode: "",
+        batchName: "",
+        capacity: 25,
+        startDate: format(new Date(), "yyyy-MM-dd"),
+        endDate: format(addDays(new Date(), 30), "yyyy-MM-dd"),
+      });
+      toast({ title: "Batch created", description: "The course batch is ready for enrollment assignment." });
+    } catch (err) {
+      toast({
+        title: "Create batch failed",
+        description: err instanceof Error ? err.message : "Could not create batch.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleToggleBatch = async (id: string, next: "open" | "closed") => {
+    try {
+      await updateBatchStatus.mutateAsync({ id, status: next });
+      toast({ title: "Batch updated", description: `Batch is now ${next}.` });
+    } catch (err) {
+      toast({
+        title: "Batch update failed",
+        description: err instanceof Error ? err.message : "Could not update batch.",
+        variant: "destructive",
+      });
+    }
   };
 
   const getCourseColor = (slug: string) => {
@@ -278,8 +342,157 @@ export default function AdminSchedulePage() {
               </form>
             </DialogContent>
           </Dialog>
+
+          <Dialog open={isBatchDialogOpen} onOpenChange={setIsBatchDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="gap-2 h-10">
+                <Plus className="h-4 w-4" />
+                Create Batch
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[520px]">
+              <form onSubmit={handleCreateBatch}>
+                <DialogHeader>
+                  <DialogTitle>Create course batch</DialogTitle>
+                  <DialogDescription>
+                    Define the batch code/name, capacity, and date range for one course.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid gap-1.5">
+                    <label className="text-sm font-semibold tracking-tight">Course</label>
+                    <Select
+                      value={batchForm.courseSlug}
+                      onValueChange={(val) => setBatchForm((prev) => ({ ...prev, courseSlug: val }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select course" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {courseList.map((c) => (
+                          <SelectItem key={c.slug} value={c.slug}>{c.title}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormInputField
+                      label="Batch Code"
+                      value={batchForm.batchCode}
+                      onChange={(e) => setBatchForm({ ...batchForm, batchCode: e.target.value })}
+                      placeholder="e.g. CK2-2026-A"
+                      required
+                    />
+                    <FormInputField
+                      label="Batch Name"
+                      value={batchForm.batchName}
+                      onChange={(e) => setBatchForm({ ...batchForm, batchName: e.target.value })}
+                      placeholder="e.g. Cookery May 2026"
+                      required
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-4">
+                    <FormInputField
+                      label="Capacity"
+                      type="number"
+                      value={String(batchForm.capacity)}
+                      onChange={(e) => setBatchForm({ ...batchForm, capacity: Number(e.target.value || 0) })}
+                      min="1"
+                      max="500"
+                      required
+                    />
+                    <FormInputField
+                      label="Start Date"
+                      type="date"
+                      value={batchForm.startDate}
+                      onChange={(e) => setBatchForm({ ...batchForm, startDate: e.target.value })}
+                      required
+                    />
+                    <FormInputField
+                      label="End Date"
+                      type="date"
+                      value={batchForm.endDate}
+                      onChange={(e) => setBatchForm({ ...batchForm, endDate: e.target.value })}
+                      required
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button type="button" variant="outline" onClick={() => setIsBatchDialogOpen(false)}>Cancel</Button>
+                  <PrimaryButton type="submit">Create Batch</PrimaryButton>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
+
+      <motion.div variants={itemVariants}>
+        <Card className="border-card-border shadow-sm">
+          <CardHeader className="py-4 border-b border-card-border">
+            <CardTitle className="text-base font-bold">Active course batches</CardTitle>
+          </CardHeader>
+          <CardContent className="p-4">
+            {courseBatches.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No batches created yet.</p>
+            ) : (
+              <div className="overflow-x-auto hide-scrollbar">
+                <table className="min-w-[760px] w-full text-sm">
+                  <thead>
+                    <tr className="text-left border-b border-card-border text-muted-foreground">
+                      <th className="py-2 pr-3 font-semibold">Batch</th>
+                      <th className="py-2 pr-3 font-semibold">Course</th>
+                      <th className="py-2 pr-3 font-semibold">Seats</th>
+                      <th className="py-2 pr-3 font-semibold">Period</th>
+                      <th className="py-2 pr-3 font-semibold">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {courseBatches.map((batch) => {
+                      const course = courseList.find((c) => c.slug === batch.courseSlug);
+                      const isOpen = batch.status === "open";
+                      return (
+                        <tr key={batch.id} className="border-b border-card-border/50">
+                          <td className="py-2 pr-3">
+                            <p className="font-semibold">{batch.batchName}</p>
+                            <p className="text-xs text-muted-foreground">{batch.batchCode}</p>
+                          </td>
+                          <td className="py-2 pr-3">{course?.title ?? batch.courseSlug}</td>
+                          <td className="py-2 pr-3">{batch.seatsTaken} / {batch.capacity}</td>
+                          <td className="py-2 pr-3">
+                            {format(new Date(batch.startDate), "MMM d, yyyy")} - {format(new Date(batch.endDate), "MMM d, yyyy")}
+                          </td>
+                          <td className="py-2 pr-3">
+                            <div className="flex items-center gap-2">
+                              <span className="inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold capitalize">
+                                {batch.status}
+                              </span>
+                              {batch.status !== "archived" && (
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-7 px-2 text-xs"
+                                  disabled={updateBatchStatus.isPending}
+                                  onClick={() => handleToggleBatch(batch.id, isOpen ? "closed" : "open")}
+                                >
+                                  {isOpen ? "Close" : "Reopen"}
+                                </Button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </motion.div>
 
       <motion.div variants={itemVariants}>
         <Card className="border-card-border shadow-sm">

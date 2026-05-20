@@ -740,6 +740,8 @@ export interface Enrollment {
   heardFrom?: string;
   notes?: string;
   consent: boolean;
+  batchId?: string;
+  batchCode?: string;
   status:
     | "pending"
     | "confirmed"

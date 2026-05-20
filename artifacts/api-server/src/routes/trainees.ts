@@ -1,10 +1,11 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
-import { enrollments, users } from "@workspace/db/schema";
-import { eq } from "drizzle-orm";
+import { courseBatches, enrollments, users } from "@workspace/db/schema";
+import { and, asc, eq, lt, sql as dsql } from "drizzle-orm";
 import { z } from "zod";
 import { logger } from "../lib/logger";
 import { assertEmailAccess, requireAuth } from "../middleware/auth";
+import { ensureBatchSchemaReady } from "./batches";
 
 const router = Router();
 router.use(requireAuth);
@@ -145,6 +146,7 @@ function enrollmentValuesFromRegister(data: RegisterBody, notesExtra?: string) {
 
 router.post("/register", async (req, res) => {
   try {
+    await ensureBatchSchemaReady();
     const data = registerSchema.parse(req.body);
     if (!assertEmailAccess(req, data.traineeEmail)) {
       return res.status(403).json({ success: false, error: "Cannot register for another user's email" });
@@ -156,6 +158,56 @@ router.post("/register", async (req, res) => {
 
     const [pubUser] = await db.select({ id: users.id }).from(users).where(eq(users.email, email)).limit(1);
     const valuesWithUser = { ...values, userId: pubUser?.id ?? null };
+
+    async function assignBatchIfApplicable(enrollmentId: string, courseSlug: string | undefined, status: string) {
+      const normalizedStatus = String(status || "").toLowerCase();
+      const canAssign = Boolean(courseSlug) && normalizedStatus !== "ready to apply";
+      if (!canAssign) return { assigned: false as const };
+
+      // Find earliest open batch with available seats.
+      const [batch] = await db
+        .select()
+        .from(courseBatches)
+        .where(
+          and(
+            dsql`lower(${courseBatches.courseSlug}) = lower(${courseSlug})`,
+            dsql`${courseBatches.status} = 'open'`,
+            lt(courseBatches.seatsTaken, courseBatches.capacity),
+          ),
+        )
+        .orderBy(asc(courseBatches.startDate), asc(courseBatches.createdAt))
+        .limit(1);
+
+      if (!batch) {
+        await db
+          .update(enrollments)
+          .set({ status: "Waitlisted", batchId: null, batchCode: null, updatedAt: new Date() })
+          .where(eq(enrollments.id, enrollmentId));
+        return { assigned: false as const, waitlisted: true as const };
+      }
+
+      const newSeats = (batch.seatsTaken ?? 0) + 1;
+      await db
+        .update(courseBatches)
+        .set({
+          seatsTaken: newSeats,
+          status: newSeats >= batch.capacity ? "closed" : "open",
+          updatedAt: new Date(),
+        })
+        .where(eq(courseBatches.id, batch.id));
+
+      await db
+        .update(enrollments)
+        .set({
+          batchId: batch.id,
+          batchCode: batch.batchCode,
+          status: "Pending",
+          updatedAt: new Date(),
+        })
+        .where(eq(enrollments.id, enrollmentId));
+
+      return { assigned: true as const, batchId: batch.id, batchCode: batch.batchCode };
+    }
 
     const [existing] = await db
       .select()
@@ -170,12 +222,19 @@ router.post("/register", async (req, res) => {
         .set({ ...patch, updatedAt: new Date() })
         .where(eq(enrollments.id, existing.id))
         .returning();
+      // Re-assign batch if a new course is being applied (and no batch yet).
+      if (updated?.course) {
+        await assignBatchIfApplicable(updated.id, String(updated.course ?? ""), String(updated.status ?? ""));
+      }
       logger.info({ email }, "Enrollment updated via register (existing email)");
       return res.status(200).json({ success: true, data: updated, updated: true });
     }
 
     try {
       const [enrollment] = await db.insert(enrollments).values(valuesWithUser).returning();
+      if (enrollment?.course) {
+        await assignBatchIfApplicable(enrollment.id, String(enrollment.course ?? ""), String(enrollment.status ?? ""));
+      }
       return res.status(201).json({ success: true, data: enrollment });
     } catch (insertError) {
       if (!isUniqueViolation(insertError)) {
@@ -188,6 +247,9 @@ router.post("/register", async (req, res) => {
         .returning();
       if (!updated) {
         throw insertError;
+      }
+      if (updated?.course) {
+        await assignBatchIfApplicable(updated.id, String(updated.course ?? ""), String(updated.status ?? ""));
       }
       logger.info({ email }, "Enrollment updated via register (unique conflict)");
       return res.status(200).json({ success: true, data: updated, updated: true });

@@ -5,18 +5,21 @@ import { deriveCertificatesFromEnrollments } from "@/lib/lista-insforge-data";
 import { fetchTraineeEnrollmentByEmail } from "@/lib/trainee-enrollment-insforge";
 import {
   bulkUpdateEnrollmentStatus,
+  createCourseBatch,
   createAnnouncement,
   createSchedule,
   deleteAnnouncement,
   deleteSchedule,
   fetchAllEnrollments,
   fetchAnnouncements,
+  fetchCourseBatches,
   fetchCourses,
   fetchFaqs,
   fetchSchedules,
   fetchTestimonials,
   fetchUsers,
   inviteStaffUser,
+  updateCourseBatchStatus,
   updateAnnouncement,
   updateEnrollmentStatus,
   updateSchedule,
@@ -32,6 +35,7 @@ export const listaKeys = {
   courses: ["lista", "courses"] as const,
   announcements: ["lista", "announcements"] as const,
   schedules: ["lista", "schedules"] as const,
+  courseBatches: ["lista", "course-batches"] as const,
   testimonials: ["lista", "testimonials"] as const,
   faqs: ["lista", "faqs"] as const,
   traineeProfile: (email: string) => ["lista", "trainee-profile", email] as const,
@@ -178,6 +182,14 @@ export function useSchedules() {
   });
 }
 
+export function useCourseBatches(courseSlug?: string) {
+  return useQuery({
+    queryKey: [...listaKeys.courseBatches, courseSlug ?? "all"],
+    queryFn: async () => unwrap(await fetchCourseBatches(courseSlug)),
+    staleTime: 30_000,
+  });
+}
+
 export function useTestimonials() {
   return useQuery({
     queryKey: listaKeys.testimonials,
@@ -259,6 +271,30 @@ export function useCreateSchedule() {
   return useMutation({
     mutationFn: async (input: Omit<DbSchedule, "id">) => unwrap(await createSchedule(input)),
     onSuccess: () => qc.invalidateQueries({ queryKey: listaKeys.schedules }),
+  });
+}
+
+export function useCreateCourseBatch() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      courseSlug: string;
+      batchCode: string;
+      batchName: string;
+      capacity: number;
+      startDate: string;
+      endDate: string;
+    }) => unwrap(await createCourseBatch(input)),
+    onSuccess: () => qc.invalidateQueries({ queryKey: listaKeys.courseBatches }),
+  });
+}
+
+export function useUpdateCourseBatchStatus() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { id: string; status: "open" | "closed" | "archived" }) =>
+      unwrap(await updateCourseBatchStatus(input.id, input.status)),
+    onSuccess: () => qc.invalidateQueries({ queryKey: listaKeys.courseBatches }),
   });
 }
 

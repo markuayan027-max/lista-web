@@ -19,6 +19,7 @@ import { useAuth } from "@/context/auth-context";
 import {
   useBulkUpdateEnrollmentStatus,
   useCourses,
+  useCourseBatches,
   useEnrollments,
   useUpdateEnrollmentStatus,
 } from "@/hooks/use-lista-data";
@@ -42,12 +43,14 @@ export default function AdminEnrollmentsPage() {
   const { toast } = useToast();
   const { data: enrollments = [], isLoading, isError, error } = useEnrollments();
   const { data: courses = [] } = useCourses();
+  const { data: courseBatches = [] } = useCourseBatches();
   const updateStatus = useUpdateEnrollmentStatus();
   const bulkUpdate = useBulkUpdateEnrollmentStatus();
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [courseFilter, setCourseFilter] = useState("all");
+  const [batchFilter, setBatchFilter] = useState("all");
   const [printTarget, setPrintTarget] = useState<Enrollment | null>(null);
 
   const toggleSelectAll = () => {
@@ -116,7 +119,12 @@ export default function AdminEnrollmentsPage() {
     const matchesStatus =
       statusFilter === "all" || enrollmentStatusIs(e.status, statusFilter);
     const matchesCourse = courseFilter === "all" || e.courseSlug === courseFilter;
-    return matchesSearch && matchesStatus && matchesCourse;
+    const matchesBatch =
+      batchFilter === "all" ||
+      (batchFilter === "unbatched"
+        ? !e.batchCode
+        : String(e.batchCode || "") === batchFilter);
+    return matchesSearch && matchesStatus && matchesCourse && matchesBatch;
   });
 
   return (
@@ -147,13 +155,10 @@ export default function AdminEnrollmentsPage() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h1 className="text-2xl font-black tracking-tight text-foreground">All Enrollments</h1>
-            <p className="text-muted-foreground text-sm mt-1">Review trainee submissions — approve, reject, or print forms. Admins do not fill applications here.</p>
+            <p className="text-muted-foreground text-sm mt-1">
+              Review trainee submissions — approve, reject, or print the official TESDA application form.
+            </p>
           </div>
-          {isAdmin && (
-            <Button variant="outline" className="gap-2 font-semibold rounded-xl border-border">
-              <Download className="h-4 w-4" /> Export CSV
-            </Button>
-          )}
         </div>
 
         {/* Stat pills */}
@@ -202,6 +207,25 @@ export default function AdminEnrollmentsPage() {
                     {courses.map(c => (
                       <SelectItem key={c.slug} value={c.slug}>{c.title}</SelectItem>
                     ))}
+                  </SelectContent>
+                </Select>
+
+                <Select value={batchFilter} onValueChange={setBatchFilter}>
+                  <SelectTrigger className="w-full min-w-0 sm:w-[220px] bg-card rounded-xl border-border">
+                    <SelectValue placeholder="All Batches" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Batches</SelectItem>
+                    <SelectItem value="unbatched">Unassigned</SelectItem>
+                    {Array.from(
+                      new Map(courseBatches.map((b) => [b.batchCode, b])).values(),
+                    )
+                      .filter((b) => b.batchCode)
+                      .map((b) => (
+                        <SelectItem key={b.id} value={b.batchCode}>
+                          {b.batchCode} — {b.batchName}
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>

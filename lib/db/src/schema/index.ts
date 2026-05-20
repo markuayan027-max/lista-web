@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, uuid, pgEnum, index, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, uuid, pgEnum, index, boolean, integer } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -76,6 +76,8 @@ export const enrollments = pgTable("lms_enrollments_legacy", {
   indigenousGroup: text("indigenous_group"),
   motherTongue: text("mother_tongue"),
   consent: boolean("consent").notNull().default(false),
+  batchId: uuid("batch_id"),
+  batchCode: text("batch_code"),
   submittedAt: timestamp("submitted_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, (table) => {
@@ -83,6 +85,7 @@ export const enrollments = pgTable("lms_enrollments_legacy", {
     refNoIdx: index("enrollment_ref_no_idx").on(table.refNo),
     userIdIdx: index("enrollment_user_id_idx").on(table.userId),
     statusIdx: index("enrollment_status_idx").on(table.status),
+    batchIdIdx: index("enrollment_batch_id_idx").on(table.batchId),
   }
 });
 
@@ -116,6 +119,28 @@ export const schedules = pgTable("schedules", {
 }, (table) => {
   return {
     courseIdx: index("schedule_course_idx").on(table.course),
+  }
+});
+
+export const courseBatchStatusEnum = pgEnum("course_batch_status", ["open", "closed", "archived"]);
+
+export const courseBatches = pgTable("course_batches", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  courseSlug: text("course_slug").notNull(),
+  batchCode: text("batch_code").notNull().unique(),
+  batchName: text("batch_name").notNull(),
+  capacity: integer("capacity").notNull().default(25),
+  seatsTaken: integer("seats_taken").notNull().default(0),
+  startDate: timestamp("start_date").notNull(),
+  endDate: timestamp("end_date").notNull(),
+  status: courseBatchStatusEnum("status").notNull().default("open"),
+  createdBy: uuid("created_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => {
+  return {
+    courseSlugIdx: index("course_batches_course_slug_idx").on(table.courseSlug),
+    statusIdx: index("course_batches_status_idx").on(table.status),
   }
 });
 
@@ -190,6 +215,7 @@ export const insertEnrollmentSchema = createInsertSchema(enrollments).omit({ id:
 export const insertAnnouncementSchema = createInsertSchema(announcements).omit({ id: true, createdAt: true });
 export const insertScheduleSchema = createInsertSchema(schedules).omit({ id: true });
 export const insertCourseSchema = createInsertSchema(courses).omit({ id: true, createdAt: true });
+export const insertCourseBatchSchema = createInsertSchema(courseBatches).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertFaqSchema = createInsertSchema(faqs).omit({ id: true });
 export const insertTestimonialSchema = createInsertSchema(testimonials).omit({ id: true });
 export const insertCaseSchema = createInsertSchema(cases).omit({ id: true, createdAt: true, updatedAt: true });
@@ -200,6 +226,7 @@ export type Enrollment = typeof enrollments.$inferSelect;
 export type Announcement = typeof announcements.$inferSelect;
 export type Schedule = typeof schedules.$inferSelect;
 export type Course = typeof courses.$inferSelect;
+export type CourseBatch = typeof courseBatches.$inferSelect;
 export type Faq = typeof faqs.$inferSelect;
 export type Testimonial = typeof testimonials.$inferSelect;
 export type Case = typeof cases.$inferSelect;

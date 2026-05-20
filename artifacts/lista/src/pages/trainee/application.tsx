@@ -29,6 +29,7 @@ import {
   mergeTraineeProfileSources,
 } from "@/lib/profile-utils";
 import { enrollmentBlocksNewCourseApplication } from "@/lib/enrollment-status";
+import { useCourseBatches } from "@/hooks/use-lista-data";
 
 const container = {
   hidden: { opacity: 0 },
@@ -52,6 +53,7 @@ export default function TraineeApplicationPage() {
   const profileQuery = useTraineeProfile(user?.email);
   const userEnrollment = (profileQuery.data as Enrollment | null) ?? null;
   const enrollmentLoading = profileQuery.isLoading;
+  const { data: courseBatches = [] } = useCourseBatches();
 
   const profile = useMemo(
     () => mergeTraineeProfileSources(userEnrollment, user?.id),
@@ -331,7 +333,13 @@ export default function TraineeApplicationPage() {
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6"
         >
           {filteredCourses.map((course) => {
-            const hasSlots = isCourseOpenForEnrollment(course);
+            const batchHasSeat = courseBatches.some(
+              (b) =>
+                b.courseSlug === course.slug &&
+                b.status === "open" &&
+                Number(b.seatsTaken) < Number(b.capacity),
+            );
+            const hasSlots = isCourseOpenForEnrollment(course) && batchHasSeat;
             const canSelect = hasSlots && canApplyToCourse;
 
             return (
