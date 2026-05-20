@@ -1,3 +1,4 @@
+import { apiUrl } from "./api-url";
 export type HomepageChatMessage = {
   role: "user" | "assistant";
   content: string;
@@ -33,7 +34,7 @@ export async function sendHomepageChatMessage(
 ): Promise<HomepageChatMessage> {
   let res: Response;
   try {
-    res = await fetch("/api/chat/homepage", {
+    res = await fetch(apiUrl("/api/chat/homepage"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ messages, programCount }),

@@ -1,0 +1,29 @@
+# LISTA API on Cloudflare Workers (matches dashboard service name lista-web).
+# Deploy from monorepo root: pnpm install && pnpm --filter @workspace/api-server exec wrangler deploy
+#
+# --- Required Worker secrets (Dashboard → lista-web → Settings → Variables and Secrets, or CLI) ---
+# DATABASE_URL     — Postgres for Drizzle (@workspace/db). On Workers use Hyperdrive + its URL.
+# GROQ_API_KEY     — Homepage AI chat (see src/lib/groq-env.ts). Aliases: GROQ_KEY, VITE_GROQ_API_KEY.
+#
+# --- Optional secrets / dashboard-only overrides ---
+# LISTA_APP_URL or VITE_APP_URL — Public site origin for staff activation links (insforge-auth-admin).
+# INSFORGE_URL — Overrides [vars] below if your InsForge project host differs.
+#
+name = "lista-web"
+main = "src/worker.ts"
+compatibility_date = "2025-11-01"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+NODE_ENV = "production"
+# Session validation + InsForge admin helpers (must match the project that issues user JWTs).
+INSFORGE_URL = "https://2r6c3q25.ap-southeast.insforge.app"
+# Homepage chat model when GROQ_MODEL secret is unset (groq-env.ts default matches this).
+GROQ_MODEL = "llama-3.3-70b-versatile"
+LOG_LEVEL = "info"
+
+# Postgres: use Hyperdrive in production (TCP from Worker). Bind here after creating in dashboard:
+# [[hyperdrive]]
+# binding = "HYPERDRIVE"
+# id = "<hyperdrive-id>"
+# Then set secret DATABASE_URL to the Hyperdrive connection string Cloudflare provides.

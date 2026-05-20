@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-20T08:13:36.709Z",
+  "generatedAt": "2026-05-20T09:30:18.247Z",
   "assets": {
     "/hero": {
       "defaultSrc": "/hero.webp",
@@ -12,7 +12,8 @@
         "1280": "/hero-1280w.webp",
         "1536": "/hero.webp"
       },
-      "preset": "hero"
+      "preset": "hero",
+      "sourceFingerprint": "3189346:1777693487516.3743:hero:{\"widths\":[640,960,1280,1920],\"maxWidth\":1920,\"quality\":82}"
     },
     "/agriculture-training": {
       "defaultSrc": "/agriculture-training.webp",
@@ -25,7 +26,8 @@
         "960": "/agriculture-training-960w.webp",
         "1024": "/agriculture-training.webp"
       },
-      "preset": "course"
+      "preset": "course",
+      "sourceFingerprint": "1060616:1777597196992.9915:course:{\"widths\":[400,640,960,1280],\"maxWidth\":1280,\"quality\":80}"
     },
     "/course-beauty-care": {
       "defaultSrc": "/course-beauty-care.webp",
@@ -38,7 +40,8 @@
         "960": "/course-beauty-care-960w.webp",
         "1024": "/course-beauty-care.webp"
       },
-      "preset": "course"
+      "preset": "course",
+      "sourceFingerprint": "698387:1778051227700.8594:course:{\"widths\":[400,640,960,1280],\"maxWidth\":1280,\"quality\":80}"
     },
     "/course-hospitality": {
       "defaultSrc": "/course-hospitality.webp",
@@ -51,7 +54,8 @@
         "960": "/course-hospitality-960w.webp",
         "1280": "/course-hospitality.webp"
       },
-      "preset": "course"
+      "preset": "course",
+      "sourceFingerprint": "1377692:1777535195000:course:{\"widths\":[400,640,960,1280],\"maxWidth\":1280,\"quality\":80}"
     },
     "/course-healthcare": {
       "defaultSrc": "/course-healthcare.webp",
@@ -64,7 +68,8 @@
         "960": "/course-healthcare-960w.webp",
         "1280": "/course-healthcare.webp"
       },
-      "preset": "course"
+      "preset": "course",
+      "sourceFingerprint": "1130554:1777535194000:course:{\"widths\":[400,640,960,1280],\"maxWidth\":1280,\"quality\":80}"
     },
     "/course-marketing": {
       "defaultSrc": "/course-marketing.webp",
@@ -77,7 +82,8 @@
         "960": "/course-marketing-960w.webp",
         "1280": "/course-marketing.webp"
       },
-      "preset": "course"
+      "preset": "course",
+      "sourceFingerprint": "1082560:1777535193000:course:{\"widths\":[400,640,960,1280],\"maxWidth\":1280,\"quality\":80}"
     },
     "/course-ui-ux": {
       "defaultSrc": "/course-ui-ux.webp",
@@ -90,7 +96,8 @@
         "960": "/course-ui-ux-960w.webp",
         "1280": "/course-ui-ux.webp"
       },
-      "preset": "course"
+      "preset": "course",
+      "sourceFingerprint": "1179822:1777535195000:course:{\"widths\":[400,640,960,1280],\"maxWidth\":1280,\"quality\":80}"
     },
     "/graduate-bookkeeper": {
       "defaultSrc": "/graduate-bookkeeper.webp",
@@ -103,7 +110,8 @@
         "960": "/graduate-bookkeeper-960w.webp",
         "1024": "/graduate-bookkeeper.webp"
       },
-      "preset": "course"
+      "preset": "course",
+      "sourceFingerprint": "645170:1777597523653.733:course:{\"widths\":[400,640,960,1280],\"maxWidth\":1280,\"quality\":80}"
     },
     "/graduate-electrician": {
       "defaultSrc": "/graduate-electrician.webp",
@@ -116,7 +124,8 @@
         "960": "/graduate-electrician-960w.webp",
         "1024": "/graduate-electrician.webp"
       },
-      "preset": "course"
+      "preset": "course",
+      "sourceFingerprint": "648925:1777597499843.8545:course:{\"widths\":[400,640,960,1280],\"maxWidth\":1280,\"quality\":80}"
     },
     "/graduate-it-support": {
       "defaultSrc": "/graduate-it-support.webp",
@@ -129,7 +138,8 @@
         "960": "/graduate-it-support-960w.webp",
         "1024": "/graduate-it-support.webp"
       },
-      "preset": "course"
+      "preset": "course",
+      "sourceFingerprint": "727566:1777597546606.479:course:{\"widths\":[400,640,960,1280],\"maxWidth\":1280,\"quality\":80}"
     },
     "/commencement_exercises": {
       "defaultSrc": "/commencement_exercises.webp",
@@ -142,7 +152,8 @@
         "960": "/commencement_exercises-960w.webp",
         "1024": "/commencement_exercises.webp"
       },
-      "preset": "course"
+      "preset": "course",
+      "sourceFingerprint": "1214431:1778551897437.2095:course:{\"widths\":[400,640,960,1280],\"maxWidth\":1280,\"quality\":80}"
     },
     "/news-scholarship": {
       "defaultSrc": "/news-scholarship.webp",
@@ -154,7 +165,8 @@
         "640": "/news-scholarship-640w.webp",
         "960": "/news-scholarship.webp"
       },
-      "preset": "news"
+      "preset": "news",
+      "sourceFingerprint": "706687:1777599385152.8777:news:{\"widths\":[400,640,960],\"maxWidth\":960,\"quality\":80}"
     },
     "/course-project-management": {
       "defaultSrc": "/course-project-management.webp",
@@ -167,7 +179,8 @@
         "960": "/course-project-management-960w.webp",
         "1280": "/course-project-management.webp"
       },
-      "preset": "course"
+      "preset": "course",
+      "sourceFingerprint": "1315982:1777535194000:course:{\"widths\":[400,640,960,1280],\"maxWidth\":1280,\"quality\":80}"
     },
     "/course-cybersecurity": {
       "defaultSrc": "/course-cybersecurity.webp",
@@ -180,7 +193,8 @@
         "960": "/course-cybersecurity-960w.webp",
         "1280": "/course-cybersecurity.webp"
       },
-      "preset": "course"
+      "preset": "course",
+      "sourceFingerprint": "1048105:1777535194000:course:{\"widths\":[400,640,960,1280],\"maxWidth\":1280,\"quality\":80}"
     },
     "/course-data-science": {
       "defaultSrc": "/course-data-science.webp",
@@ -193,7 +207,8 @@
         "960": "/course-data-science-960w.webp",
         "1280": "/course-data-science.webp"
       },
-      "preset": "course"
+      "preset": "course",
+      "sourceFingerprint": "1099041:1777535193000:course:{\"widths\":[400,640,960,1280],\"maxWidth\":1280,\"quality\":80}"
     },
     "/course-dressmaking": {
       "defaultSrc": "/course-dressmaking.webp",
@@ -206,7 +221,8 @@
         "960": "/course-dressmaking-960w.webp",
         "1024": "/course-dressmaking.webp"
       },
-      "preset": "course"
+      "preset": "course",
+      "sourceFingerprint": "835969:1778051882392.8943:course:{\"widths\":[400,640,960,1280],\"maxWidth\":1280,\"quality\":80}"
     },
     "/course-web-dev": {
       "defaultSrc": "/course-web-dev.webp",
@@ -219,7 +235,8 @@
         "960": "/course-web-dev-960w.webp",
         "1280": "/course-web-dev.webp"
       },
-      "preset": "course"
+      "preset": "course",
+      "sourceFingerprint": "995265:1777535193000:course:{\"widths\":[400,640,960,1280],\"maxWidth\":1280,\"quality\":80}"
     },
     "/assessment-promotional": {
       "defaultSrc": "/assessment-promotional.webp",
@@ -231,7 +248,8 @@
         "480": "/assessment-promotional-480w.webp",
         "640": "/assessment-promotional.webp"
       },
-      "preset": "portrait"
+      "preset": "portrait",
+      "sourceFingerprint": "2083714:1778911134431.9526:portrait:{\"widths\":[320,480,640],\"maxWidth\":640,\"quality\":82}"
     },
     "/lista-founder": {
       "defaultSrc": "/lista-founder.webp",
@@ -243,7 +261,8 @@
         "480": "/lista-founder-480w.webp",
         "508": "/lista-founder.webp"
       },
-      "preset": "portrait"
+      "preset": "portrait",
+      "sourceFingerprint": "16128:1777592926468.537:portrait:{\"widths\":[320,480,640],\"maxWidth\":640,\"quality\":82}"
     },
     "/logo": {
       "defaultSrc": "/logo.webp",
@@ -255,7 +274,8 @@
         "192": "/logo-192w.webp",
         "256": "/logo.webp"
       },
-      "preset": "partner"
+      "preset": "partner",
+      "sourceFingerprint": "69902:1777589329552.3164:partner:{\"widths\":[128,192,256],\"maxWidth\":256,\"quality\":88}"
     },
     "/opengraph": {
       "defaultSrc": "/opengraph.webp",
@@ -265,7 +285,8 @@
       "variants": {
         "1200": "/opengraph.webp"
       },
-      "preset": "og"
+      "preset": "og",
+      "sourceFingerprint": "102831:1777535869000:og:{\"widths\":[1200],\"maxWidth\":1200,\"quality\":85}"
     },
     "/partners/tesda-logo": {
       "defaultSrc": "/partners/tesda-logo.webp",
@@ -277,7 +298,8 @@
         "192": "/partners/tesda-logo-192w.webp",
         "256": "/partners/tesda-logo.webp"
       },
-      "preset": "partner"
+      "preset": "partner",
+      "sourceFingerprint": "243157:1777636536189.4695:partner:{\"widths\":[128,192,256],\"maxWidth\":256,\"quality\":88}"
     },
     "/partners/deped-logo": {
       "defaultSrc": "/partners/deped-logo.webp",
@@ -289,7 +311,8 @@
         "192": "/partners/deped-logo-192w.webp",
         "256": "/partners/deped-logo.webp"
       },
-      "preset": "partner"
+      "preset": "partner",
+      "sourceFingerprint": "225404:1777637979385.4927:partner:{\"widths\":[128,192,256],\"maxWidth\":256,\"quality\":88}"
     },
     "/partners/ati-logo": {
       "defaultSrc": "/partners/ati-logo.webp",
@@ -301,7 +324,8 @@
         "192": "/partners/ati-logo-192w.webp",
         "256": "/partners/ati-logo.webp"
       },
-      "preset": "partner"
+      "preset": "partner",
+      "sourceFingerprint": "235180:1777637010525.406:partner:{\"widths\":[128,192,256],\"maxWidth\":256,\"quality\":88}"
     },
     "/partners/nvtc-logo": {
       "defaultSrc": "/partners/nvtc-logo.webp",
@@ -313,7 +337,8 @@
         "192": "/partners/nvtc-logo-192w.webp",
         "256": "/partners/nvtc-logo.webp"
       },
-      "preset": "partner"
+      "preset": "partner",
+      "sourceFingerprint": "73996:1777637320251.8186:partner:{\"widths\":[128,192,256],\"maxWidth\":256,\"quality\":88}"
     },
     "/partners/lto-logo": {
       "defaultSrc": "/partners/lto-logo.webp",
@@ -325,7 +350,8 @@
         "192": "/partners/lto-logo-192w.webp",
         "256": "/partners/lto-logo.webp"
       },
-      "preset": "partner"
+      "preset": "partner",
+      "sourceFingerprint": "653715:1777589292306.4348:partner:{\"widths\":[128,192,256],\"maxWidth\":256,\"quality\":88}"
     }
   }
 }

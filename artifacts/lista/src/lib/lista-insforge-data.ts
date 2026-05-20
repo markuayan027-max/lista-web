@@ -9,6 +9,7 @@ import { insforgeEnrollmentRowToApiData } from "@/lib/trainee-enrollment-insforg
 import { enrollmentStatusIs, normalizeEnrollmentStatus } from "@/lib/enrollment-status";
 import type { Course, Enrollment, User, UserRole } from "@/lib/institutional-data";
 import { resolveCourseCoverImage, resolveCourseGalleryImages } from "@/lib/course-images";
+import { apiUrl } from "@/lib/api-url";
 
 export type ListaAnnouncement = {
   id: string;
@@ -292,7 +293,7 @@ export async function fetchUsers(): Promise<ListaFetchResult<User[]>> {
     return { success: false, error: "Sign in required to list users" };
   }
   try {
-    const apiRes = await fetch("/api/users", { headers });
+    const apiRes = await fetch(apiUrl("/api/users"), { headers });
     const body = (await apiRes.json().catch(() => ({}))) as {
       success?: boolean;
       data?: Record<string, unknown>[];
@@ -314,7 +315,7 @@ export async function fetchUsers(): Promise<ListaFetchResult<User[]>> {
 }
 
 export async function updateUserRole(userId: string, role: UserRole): Promise<ListaFetchResult<User>> {
-  const apiRes = await fetch(`/api/users/${userId}/role`, {
+  const apiRes = await fetch(apiUrl(`/api/users/${userId}/role`), {
     method: "PATCH",
     headers: { "Content-Type": "application/json", ...authHeaders() },
     body: JSON.stringify({ role }),
@@ -343,7 +344,7 @@ export async function inviteStaffUser(input: {
   email: string;
   role: "staff" | "admin";
 }): Promise<ListaFetchResult<User & { inviteMessage?: string }>> {
-  const apiRes = await fetch("/api/users/invite", {
+  const apiRes = await fetch(apiUrl("/api/users/invite"), {
     method: "POST",
     headers: { "Content-Type": "application/json", ...authHeaders() },
     body: JSON.stringify(input),
@@ -375,7 +376,7 @@ export async function updateUserStatus(
   userId: string,
   status: "active" | "deactivated",
 ): Promise<ListaFetchResult<User>> {
-  const apiRes = await fetch(`/api/users/${userId}/status`, {
+  const apiRes = await fetch(apiUrl(`/api/users/${userId}/status`), {
     method: "PATCH",
     headers: { "Content-Type": "application/json", ...authHeaders() },
     body: JSON.stringify({ status }),
@@ -407,7 +408,7 @@ async function fetchAllEnrollmentsViaApi(): Promise<ListaFetchResult<Enrollment[
     return { success: false, error: "Sign in required to list enrollments" };
   }
   try {
-    const apiRes = await fetch("/api/enrollments", { headers });
+    const apiRes = await fetch(apiUrl("/api/enrollments"), { headers });
     const body = (await apiRes.json().catch(() => ({}))) as {
       success?: boolean;
       data?: Record<string, unknown>[];
@@ -461,7 +462,7 @@ export async function updateEnrollmentStatus(
   const headers = authHeaders();
   if ("Authorization" in headers) {
     try {
-      const apiRes = await fetch(`/api/enrollments/${id}`, {
+      const apiRes = await fetch(apiUrl(`/api/enrollments/${id}`), {
         method: "PATCH",
         headers: { "Content-Type": "application/json", ...headers },
         body: JSON.stringify({ status }),
@@ -487,7 +488,7 @@ export async function bulkUpdateEnrollmentStatus(
   const headers = authHeaders();
   if ("Authorization" in headers) {
     try {
-      const apiRes = await fetch("/api/enrollments/bulk", {
+      const apiRes = await fetch(apiUrl("/api/enrollments/bulk"), {
         method: "PATCH",
         headers: { "Content-Type": "application/json", ...headers },
         body: JSON.stringify({ ids, status }),
@@ -512,7 +513,7 @@ async function fetchCoursesFromApi(): Promise<ListaFetchResult<Course[]>> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FETCH_COURSES_MS);
   try {
-    const res = await fetch("/api/courses", { signal: controller.signal });
+    const res = await fetch(apiUrl("/api/courses"), { signal: controller.signal });
     if (!res.ok) {
       return { success: false, error: `Courses API HTTP ${res.status}` };
     }
@@ -578,7 +579,7 @@ async function fetchAnnouncementsFromApi(): Promise<ListaFetchResult<ListaAnnoun
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FETCH_COURSES_MS);
   try {
-    const res = await fetch("/api/announcements", { signal: controller.signal });
+    const res = await fetch(apiUrl("/api/announcements"), { signal: controller.signal });
     if (!res.ok) {
       return { success: false, error: `Announcements API HTTP ${res.status}` };
     }
@@ -633,7 +634,7 @@ export async function fetchCourseBatches(
   }
   const query = courseSlug ? `?courseSlug=${encodeURIComponent(courseSlug)}` : "";
   try {
-    const apiRes = await fetch(`/api/batches${query}`, { headers });
+    const apiRes = await fetch(apiUrl(`/api/batches${query}`), { headers });
     const body = (await apiRes.json().catch(() => ({}))) as {
       success?: boolean;
       data?: Record<string, unknown>[];
@@ -664,7 +665,7 @@ export async function createCourseBatch(input: {
     return { success: false, error: "Sign in required to create batch" };
   }
   try {
-    const apiRes = await fetch("/api/batches", {
+    const apiRes = await fetch(apiUrl("/api/batches"), {
       method: "POST",
       headers: { "Content-Type": "application/json", ...headers },
       body: JSON.stringify(input),
@@ -695,7 +696,7 @@ export async function updateCourseBatchStatus(
     return { success: false, error: "Sign in required to update batch status" };
   }
   try {
-    const apiRes = await fetch(`/api/batches/${encodeURIComponent(id)}/status`, {
+    const apiRes = await fetch(apiUrl(`/api/batches/${encodeURIComponent(id)}/status`), {
       method: "PATCH",
       headers: { "Content-Type": "application/json", ...headers },
       body: JSON.stringify({ status }),

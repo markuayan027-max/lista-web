@@ -64,6 +64,8 @@ Thumbs.db
 .windsurf
 .env
 .env*
+!.env.example
+!**/.env.example
 scratch/
 scripts/
 !artifacts/lista/scripts/

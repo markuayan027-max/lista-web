@@ -66,3 +66,13 @@ graphify query "<file you changed> <behavior you fixed>"
 ```
 
 Paste subgraph file list into PR description.
+
+## Deployment reliability queries
+
+```
+python -m graphify query "vercel.json buildCommand outputDirectory rewrites api lista.dpdns.org"
+python -m graphify query ".vercelignore frontend-only deployment api exclusion"
+python -m graphify query "artifacts/lista/scripts/optimize-public-images.mjs incremental sourceFingerprint"
+python -m graphify query "artifacts/api-server/src/routes/homepage-chat.ts GROQ_API_KEY GROQ_MODEL"
+python -m graphify query "artifacts/api-server/src/routes/index.ts Router typing use"
+```

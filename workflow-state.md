@@ -1,6 +1,6 @@
 # LISTA Project — Workflow State
 
-**Last Updated:** 2026-05-20 (`PRODUCTION-READINESS-E2E-META-PROMPT.md` — full-stack + scale audit)
+**Last Updated:** 2026-05-20 (deploy optimization: incremental image build cache)
 
 > Read this before starting. Update when you finish or hand off.
 
@@ -63,3 +63,6 @@
 | 2026-05-20 | Sync meta Phase 4 | Matrix run + `PHASE-4-SYNC-E2E-RESULTS.md`; pilot-smoke 35/36; live print modal 2-page preview |
 | 2026-05-20 | Admin live smoke | `admin-live-smoke.mjs` — login → admin users/export/enrollments OK |
 | 2026-05-20 | Trainee live + routing | Profile/help/announcements OK; `/trainee/preferences` → profile redirect; application copy UTF-8 fix |
+| 2026-05-20 | Deploy optimization | `optimize-public-images.mjs` now skips unchanged files using manifest fingerprint/build-time checks for faster Vercel builds |
+| 2026-05-20 | API separation guard | Added `VITE_LISTA_API_BASE_URL` frontend API override + runbook hard boundary to keep LISTA off shared `astral-api` infra |
+| 2026-05-20 | Cloudflare `lista-web` | `artifacts/api-server/wrangler.toml` + `src/worker.ts` (Express + `httpServerHandler`); `pnpm cf:deploy`; runbook Workers Builds table (repo root + pnpm filter) |

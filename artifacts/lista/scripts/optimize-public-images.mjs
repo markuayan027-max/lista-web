@@ -11,6 +11,31 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC = path.resolve(__dirname, "..", "public");
 const MANIFEST_PATH = path.resolve(__dirname, "..", "src", "lib", "image-manifest.json");
 
+function readPreviousManifest() {
+  if (!fs.existsSync(MANIFEST_PATH)) return null;
+  try {
+    return JSON.parse(fs.readFileSync(MANIFEST_PATH, "utf8"));
+  } catch {
+    return null;
+  }
+}
+
+function getSourceFingerprint(inputPath, preset) {
+  const stat = fs.statSync(inputPath);
+  const presetDef = PRESETS[preset];
+  return `${stat.size}:${stat.mtimeMs}:${preset}:${JSON.stringify(presetDef)}`;
+}
+
+function outputsExist(asset) {
+  if (!asset || !asset.defaultSrc || !asset.variants) return false;
+  const allOutputs = new Set([asset.defaultSrc, ...Object.values(asset.variants)]);
+  for (const rel of allOutputs) {
+    const target = path.join(PUBLIC, String(rel).replace(/^\//, ""));
+    if (!fs.existsSync(target)) return false;
+  }
+  return true;
+}
+
 /** @type {Record<string, { widths: number[]; maxWidth: number; quality: number }>} */
 const PRESETS = {
   hero: { widths: [640, 960, 1280, 1920], maxWidth: 1920, quality: 82 },
@@ -64,11 +89,26 @@ const FILES = [
   { file: "logo.png", preset: "partner", out: "/partners/lto-logo" },
 ];
 
-async function processEntry({ file, preset, out, isWebp }) {
+async function processEntry({ file, preset, out, isWebp }, previousAsset, previousGeneratedAt) {
   const inputPath = path.join(PUBLIC, file);
   if (!fs.existsSync(inputPath)) {
     console.warn(`skip (missing): ${file}`);
     return null;
+  }
+
+  const sourceFingerprint = getSourceFingerprint(inputPath, preset);
+  const inputMtime = fs.statSync(inputPath).mtimeMs;
+  const previousBuildTime = Number.isFinite(previousGeneratedAt) ? previousGeneratedAt : 0;
+  const unchangedSinceLastBuild = inputMtime <= previousBuildTime;
+  if (previousAsset && outputsExist(previousAsset)) {
+    if (previousAsset.sourceFingerprint === sourceFingerprint || unchangedSinceLastBuild) {
+      return {
+        key: out,
+        ...previousAsset,
+        sourceFingerprint,
+        reused: true,
+      };
+    }
   }
 
   const { widths, maxWidth, quality } = PRESETS[preset];
@@ -131,14 +171,21 @@ async function processEntry({ file, preset, out, isWebp }) {
     height: Math.round(intrinsicW * scale),
     variants,
     preset,
+    sourceFingerprint,
+    reused: false,
   };
 }
 
 async function main() {
+  const previousManifest = readPreviousManifest();
+  const previousAssets = previousManifest?.assets ?? {};
+  const previousGeneratedAt = previousManifest?.generatedAt
+    ? Date.parse(previousManifest.generatedAt)
+    : 0;
   const manifest = { generatedAt: new Date().toISOString(), assets: {} };
 
   for (const entry of FILES) {
-    const result = await processEntry(entry);
+    const result = await processEntry(entry, previousAssets[entry.out], previousGeneratedAt);
     if (result) {
       manifest.assets[result.key] = {
         defaultSrc: result.defaultSrc,
@@ -147,8 +194,13 @@ async function main() {
         height: result.height,
         variants: result.variants,
         preset: result.preset,
+        sourceFingerprint: result.sourceFingerprint,
       };
-      console.log(`ok ${entry.file} → ${result.defaultSrc}`);
+      if (result.reused) {
+        console.log(`skip unchanged ${entry.file} → ${result.defaultSrc}`);
+      } else {
+        console.log(`ok ${entry.file} → ${result.defaultSrc}`);
+      }
     }
   }
 

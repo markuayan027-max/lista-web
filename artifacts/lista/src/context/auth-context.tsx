@@ -14,6 +14,7 @@ import {
 import { isTraineeRegistrationComplete, skipsTraineeApplication } from "../lib/role-navigation";
 import { clearLocalProfile, clearProfilePic } from "../lib/profile-utils";
 import { authApiRequest, authApiUrl } from "../lib/auth-api";
+import { apiUrl } from "../lib/api-url";
 import {
   clearAccessTokenCache,
   ensureAccessToken,
@@ -30,7 +31,7 @@ async function resolveUserRole(_email: string, insUser: Record<string, unknown>)
   try {
     const token = await ensureAccessToken();
     if (token) {
-      const res = await fetch("/api/users/me", {
+      const res = await fetch(apiUrl("/api/users/me"), {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {

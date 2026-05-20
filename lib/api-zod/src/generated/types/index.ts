@@ -4,12 +4,9 @@
  * Api
  * API specification for Lorenz ISTA (LISTA)
  * OpenAPI spec version: 0.1.0
+ *
+ * Only re-export types that exist in this directory. The orval barrel previously
+ * listed modules that were never generated in-repo, which broke Wrangler/esbuild.
  */
 
-export * from "./announcement";
-export * from "./case";
-export * from "./course";
-export * from "./faq";
 export * from "./healthStatus";
-export * from "./incident";
-export * from "./testimonial";
