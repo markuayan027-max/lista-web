@@ -1,7 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
-import { db } from "@workspace/db";
-import { users } from "@workspace/db/schema";
-import { eq, sql } from "drizzle-orm";
+import { lookupPublicUserRole } from "../lib/public-user-role.js";
 
 export type AuthRole = "trainee" | "staff" | "admin";
 
@@ -38,10 +36,12 @@ function roleFromInsForgeUser(user: Record<string, unknown>): AuthRole {
     pickMeta(user.appMetadata) ??
     pickMeta(user.raw_app_meta_data);
   const userMeta = pickMeta(user.user_metadata) ?? pickMeta(user.userMetadata);
+  const sessionMeta = pickMeta(user.metadata);
 
   const candidates = [
     appMeta?.role,
     userMeta?.role,
+    sessionMeta?.role,
     typeof user.role === "string" ? user.role : undefined,
   ];
   for (const r of candidates) {
@@ -55,29 +55,9 @@ function roleFromInsForgeUser(user: Record<string, unknown>): AuthRole {
 }
 
 async function roleFromPublicUsers(email: string): Promise<AuthRole | null> {
-  try {
-    const result = await db.execute(sql`
-      SELECT role::text AS role, status::text AS status
-      FROM public.users
-      WHERE lower(email) = lower(${email})
-      LIMIT 1
-    `);
-    const rows = (result.rows ?? result) as { role?: string; status?: string }[];
-    const row = rows[0];
-    if (row?.status === "deactivated") return null;
-    if (row?.role === "admin" || row?.role === "staff") return row.role;
-  } catch {
-    try {
-      const [legacy] = await db
-        .select({ role: users.role })
-        .from(users)
-        .where(eq(users.email, email.toLowerCase()))
-        .limit(1);
-      if (legacy?.role === "admin" || legacy?.role === "staff") return legacy.role;
-    } catch {
-      // ignore
-    }
-  }
+  const { role, deactivated } = await lookupPublicUserRole(email);
+  if (deactivated) return null;
+  if (role === "admin" || role === "staff") return role;
   return null;
 }
 
@@ -113,35 +93,13 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
       return res.status(401).json({ success: false, error: "Invalid session user" });
     }
     const email = String(raw.email).toLowerCase();
-    try {
-      const deactivated = await db.execute(sql`
-        SELECT status::text AS status FROM public.users WHERE lower(email) = lower(${email}) LIMIT 1
-      `);
-      const dRows = (deactivated.rows ?? deactivated) as { status?: string }[];
-      if (dRows[0]?.status === "deactivated") {
-        return res.status(403).json({
-          success: false,
-          error: "ACCOUNT_DEACTIVATED",
-          message: "This account has been deactivated. Contact your administrator.",
-        });
-      }
-    } catch {
-      try {
-        const [profile] = await db
-          .select({ status: users.status })
-          .from(users)
-          .where(eq(users.email, email))
-          .limit(1);
-        if (profile?.status === "deactivated") {
-          return res.status(403).json({
-            success: false,
-            error: "ACCOUNT_DEACTIVATED",
-            message: "This account has been deactivated. Contact your administrator.",
-          });
-        }
-      } catch {
-        // public.users unavailable — allow auth session (trainee sync may run later)
-      }
+    const { deactivated } = await lookupPublicUserRole(email);
+    if (deactivated) {
+      return res.status(403).json({
+        success: false,
+        error: "ACCOUNT_DEACTIVATED",
+        message: "This account has been deactivated. Contact your administrator.",
+      });
     }
     req.authUser = {
       id: String(raw.id ?? ""),

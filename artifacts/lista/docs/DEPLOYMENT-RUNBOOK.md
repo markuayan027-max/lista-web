@@ -43,6 +43,7 @@ Post-upload checks (must hit **lista-web**, not legacy `astral-api` / InsForge-o
 - `GET https://api.lista.dpdns.org/api/healthz` → `{"status":"ok"}` (LISTA Express). If you see `database`/`sdk` JSON, DNS still points at the wrong service.
 - `POST https://api.lista.dpdns.org/api/chat/homepage` → `200` with assistant text (not `404`, not `CHAT_NOT_CONFIGURED`)
 - Staff login: `GET https://api.lista.dpdns.org/api/users/me` with Bearer token → `data.role` is `staff` or `admin`
+- InsForge SQL: `SELECT email, role::text FROM public.users WHERE role IN ('admin','staff');` — **no `status` column** on current prod schema (see `artifacts/lista/sql/verify-staff-admin-roles.sql`)
 
 **Cloudflare → lista-web → Domains:** add route or custom domain `api.lista.dpdns.org` (or set `VITE_LISTA_API_BASE_URL` on Vercel to the Worker URL).
 

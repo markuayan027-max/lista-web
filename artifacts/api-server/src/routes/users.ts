@@ -11,6 +11,7 @@ import {
   staffActivationPath,
 } from "../lib/insforge-auth-admin";
 import { requireAuth, requireAdmin, requireStaffOrAdmin } from "../middleware/auth";
+import { lookupPublicUserRole } from "../lib/public-user-role.js";
 
 const router = Router();
 
@@ -74,27 +75,16 @@ function profileFromAuth(raw: unknown): { name?: string; avatar_url?: string } {
 /** Role for the signed-in user (public.users legacy + auth metadata). */
 router.get("/me", requireAuth, async (req, res) => {
   const email = req.authUser!.email.toLowerCase();
-  try {
-    const result = await db.execute(sql`
-      SELECT role::text AS role, status::text AS status
-      FROM public.users
-      WHERE lower(email) = lower(${email})
-      LIMIT 1
-    `);
-    const rows = (result.rows ?? result) as { role?: string; status?: string }[];
-    const row = rows[0];
-    if (row?.status === "deactivated") {
-      return res.status(403).json({
-        success: false,
-        error: "ACCOUNT_DEACTIVATED",
-        message: "This account has been deactivated.",
-      });
-    }
-    if (row?.role === "admin" || row?.role === "staff") {
-      return res.json({ success: true, data: { email, role: row.role } });
-    }
-  } catch (err) {
-    logger.warn({ err, email }, "GET /users/me public.users lookup failed");
+  const { role, deactivated } = await lookupPublicUserRole(email);
+  if (deactivated) {
+    return res.status(403).json({
+      success: false,
+      error: "ACCOUNT_DEACTIVATED",
+      message: "This account has been deactivated.",
+    });
+  }
+  if (role) {
+    return res.json({ success: true, data: { email, role } });
   }
   return res.json({ success: true, data: { email, role: req.authUser!.role } });
 });

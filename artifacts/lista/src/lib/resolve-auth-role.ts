@@ -15,12 +15,12 @@ export function roleFromInsForgeUser(insUser: Record<string, unknown>): UserRole
     pickMeta(insUser.appMetadata) ??
     pickMeta(insUser.raw_app_meta_data);
   const userMeta = pickMeta(insUser.user_metadata) ?? pickMeta(insUser.userMetadata);
-  const meta = pickMeta(insUser.metadata);
+  const sessionMeta = pickMeta(insUser.metadata);
 
   const candidates = [
     appMeta?.role,
     userMeta?.role,
-    meta?.role,
+    sessionMeta?.role,
     typeof insUser.role === "string" ? insUser.role : undefined,
   ];
   for (const r of candidates) {
