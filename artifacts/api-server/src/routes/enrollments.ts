@@ -3,9 +3,9 @@ import { db } from "@workspace/db";
 import { courseBatches, enrollments } from "@workspace/db/schema";
 import { desc, eq, inArray, sql } from "drizzle-orm";
 import { z } from "zod";
-import { logger } from "../lib/logger";
-import { requireAuth, requireStaffOrAdmin } from "../middleware/auth";
-import { ensureBatchSchemaReady } from "./batches";
+import { logger } from "../lib/logger.js";
+import { requireAuth, requireStaffOrAdmin } from "../middleware/auth.js";
+import { ensureBatchSchemaReady } from "./batches.js";
 
 const router = Router();
 

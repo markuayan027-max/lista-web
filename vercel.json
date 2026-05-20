@@ -4,12 +4,8 @@
   "buildCommand": "pnpm --filter @workspace/lista run build",
   "outputDirectory": "artifacts/lista/dist/public",
   "framework": null,
-  "functions": {
-    "api/index.ts": {
-      "maxDuration": 30
-    }
-  },
   "rewrites": [
+    { "source": "/api/(.*)", "destination": "https://api.lista.dpdns.org/api/$1" },
     { "source": "/((?!api(?:/|$)).*)", "destination": "/index.html" }
   ]
 }

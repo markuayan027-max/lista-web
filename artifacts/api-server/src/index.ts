@@ -1,6 +1,6 @@
 import "./load-env.js";
-import app from "./app";
-import { logger } from "./lib/logger";
+import app from "./app.js";
+import { logger } from "./lib/logger.js";
 import fs from "node:fs";
 import path from "node:path";
 import { createServer } from "node:http";

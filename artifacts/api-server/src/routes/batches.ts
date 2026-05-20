@@ -3,8 +3,8 @@ import { db } from "@workspace/db";
 import { courseBatches } from "@workspace/db/schema";
 import { asc, desc, sql } from "drizzle-orm";
 import { z } from "zod";
-import { logger } from "../lib/logger";
-import { requireAuth, requireStaffOrAdmin } from "../middleware/auth";
+import { logger } from "../lib/logger.js";
+import { requireAuth, requireStaffOrAdmin } from "../middleware/auth.js";
 
 const router = Router();
 router.use(requireAuth);
