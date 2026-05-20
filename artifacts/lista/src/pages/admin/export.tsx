@@ -21,7 +21,6 @@ import {
 import { useCourses, useEnrollments } from "@/hooks/use-lista-data";
 import {
   exportTraineesToExcel,
-  exportSingleTraineeToExcel,
   exportSingleTraineeToWord,
   exportAllTraineesToWord,
 } from "@/lib/export-utils";
@@ -95,9 +94,10 @@ export default function AdminExportPage() {
             <FileUp className="h-32 w-32" />
           </div>
           <div className="relative z-10 max-w-2xl">
-            <h1 className="text-3xl font-bold tracking-tight">Data Export Center</h1>
+            <h1 className="text-3xl font-bold tracking-tight">Admission Records Center</h1>
             <p className="text-primary-foreground/80 mt-2">
-              Export trainee admission records as Excel (.xlsx) for spreadsheets or Word (.docx) for print-ready forms.
+              Download trainee application forms (Word/PDF) for printing, and Excel sheets for batch processing in the
+              Batch Excel tab.
             </p>
           </div>
         </div>
@@ -110,12 +110,12 @@ export default function AdminExportPage() {
               <Users className="h-4 w-4" /> Trainees
             </TabsTrigger>
             <TabsTrigger value="batch" className="gap-2">
-              <Database className="h-4 w-4" /> Batch Export
+              <Database className="h-4 w-4" /> Batch Excel
             </TabsTrigger>
           </TabsList>
         </motion.div>
 
-        {/* ── Trainee-by-Trainee Export ── */}
+        {/* ── Per-trainee application form (Word/PDF) ── */}
         <TabsContent value="trainees" className="space-y-4 mt-4">
           <motion.div variants={itemVariants} className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
@@ -206,28 +206,12 @@ export default function AdminExportPage() {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 opacity-0 group-hover:opacity-100 text-emerald-600"
-                                disabled={exportingId === `${rowId}-xl`}
-                                onClick={() =>
-                                  doExport(() => exportSingleTraineeToExcel(e), `${rowId}-xl`)
-                                }
-                                title="Download Excel"
-                              >
-                                {exportingId === `${rowId}-xl` ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : (
-                                  <FileSpreadsheet className="h-4 w-4" />
-                                )}
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
                                 className="h-8 w-8 opacity-0 group-hover:opacity-100 text-blue-600"
                                 disabled={exportingId === `${rowId}-doc`}
                                 onClick={() =>
                                   doExport(() => exportSingleTraineeToWord(e), `${rowId}-doc`)
                                 }
-                                title="Download Word"
+                                title="PDF export application form"
                               >
                                 {exportingId === `${rowId}-doc` ? (
                                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -247,11 +231,11 @@ export default function AdminExportPage() {
           </motion.div>
         </TabsContent>
 
-        {/* ── Batch Export ── */}
+        {/* ── Batch Excel / Word ── */}
         <TabsContent value="batch" className="mt-4 space-y-3">
           <p className="text-sm text-muted-foreground max-w-3xl rounded-lg border border-border bg-muted/40 px-4 py-3">
             <strong className="font-semibold text-foreground">Batch / cohort tip:</strong> target roughly 25 trainees per class. Use the Trainees tab search and status filter, then run{" "}
-            <strong className="font-semibold text-foreground">Filtered / Custom Export</strong> to pull one cohort’s application packet in one click.
+            <strong className="font-semibold text-foreground">Filtered / Custom Excel</strong> to pull one cohort’s application packet in one click.
           </p>
           <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* All trainees Excel */}
