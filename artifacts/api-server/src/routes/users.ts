@@ -76,14 +76,14 @@ router.get("/me", requireAuth, async (req, res) => {
   const email = req.authUser!.email.toLowerCase();
   try {
     const result = await db.execute(sql`
-      SELECT role::text AS role, is_active
+      SELECT role::text AS role, status::text AS status
       FROM public.users
       WHERE lower(email) = lower(${email})
       LIMIT 1
     `);
-    const rows = (result.rows ?? result) as { role?: string; is_active?: boolean }[];
+    const rows = (result.rows ?? result) as { role?: string; status?: string }[];
     const row = rows[0];
-    if (row?.is_active === false) {
+    if (row?.status === "deactivated") {
       return res.status(403).json({
         success: false,
         error: "ACCOUNT_DEACTIVATED",

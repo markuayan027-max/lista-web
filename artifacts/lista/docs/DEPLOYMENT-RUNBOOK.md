@@ -38,10 +38,13 @@ Required Worker secrets for homepage chat (on LISTA-only Worker):
 
 Never commit secrets to git. Upload as Worker secrets only.
 
-Post-upload checks:
+Post-upload checks (must hit **lista-web**, not legacy `astral-api` / InsForge-only hosts):
 
-- `GET https://api.lista.dpdns.org/api/health` should return `200`
-- `POST https://api.lista.dpdns.org/api/chat/homepage` should not return `CHAT_NOT_CONFIGURED`
+- `GET https://api.lista.dpdns.org/api/healthz` → `{"status":"ok"}` (LISTA Express). If you see `database`/`sdk` JSON, DNS still points at the wrong service.
+- `POST https://api.lista.dpdns.org/api/chat/homepage` → `200` with assistant text (not `404`, not `CHAT_NOT_CONFIGURED`)
+- Staff login: `GET https://api.lista.dpdns.org/api/users/me` with Bearer token → `data.role` is `staff` or `admin`
+
+**Cloudflare → lista-web → Domains:** add route or custom domain `api.lista.dpdns.org` (or set `VITE_LISTA_API_BASE_URL` on Vercel to the Worker URL).
 
 ## Graphify queries for future AI deploys
 

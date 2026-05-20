@@ -1,5 +1,5 @@
 import { useState, ReactNode, useEffect } from "react";
-import { User, UserRole } from "../lib/institutional-data";
+import { User } from "../lib/institutional-data";
 import { AuthContext, type AuthContextType } from "./use-auth";
 
 export { useAuth } from "./use-auth";
@@ -14,7 +14,7 @@ import {
 import { isTraineeRegistrationComplete, skipsTraineeApplication } from "../lib/role-navigation";
 import { clearLocalProfile, clearProfilePic } from "../lib/profile-utils";
 import { authApiRequest, authApiUrl } from "../lib/auth-api";
-import { apiUrl } from "../lib/api-url";
+import { resolveUserRole } from "../lib/resolve-auth-role";
 import {
   clearAccessTokenCache,
   ensureAccessToken,
@@ -26,40 +26,16 @@ import { clearTraineeSyncMarkers, syncTraineeSideEffects } from "../lib/auth-tra
 // Helpers
 // ---------------------------------------------------------------------------
 
-/** Role: LISTA public.users (via api-server) → InsForge metadata → trainee. */
-async function resolveUserRole(_email: string, insUser: Record<string, unknown>): Promise<UserRole> {
-  try {
-    const token = await ensureAccessToken();
-    if (token) {
-      const res = await fetch(apiUrl("/api/users/me"), {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        const json = (await res.json()) as { data?: { role?: string } };
-        const apiRole = json.data?.role;
-        if (apiRole === "admin" || apiRole === "staff") return apiRole;
-      }
-    }
-  } catch {
-    // api-server down or no public.users row — fall through
-  }
-
-  if (insUser.is_project_admin === true || insUser.isProjectAdmin === true) {
-    return "admin";
-  }
-
-  const appMeta = insUser.app_metadata as Record<string, unknown> | undefined;
-  const meta = insUser.metadata as Record<string, unknown> | undefined;
-  const appRole = (appMeta?.role ?? meta?.role) as string | undefined;
-  if (appRole === "admin" || appRole === "staff") return appRole;
-  return "trainee";
-}
-
 async function mapInsForgeUser(insUser: any): Promise<User | null> {
   if (!insUser) return null;
   const email: string = insUser.email || "";
 
-  const resolvedRole = await resolveUserRole(email, insUser as Record<string, unknown>);
+  const token = await ensureAccessToken();
+  const resolvedRole = await resolveUserRole(
+    email,
+    insUser as Record<string, unknown>,
+    token,
+  );
 
   return {
     id: insUser.id,

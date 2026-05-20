@@ -24,26 +24,47 @@ const baseUrl =
   process.env.INSFORGE_URL ||
   "https://2r6c3q25.ap-southeast.insforge.app";
 
-/** Server-controlled metadata only — user_metadata is client-writable on many auth stacks. */
+/** Server-controlled metadata — prefer DB role; InsForge may use snake_case or camelCase. */
+function pickMeta(obj: unknown): Record<string, unknown> | undefined {
+  if (obj && typeof obj === "object" && !Array.isArray(obj)) return obj as Record<string, unknown>;
+  return undefined;
+}
+
 function roleFromInsForgeUser(user: Record<string, unknown>): AuthRole {
-  const meta = user.metadata as Record<string, unknown> | undefined;
-  const appMeta = user.app_metadata as Record<string, unknown> | undefined;
-  const appRole = (appMeta?.role ?? meta?.role) as string | undefined;
-  if (appRole === "admin" || appRole === "staff") return appRole;
+  if (user.is_project_admin === true || user.isProjectAdmin === true) return "admin";
+
+  const appMeta =
+    pickMeta(user.app_metadata) ??
+    pickMeta(user.appMetadata) ??
+    pickMeta(user.raw_app_meta_data);
+  const userMeta = pickMeta(user.user_metadata) ?? pickMeta(user.userMetadata);
+
+  const candidates = [
+    appMeta?.role,
+    userMeta?.role,
+    typeof user.role === "string" ? user.role : undefined,
+  ];
+  for (const r of candidates) {
+    if (r === "admin" || r === "staff") return r;
+    if (typeof r === "string") {
+      const lower = r.toLowerCase();
+      if (lower === "admin" || lower === "staff") return lower as AuthRole;
+    }
+  }
   return "trainee";
 }
 
 async function roleFromPublicUsers(email: string): Promise<AuthRole | null> {
   try {
     const result = await db.execute(sql`
-      SELECT role::text AS role, is_active
+      SELECT role::text AS role, status::text AS status
       FROM public.users
       WHERE lower(email) = lower(${email})
       LIMIT 1
     `);
-    const rows = (result.rows ?? result) as { role?: string; is_active?: boolean }[];
+    const rows = (result.rows ?? result) as { role?: string; status?: string }[];
     const row = rows[0];
-    if (row?.is_active === false) return null;
+    if (row?.status === "deactivated") return null;
     if (row?.role === "admin" || row?.role === "staff") return row.role;
   } catch {
     try {
@@ -94,10 +115,10 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
     const email = String(raw.email).toLowerCase();
     try {
       const deactivated = await db.execute(sql`
-        SELECT is_active FROM public.users WHERE lower(email) = lower(${email}) LIMIT 1
+        SELECT status::text AS status FROM public.users WHERE lower(email) = lower(${email}) LIMIT 1
       `);
-      const dRows = (deactivated.rows ?? deactivated) as { is_active?: boolean }[];
-      if (dRows[0]?.is_active === false) {
+      const dRows = (deactivated.rows ?? deactivated) as { status?: string }[];
+      if (dRows[0]?.status === "deactivated") {
         return res.status(403).json({
           success: false,
           error: "ACCOUNT_DEACTIVATED",
