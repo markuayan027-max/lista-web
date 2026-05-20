@@ -66,6 +66,9 @@ Thumbs.db
 .env*
 scratch/
 scripts/
+!artifacts/lista/scripts/
+!artifacts/lista/scripts/*.mjs
+!artifacts/lista/scripts/*.ps1
 lib/api-zod/
 obsidian-mcp.json
 attached_assets/
