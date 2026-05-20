@@ -280,6 +280,7 @@ router.get("/profile", async (req, res) => {
   const normalizedEmail = email.trim().toLowerCase();
 
   try {
+    await ensureBatchSchemaReady();
     const [enrollment] = await db
       .select()
       .from(enrollments)
@@ -356,6 +357,7 @@ router.put("/profile", async (req, res) => {
   const normalizedEmail = email.trim().toLowerCase();
 
   try {
+    await ensureBatchSchemaReady();
     const parsedData = updateSchema.parse(req.body) as any;
 
     if (

@@ -42,6 +42,7 @@ function mapStatusToDb(status: string): (typeof enrollments.$inferSelect)["statu
 /** Staff/admin list — bypasses PostgREST RLS (same DB as trainee register API). */
 router.get("/", requireStaffOrAdmin, async (_req, res) => {
   try {
+    await ensureBatchSchemaReady();
     const rows = await db.select().from(enrollments).orderBy(desc(enrollments.updatedAt));
     return res.json({ success: true, data: rows });
   } catch (err) {
