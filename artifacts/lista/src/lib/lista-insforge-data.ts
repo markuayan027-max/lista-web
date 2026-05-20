@@ -6,7 +6,7 @@ import { canUseInsforgeSdk } from "@/lib/insforge-env";
 import { lista } from "@/lib/insforge";
 import { authHeaders } from "@/lib/auth-token";
 import { insforgeEnrollmentRowToApiData } from "@/lib/trainee-enrollment-insforge";
-import { normalizeEnrollmentStatus } from "@/lib/enrollment-status";
+import { enrollmentStatusIs, normalizeEnrollmentStatus } from "@/lib/enrollment-status";
 import type { Course, Enrollment, User, UserRole } from "@/lib/institutional-data";
 import { resolveCourseCoverImage, resolveCourseGalleryImages } from "@/lib/course-images";
 
@@ -717,9 +717,10 @@ export function deriveCertificatesFromEnrollments(
   courses: Course[],
 ): ListaCertificate[] {
   return enrollments
-    .filter((e) => e.status === "completed")
+    .filter((e) => enrollmentStatusIs(e.status, "completed"))
     .map((e) => {
       const course = courses.find((c) => c.slug === e.courseSlug);
+      const row = e as Enrollment & { updatedAt?: string };
       return {
         id: `cert-${e.id}`,
         userId: e.userId,
@@ -727,7 +728,7 @@ export function deriveCertificatesFromEnrollments(
         ncLevel: course?.ncLevel ?? "NC II",
         status: "issued" as const,
         progressStage: "passed",
-        issuedAt: e.createdAt,
+        issuedAt: row.updatedAt ?? e.createdAt,
         fileUrl: "#",
       };
     });

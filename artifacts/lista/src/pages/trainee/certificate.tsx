@@ -3,157 +3,144 @@ import { useAuth } from "@/context/auth-context";
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useCourses, useTraineeDerivedCertificates } from "@/hooks/use-lista-data";
-import { courseTitleBySlug } from "@/lib/lista-insforge-data";
-import StatusBadge from "@/components/status-badge";
-import { Download, Eye, Award } from "lucide-react";
+import { courseTitleBySlug, type ListaCertificate } from "@/lib/lista-insforge-data";
+import { Info, Award, Calendar } from "lucide-react";
 import { format } from "date-fns";
 
 const container = {
   hidden: { opacity: 0 },
   show: {
     opacity: 1,
-    transition: { staggerChildren: 0.1 }
-  }
+    transition: { staggerChildren: 0.08 },
+  },
 };
 
 const item = {
-  hidden: { opacity: 0, scale: 0.95 },
-  show: { opacity: 1, scale: 1, transition: { type: "spring" as const, stiffness: 300, damping: 24 } }
+  hidden: { opacity: 0, y: 16 },
+  show: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 300, damping: 28 } },
 };
+
+type PreviewRow = { cert: ListaCertificate; courseTitle: string };
 
 export default function TraineeCertificatePage() {
   const { user } = useAuth();
   const { data: myCerts = [] } = useTraineeDerivedCertificates(user?.email);
   const { data: courses = [] } = useCourses();
-  const [previewCert, setPreviewCert] = useState<any>(null);
+  const [preview, setPreview] = useState<PreviewRow | null>(null);
 
   return (
-    <div className="space-y-8">
-      <motion.div 
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-      >
-        <h1 className="text-3xl font-bold tracking-tight">Certificates</h1>
-        <p className="text-muted-foreground mt-1">View and download your earned credentials.</p>
+    <div className="space-y-6 sm:space-y-8">
+      <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} className="space-y-2">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Completions & credentials</h1>
+        <p className="text-sm sm:text-base text-muted-foreground max-w-2xl">
+          A short history of programs you finished at LISTA. Official TESDA National Certificates (NC) are emailed by TESDA to your Gmail—they do not download here.
+        </p>
       </motion.div>
 
-      <motion.div 
-        variants={container}
-        initial="hidden"
-        animate="show"
-        className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
-      >
-        {myCerts.map((cert) => {
-          const courseTitle = courseTitleBySlug(courses, cert.courseSlug);
-          const isIssued = cert.status === "issued";
+      <Alert className="border-blue-200 bg-blue-50/90 dark:bg-blue-950/30 dark:border-blue-900">
+        <Info className="h-4 w-4 text-blue-700 dark:text-blue-400" aria-hidden />
+        <AlertTitle className="text-blue-950 dark:text-blue-100">TESDA NC certificates</AlertTitle>
+        <AlertDescription className="text-blue-900/90 dark:text-blue-100/85 text-sm leading-relaxed">
+          LISTA marks course completion below for your records. Watch the Gmail you used at registration for official documents from TESDA.
+          After staff marks your enrollment completed, you can register or apply again when new batches open.
+        </AlertDescription>
+      </Alert>
 
-          return (
-            <motion.div key={cert.id} variants={item}>
-              <Card className={`overflow-hidden border-card-border h-full flex flex-col ${!isIssued ? 'opacity-70 grayscale-[0.2]' : ''}`}>
-                <div className={`h-32 flex items-center justify-center ${isIssued ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>
-                  <Award className="h-16 w-16" />
-                </div>
-                <CardContent className="p-6 flex-1 flex flex-col">
-                  <div className="flex items-start justify-between mb-4 gap-2">
-                    <h3 className="font-bold text-lg leading-tight">{courseTitle}</h3>
-                    <StatusBadge status={cert.status as any} />
-                  </div>
-                  
-                  {isIssued && cert.issuedAt && (
-                    <p className="text-sm text-muted-foreground mb-6">
-                      Issued on {format(new Date(cert.issuedAt), "MMM dd, yyyy")}
-                    </p>
-                  )}
-                  
-                  {!isIssued && (
-                    <p className="text-sm text-muted-foreground mb-6">
-                      Complete all course requirements to earn this certificate.
-                    </p>
-                  )}
+      {myCerts.length === 0 ? (
+        <motion.section
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          role="status"
+          aria-live="polite"
+          className="rounded-2xl border border-dashed border-border bg-muted/40 px-6 py-14 text-center space-y-3"
+        >
+          <Award className="h-10 w-10 text-muted-foreground mx-auto" aria-hidden />
+          <h2 className="font-semibold text-lg">No completed programs yet</h2>
+          <p className="text-sm text-muted-foreground max-w-md mx-auto">
+            Completed courses appear here once staff sets your enrollment status to completed. Until then, use My Applications and Courses.
+          </p>
+        </motion.section>
+      ) : (
+        <motion.div variants={container} initial="hidden" animate="show" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {myCerts.map((cert) => {
+            const courseTitle = courseTitleBySlug(courses, cert.courseSlug);
+            const ended = cert.issuedAt ? format(new Date(cert.issuedAt), "MMM d, yyyy") : "—";
 
-                  <div className="mt-auto flex gap-3">
-                    <Button 
-                      variant="outline" 
-                      className="flex-1 font-semibold"
-                      onClick={() => setPreviewCert({ cert, courseTitle })}
+            return (
+              <motion.div key={cert.id} variants={item}>
+                <Card className="h-full border-card-border flex flex-col overflow-hidden shadow-sm">
+                  <CardContent className="p-5 flex flex-col gap-3 flex-1">
+                    <div className="flex items-start gap-3">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                        <Award className="h-5 w-5" aria-hidden />
+                      </div>
+                      <div className="min-w-0 flex-1 space-y-1">
+                        <h3 className="font-bold text-base leading-snug">{courseTitle}</h3>
+                        <p className="text-xs text-muted-foreground">
+                          NC {cert.ncLevel.replace(/^NC\s*/i, "")}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Calendar className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                      <span>Recorded completed {ended}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      Official NC from TESDA: check your Gmail (TESDA).
+                    </p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="mt-auto w-full sm:w-auto"
+                      onClick={() => setPreview({ cert, courseTitle })}
                     >
-                      <Eye className="mr-2 h-4 w-4" /> Preview
+                      View summary
                     </Button>
-                    {isIssued && (
-                      <Button className="flex-1 font-semibold">
-                        <Download className="mr-2 h-4 w-4" /> Download
-                      </Button>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          );
-        })}
-      </motion.div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            );
+          })}
+        </motion.div>
+      )}
 
-      {/* Preview Dialog */}
-      <Dialog open={!!previewCert} onOpenChange={(open) => !open && setPreviewCert(null)}>
-        <DialogContent className="max-w-3xl p-0 overflow-hidden bg-white border-8 border-double border-muted">
-          {previewCert && (
-            <div className="p-12 text-center relative border-4 border-primary/20 m-2">
-              {/* Decorative elements */}
-              <div className="absolute top-0 left-0 w-16 h-16 border-t-2 border-l-2 border-primary m-4" />
-              <div className="absolute top-0 right-0 w-16 h-16 border-t-2 border-r-2 border-primary m-4" />
-              <div className="absolute bottom-0 left-0 w-16 h-16 border-b-2 border-l-2 border-primary m-4" />
-              <div className="absolute bottom-0 right-0 w-16 h-16 border-b-2 border-r-2 border-primary m-4" />
-              
-              <div className="w-24 h-24 mx-auto bg-primary text-primary-foreground rounded-full flex items-center justify-center mb-8 shadow-xl">
-                <Award className="h-12 w-12" />
-              </div>
-              
-              <h2 className="text-sm font-bold uppercase tracking-[0.3em] text-muted-foreground mb-4">
-                Lorenz International Skills Training Academy
-              </h2>
-              
-              <h1 className="text-4xl font-serif text-primary mb-8 font-bold">
-                Certificate of Completion
-              </h1>
-              
-              <p className="text-muted-foreground mb-4">This is to certify that</p>
-              
-              <p className="text-3xl font-bold border-b border-muted-foreground pb-2 inline-block min-w-[300px] mb-8">
-                {user?.name || "Trainee"}
+      <Dialog open={!!preview} onOpenChange={(open) => !open && setPreview(null)}>
+        <DialogContent className="sm:max-w-md">
+          {preview && (
+            <>
+              <DialogHeader>
+                <DialogTitle>Completion summary</DialogTitle>
+              </DialogHeader>
+              <dl className="space-y-3 text-sm">
+                <div>
+                  <dt className="text-muted-foreground font-medium">Trainee</dt>
+                  <dd className="font-semibold">{user?.name || "Trainee"}</dd>
+                </div>
+                <div>
+                  <dt className="text-muted-foreground font-medium">Program</dt>
+                  <dd className="font-semibold">{preview.courseTitle}</dd>
+                </div>
+                <div>
+                  <dt className="text-muted-foreground font-medium">NC level</dt>
+                  <dd>{preview.cert.ncLevel}</dd>
+                </div>
+                <div>
+                  <dt className="text-muted-foreground font-medium">LISTA completion recorded</dt>
+                  <dd>
+                    {preview.cert.issuedAt
+                      ? format(new Date(preview.cert.issuedAt), "MMMM d, yyyy")
+                      : "—"}
+                  </dd>
+                </div>
+              </dl>
+              <p className="text-xs text-muted-foreground pt-2 border-t border-border">
+                This summary is not an NC certificate. TESDA issues official credentials by email.
               </p>
-              
-              <p className="text-muted-foreground mb-4">has successfully completed the course</p>
-              
-              <p className="text-2xl font-bold text-foreground mb-12">
-                {previewCert.courseTitle}
-              </p>
-              
-              <div className="flex justify-center gap-24 text-sm font-medium">
-                <div className="text-center">
-                  <div className="border-b border-foreground w-40 pb-2 mb-2">
-                    {previewCert.cert.issuedAt ? format(new Date(previewCert.cert.issuedAt), "MMMM dd, yyyy") : "Pending"}
-                  </div>
-                  <p className="text-muted-foreground">Date Issued</p>
-                </div>
-                <div className="text-center">
-                  <div className="border-b border-foreground w-40 pb-2 mb-2 font-serif italic text-lg">
-                    Admin Signature
-                  </div>
-                  <p className="text-muted-foreground">Academy Director</p>
-                </div>
-              </div>
-              
-              {previewCert.cert.status !== "issued" && (
-                <div className="absolute inset-0 bg-background/80 backdrop-blur-[2px] flex items-center justify-center flex-col z-10">
-                  <div className="bg-white p-6 rounded-xl border border-card-border shadow-xl max-w-sm">
-                    <Award className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-lg font-bold mb-2">Not Yet Issued</h3>
-                    <p className="text-sm text-muted-foreground">This is a preview. Your certificate will be issued once you complete all course requirements.</p>
-                  </div>
-                </div>
-              )}
-            </div>
+            </>
           )}
         </DialogContent>
       </Dialog>

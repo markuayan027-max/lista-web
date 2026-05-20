@@ -248,7 +248,11 @@ export default function AdminExportPage() {
         </TabsContent>
 
         {/* ── Batch Export ── */}
-        <TabsContent value="batch" className="mt-4">
+        <TabsContent value="batch" className="mt-4 space-y-3">
+          <p className="text-sm text-muted-foreground max-w-3xl rounded-lg border border-border bg-muted/40 px-4 py-3">
+            <strong className="font-semibold text-foreground">Batch / cohort tip:</strong> target roughly 25 trainees per class. Use the Trainees tab search and status filter, then run{" "}
+            <strong className="font-semibold text-foreground">Filtered / Custom Export</strong> to pull one cohort’s application packet in one click.
+          </p>
           <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* All trainees Excel */}
             <Card className="border-card-border shadow-sm hover:border-emerald-300 transition-colors">
