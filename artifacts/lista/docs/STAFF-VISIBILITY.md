@@ -17,7 +17,8 @@ Trainee registration/profile
   → ensurePublicTraineeUser()     → public.users (role=trainee)
   → registerTraineeFromForm()     → public.enrollments (upsert by email)
 Staff/Admin dashboards
-  → useEnrollments()              → fetchAllEnrollments() (InsForge + RLS is_staff_or_admin)
+  → useEnrollments()              → fetchAllEnrollments() via **GET /api/enrollments** (Drizzle, staff/admin auth)
+  → fallback: InsForge PostgREST + RLS if API unavailable
   → auto refetch 10s + on focus
 ```
 

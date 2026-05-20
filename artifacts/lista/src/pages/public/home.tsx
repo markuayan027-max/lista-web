@@ -84,7 +84,7 @@ export default function HomePage() {
 
       {/* ── Hero ── */}
       <section className="bg-background border-b border-border overflow-hidden">
-        <div className="container mx-auto px-6 md:px-8">
+        <div className="container mx-auto px-4 md:px-6">
 
           {/* Top rule + tagline */}
           <div className="pt-6 pb-4">
@@ -489,7 +489,7 @@ export default function HomePage() {
       <section className="py-24 bg-white">
         <div className="container mx-auto px-4 md:px-6">
           <div className="flex flex-col lg:flex-row gap-16 items-start">
-            <div className="lg:w-1/3 lg:sticky lg:top-32">
+            <div className="lg:w-1/3 lg:sticky lg:top-24">
               <div className="relative pl-6 mb-8">
                 <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-600 via-blue-400 to-transparent rounded-full" />
                 <span className="text-[10px] font-bold text-blue-600 uppercase tracking-[0.3em]">Process</span>
@@ -750,3 +750,4 @@ export default function HomePage() {
     </div>
   );
 }
+

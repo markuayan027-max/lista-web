@@ -141,7 +141,7 @@ export default function AssessmentPage() {
   };
 
   return (
-    <div className="w-full min-h-[calc(100vh-80px)] bg-slate-50 flex items-center justify-center py-12">
+    <div className="w-full min-h-[calc(100vh-80px)] bg-slate-50 flex items-center justify-center py-8 sm:py-12 overflow-x-hidden">
       <div className="container mx-auto px-4 md:px-6 max-w-3xl">
         
         <AnimatePresence mode="wait">
@@ -153,7 +153,7 @@ export default function AssessmentPage() {
               exit={{ opacity: 0, y: -20 }}
               className="bg-white rounded-3xl p-10 md:p-16 text-center border border-card-border shadow-sm"
             >
-              <div className="mx-auto mb-10 w-full max-w-lg aspect-[3/4] flex items-center justify-center overflow-hidden rounded-2xl">
+              <div className="mx-auto mb-8 sm:mb-10 w-full max-w-lg max-h-[40vh] sm:max-h-none aspect-[3/4] sm:aspect-[3/4] flex items-center justify-center overflow-hidden rounded-2xl">
                 <OptimizedImage
                   src="/assessment promotional image.png"
                   alt="Find Your Path"
@@ -195,7 +195,7 @@ export default function AssessmentPage() {
                   <button
                     key={idx}
                     onClick={() => handleAnswer(option.text)}
-                    className="w-full text-left p-6 rounded-2xl border-2 border-card-border hover:border-primary hover:bg-primary/5 transition-all duration-200 font-medium text-lg text-foreground"
+                    className="w-full text-left p-4 sm:p-6 rounded-2xl border-2 border-card-border hover:border-primary hover:bg-primary/5 transition-all duration-200 font-medium text-base sm:text-lg text-foreground min-h-11"
                   >
                     {option.text}
                   </button>
@@ -223,7 +223,7 @@ export default function AssessmentPage() {
                 <p className="text-xl text-muted-foreground">Based on your answers, these programs are the best fit for your goals.</p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {getRecommendations().map((course) => (
                   <CourseCard key={course.slug} course={course} hideLockOverlay={true} />
                 ))}

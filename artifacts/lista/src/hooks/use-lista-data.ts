@@ -16,11 +16,12 @@ import {
   fetchSchedules,
   fetchTestimonials,
   fetchUsers,
-  inviteUser,
+  inviteStaffUser,
   updateAnnouncement,
   updateEnrollmentStatus,
   updateSchedule,
   updateUserRole,
+  updateUserStatus,
 } from "@/lib/lista-insforge-data";
 import type { DbSchedule, ListaAnnouncement } from "@/lib/lista-insforge-data";
 import type { Enrollment, UserRole } from "@/lib/institutional-data";
@@ -79,11 +80,28 @@ export function useTraineeProfile(email: string | undefined) {
   });
 }
 
-export function useInviteUser() {
+export function useInviteStaffUser() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: { name: string; email: string; role: UserRole }) =>
-      unwrap(await inviteUser(input)),
+    mutationFn: async (input: { name: string; email: string; role: "staff" | "admin" }) =>
+      unwrap(await inviteStaffUser(input)),
+    onSuccess: () => qc.invalidateQueries({ queryKey: listaKeys.users }),
+  });
+}
+
+/** @deprecated Use useInviteStaffUser — SDK-only insert removed in Phase B */
+export const useInviteUser = useInviteStaffUser;
+
+export function useUpdateUserStatus() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      userId,
+      status,
+    }: {
+      userId: string;
+      status: "active" | "deactivated";
+    }) => unwrap(await updateUserStatus(userId, status)),
     onSuccess: () => qc.invalidateQueries({ queryKey: listaKeys.users }),
   });
 }

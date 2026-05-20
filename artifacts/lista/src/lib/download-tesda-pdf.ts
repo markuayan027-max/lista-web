@@ -1,9 +1,13 @@
+import { isPrintableFormReady, waitForPrintableFormImages } from "@/lib/official-form-print-ready";
+
 /** Client-side PDF export for the official 2-page application form. */
 export async function downloadApplicationFormPdf(filename: string): Promise<void> {
   const element = document.getElementById("printable-form");
-  if (!element) {
-    throw new Error("Printable form is not ready.");
+  if (!element || !isPrintableFormReady(element)) {
+    throw new Error("Form is still loading. Wait a moment, then try Download PDF again.");
   }
+
+  await waitForPrintableFormImages(element);
 
   const html2pdf = (await import("html2pdf.js")).default;
 

@@ -49,6 +49,7 @@ import {
   resolveRegistrationPersistStep,
   saveRegistrationMaxStep,
 } from "@/lib/profile-utils";
+import { enrollmentBlocksNewCourseApplication } from "@/lib/enrollment-status";
 
 const STEPS = [
   { id: 1, title: "Personal", description: "Identity details", icon: User },
@@ -241,11 +242,7 @@ export default function TraineeRegistrationPage() {
     const searchParams = new URLSearchParams(window.location.search);
     const fromProfile = searchParams.get("from") === "profile";
     const dbData = cloudProfile as Enrollment;
-    const status = String(dbData.status).toLowerCase().replace(/\s+/g, "_");
-    if (
-      !fromProfile &&
-      !["completed", "cancelled", "rejected", "ready_to_apply"].includes(status)
-    ) {
+    if (!fromProfile && enrollmentBlocksNewCourseApplication(dbData.status)) {
       toast({
         title: "Active Enrollment",
         description:

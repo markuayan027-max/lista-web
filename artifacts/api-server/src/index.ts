@@ -1,3 +1,4 @@
+import "./load-env.js";
 import app from "./app";
 import { logger } from "./lib/logger";
 import fs from "node:fs";
@@ -68,5 +69,8 @@ httpServer.listen(port, () => {
     );
   } catch {}
   // #endregion agent log
-  logger.info({ port }, "Server listening with WebSocket support");
+  logger.info(
+    { port, groqChat: process.env.GROQ_API_KEY ? "configured" : "missing" },
+    "Server listening with WebSocket support",
+  );
 });

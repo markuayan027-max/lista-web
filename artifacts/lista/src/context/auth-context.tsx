@@ -4,7 +4,13 @@ import { AuthContext, type AuthContextType } from "./use-auth";
 
 export { useAuth } from "./use-auth";
 export type { AuthContextType };
-import { lista } from "../lib/insforge";
+import {
+  clearOAuthCallbackParams,
+  clearPkceVerifierFromStorage,
+  getPkceVerifierFromStorage,
+  lista,
+  readSdkAuthSession,
+} from "../lib/insforge";
 import { isTraineeRegistrationComplete, skipsTraineeApplication } from "../lib/role-navigation";
 import { clearLocalProfile, clearProfilePic } from "../lib/profile-utils";
 import { authApiRequest, authApiUrl } from "../lib/auth-api";
@@ -19,8 +25,28 @@ import { clearTraineeSyncMarkers, syncTraineeSideEffects } from "../lib/auth-tra
 // Helpers
 // ---------------------------------------------------------------------------
 
-/** Staff/admin from server-controlled app_metadata only — no browser InsForge users query (avoids CORS/503). */
+/** Role: LISTA public.users (via api-server) → InsForge metadata → trainee. */
 async function resolveUserRole(_email: string, insUser: Record<string, unknown>): Promise<UserRole> {
+  try {
+    const token = await ensureAccessToken();
+    if (token) {
+      const res = await fetch("/api/users/me", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const json = (await res.json()) as { data?: { role?: string } };
+        const apiRole = json.data?.role;
+        if (apiRole === "admin" || apiRole === "staff") return apiRole;
+      }
+    }
+  } catch {
+    // api-server down or no public.users row — fall through
+  }
+
+  if (insUser.is_project_admin === true || insUser.isProjectAdmin === true) {
+    return "admin";
+  }
+
   const appMeta = insUser.app_metadata as Record<string, unknown> | undefined;
   const meta = insUser.metadata as Record<string, unknown> | undefined;
   const appRole = (appMeta?.role ?? meta?.role) as string | undefined;
@@ -194,8 +220,57 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     if (error) throw error;
     // InsForge PKCE flow returns the authorisation URL — we redirect manually.
-    const url = (data as any)?.url;
+    const url = (data as { url?: string })?.url;
     if (url) window.location.href = url;
+  };
+
+  const completeOAuthCallback = async () => {
+    if (typeof window === "undefined") return;
+
+    const params = new URLSearchParams(window.location.search);
+    const oauthError = params.get("error_description") || params.get("error");
+    if (oauthError) {
+      throw new Error(oauthError);
+    }
+
+    const sdkSession = await readSdkAuthSession();
+    if (sdkSession) {
+      await applySessionPayload(
+        normalizeAuthSession({
+          accessToken: sdkSession.accessToken,
+          refreshToken: sdkSession.refreshToken,
+          user: sdkSession.user,
+        }),
+        setUser,
+        setIsRegistered,
+      );
+      clearPkceVerifierFromStorage();
+      clearOAuthCallbackParams();
+      return;
+    }
+
+    const code = params.get("insforge_code");
+    if (!code) {
+      throw new Error("No sign-in session found. Please try again from the login page.");
+    }
+
+    const verifier = getPkceVerifierFromStorage();
+    if (!verifier) {
+      throw new Error(
+        "Sign-in session expired. Close this tab and use Continue with Google again.",
+      );
+    }
+
+    const data = await authApiRequest<Record<string, unknown>>(
+      "/api/auth/oauth/exchange?client_type=mobile",
+      {
+        method: "POST",
+        body: { code, code_verifier: verifier },
+      },
+    );
+    clearPkceVerifierFromStorage();
+    clearOAuthCallbackParams();
+    await applySessionPayload(normalizeAuthSession(data), setUser, setIsRegistered);
   };
 
   const logout = async () => {
@@ -252,6 +327,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         verifyEmail,
         resendVerificationEmail,
         signUpWithOAuth,
+        completeOAuthCallback,
         logout,
         isRegistered,
         completeRegistration,

@@ -23,14 +23,15 @@ import {
   useUpdateEnrollmentStatus,
 } from "@/hooks/use-lista-data";
 import { TableSkeleton } from "@/components/skeletons";
+import { enrollmentStatusIs } from "@/lib/enrollment-status";
 
 // Ã¢â€â‚¬Ã¢â€â‚¬ Stats card Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 function StatPill({ label, value, color }: { label: string; value: number; color: string }) {
   return (
-    <div className={`flex items-center gap-3 px-5 py-3 rounded-2xl border ${color}`}>
-      <span className="text-2xl font-black">{value}</span>
-      <span className="text-xs font-bold uppercase tracking-widest opacity-70">{label}</span>
-    </div>
+    <motion.div className={`flex items-center gap-2 sm:gap-3 px-3 sm:px-5 py-2.5 sm:py-3 rounded-2xl border min-w-0 ${color}`}>
+      <span className="text-xl sm:text-2xl font-black tabular-nums">{value}</span>
+      <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest opacity-70">{label}</span>
+    </motion.div>
   );
 }
 
@@ -98,17 +99,22 @@ export default function AdminEnrollmentsPage() {
   };
 
   // Stat counts - excluding 'ready_to_apply' from total and formal counts
-  const formalEnrollments = enrollments.filter(e => e.status !== "ready_to_apply");
-  const pending = formalEnrollments.filter(e => e.status === "pending").length;
-  const confirmed = formalEnrollments.filter(e => e.status === "confirmed").length;
-  const rejected = formalEnrollments.filter(e => e.status === "rejected").length;
+  const formalEnrollments = enrollments.filter(
+    (e) => !enrollmentStatusIs(e.status, "ready_to_apply"),
+  );
+  const pending = formalEnrollments.filter((e) => enrollmentStatusIs(e.status, "pending")).length;
+  const confirmed = formalEnrollments.filter((e) =>
+    enrollmentStatusIs(e.status, "confirmed", "enrolled"),
+  ).length;
+  const rejected = formalEnrollments.filter((e) => enrollmentStatusIs(e.status, "rejected")).length;
 
   const filteredEnrollments = formalEnrollments.filter(e => {
     const matchesSearch =
       e.traineeName.toLowerCase().includes(search.toLowerCase()) ||
       e.refNo.toLowerCase().includes(search.toLowerCase()) ||
       e.traineeEmail.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus = statusFilter === "all" || e.status === statusFilter;
+    const matchesStatus =
+      statusFilter === "all" || enrollmentStatusIs(e.status, statusFilter);
     const matchesCourse = courseFilter === "all" || e.courseSlug === courseFilter;
     return matchesSearch && matchesStatus && matchesCourse;
   });
@@ -171,9 +177,9 @@ export default function AdminEnrollmentsPage() {
                   onChange={e => setSearch(e.target.value)}
                 />
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-col gap-2 min-w-0 w-full sm:flex-row sm:w-auto">
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-[140px] bg-card rounded-xl border-border">
+                  <SelectTrigger className="w-full min-w-0 sm:w-[140px] bg-card rounded-xl border-border">
                     <div className="flex items-center gap-2 text-muted-foreground">
                       <Filter className="h-3 w-3" />
                       <SelectValue placeholder="Status" />
@@ -188,7 +194,7 @@ export default function AdminEnrollmentsPage() {
                 </Select>
 
                 <Select value={courseFilter} onValueChange={setCourseFilter}>
-                  <SelectTrigger className="w-[200px] bg-card rounded-xl border-border">
+                  <SelectTrigger className="w-full min-w-0 sm:w-[200px] bg-card rounded-xl border-border">
                     <SelectValue placeholder="All Courses" />
                   </SelectTrigger>
                   <SelectContent>

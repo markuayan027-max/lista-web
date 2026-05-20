@@ -53,7 +53,7 @@ export default function Navbar() {
             }}
           >
             <div className="transition-transform group-hover:scale-105">
-              <SiteLogo className="h-16 w-auto object-contain" priority />
+              <SiteLogo className="h-12 w-auto object-contain sm:h-14 md:h-16" priority />
             </div>
             <span className="text-xl font-bold tracking-tighter text-slate-900">LISTA</span>
           </Link>

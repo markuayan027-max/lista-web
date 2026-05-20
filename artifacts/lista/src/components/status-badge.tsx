@@ -3,8 +3,28 @@ import { Badge } from "@/components/ui/badge";
 
 type Status = "pending" | "confirmed" | "rejected" | "issued" | "in_progress" | "cancelled";
 
+/** DB enum uses Pascal case; legacy rows may use other labels. */
+function normalizeStatus(raw: string): Status {
+  const key = raw.trim().toLowerCase().replace(/\s+/g, "_");
+  const aliases: Record<string, Status> = {
+    pending: "pending",
+    confirmed: "confirmed",
+    rejected: "rejected",
+    issued: "issued",
+    in_progress: "in_progress",
+    cancelled: "cancelled",
+    waitlisted: "pending",
+    review: "pending",
+    interview: "in_progress",
+    enrolled: "confirmed",
+    completed: "issued",
+    ready_to_apply: "pending",
+  };
+  return aliases[key] ?? "pending";
+}
+
 interface StatusBadgeProps {
-  status: Status;
+  status: Status | string;
   className?: string;
 }
 
@@ -36,7 +56,11 @@ const statusConfig: Record<Status, { label: string; className: string }> = {
 };
 
 export default function StatusBadge({ status, className }: StatusBadgeProps) {
-  const config = statusConfig[status];
+  const normalized =
+    typeof status === "string" && !(status in statusConfig)
+      ? normalizeStatus(status)
+      : (status as Status);
+  const config = statusConfig[normalized] ?? statusConfig.pending;
 
   return (
     <Badge

@@ -34,11 +34,11 @@ export default function StaffLayout({ children }: { children: React.ReactNode })
             <div className="md:hidden">
               <Sheet>
                 <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-10 w-10">
+                  <Button variant="ghost" size="icon" className="h-10 w-10 touch-target" aria-label="Open menu">
                     <Menu className="h-5 w-5" />
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="left" className="p-0 w-64">
+                <SheetContent side="left" className="p-0 w-[min(100vw,280px)] border-0">
                   <SidebarStaff />
                 </SheetContent>
               </Sheet>
@@ -96,7 +96,7 @@ export default function StaffLayout({ children }: { children: React.ReactNode })
         </header>
 
         {/* Main Content */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-8">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-8 min-w-0">
           <div className="max-w-7xl mx-auto">
             {children}
           </div>

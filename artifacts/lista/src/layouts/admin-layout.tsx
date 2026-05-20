@@ -54,19 +54,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <div className="md:hidden">
               <Sheet>
                 <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-10 w-10">
+                  <Button variant="ghost" size="icon" className="h-10 w-10 touch-target" aria-label="Open menu">
                     <Menu className="h-5 w-5" />
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="left" className="p-0 w-64">
+                <SheetContent side="left" className="p-0 w-[min(100vw,280px)] border-0">
                   <SidebarAdmin />
                 </SheetContent>
               </Sheet>
             </div>
-            <h1 className="text-lg font-bold tracking-tight">{getPageTitle()}</h1>
+            <h1 className="text-base sm:text-lg font-bold tracking-tight truncate max-w-[45vw] sm:max-w-none">{getPageTitle()}</h1>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 shrink">
             <Button 
               variant="ghost" 
               size="icon" 
@@ -79,10 +79,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-                  <AvatarInitials name={user?.name || "Admin"} size="sm" />
-                  <div className="hidden sm:block text-left">
-                    <p className="text-sm font-bold leading-none">{user?.name}</p>
+                <button className="flex items-center gap-2 hover:opacity-80 transition-opacity min-w-0 max-w-[42vw] sm:max-w-[10rem] md:max-w-none">
+                  <AvatarInitials name={user?.name || "Admin"} size="sm" className="shrink-0" />
+                  <div className="hidden sm:block text-left min-w-0 overflow-hidden">
+                    <p className="text-sm font-bold leading-none truncate">{user?.name}</p>
                     <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mt-0.5">Administrator</p>
                   </div>
                 </button>

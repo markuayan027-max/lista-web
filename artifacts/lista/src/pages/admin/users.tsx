@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Plus, Search, MoreHorizontal, Pencil, Loader2 } from "lucide-react";
+import { Plus, Search, MoreHorizontal, Pencil, Loader2, UserX, UserCheck } from "lucide-react";
 import { TableSkeleton } from "@/components/skeletons";
 import { format } from "date-fns";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,12 +11,50 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import AvatarInitials from "@/components/avatar-initials";
 import FormInputField from "@/components/form-input-field";
 import PrimaryButton from "@/components/primary-button";
+import { useAuth } from "@/context/auth-context";
 import type { User, UserRole } from "@/lib/institutional-data";
-import { useInviteUser, useUpdateUserRole, useUsers } from "@/hooks/use-lista-data";
+import {
+  useEnrollments,
+  useInviteStaffUser,
+  useUpdateUserRole,
+  useUpdateUserStatus,
+  useUsers,
+} from "@/hooks/use-lista-data";
+
+function traineeHasEnrollmentHistory(
+  user: User,
+  enrollmentEmails: Set<string>,
+  enrollmentUserIds: Set<string>,
+): boolean {
+  if (user.role !== "trainee") return false;
+  return (
+    enrollmentEmails.has(user.email.toLowerCase()) || enrollmentUserIds.has(user.id)
+  );
+}
+
+function isRoleTransitionForbidden(current: UserRole, next: UserRole): boolean {
+  return (
+    (current === "trainee" && next === "admin") ||
+    (current === "staff" && next === "trainee") ||
+    (current === "admin" && next === "trainee")
+  );
+}
+
+function isEditRoleOptionDisabled(
+  current: UserRole,
+  option: UserRole,
+  traineeLocked: boolean,
+): boolean {
+  if (option === current) return false;
+  if (isRoleTransitionForbidden(current, option)) return true;
+  if (traineeLocked && current === "trainee") return true;
+  return false;
+}
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -33,9 +71,22 @@ const itemVariants = {
 
 export default function AdminUsersPage() {
   const { toast } = useToast();
+  const { user: currentUser } = useAuth();
   const { data: users = [], isLoading, isError, error } = useUsers();
-  const inviteMutation = useInviteUser();
+  const { data: enrollments = [] } = useEnrollments();
+  const inviteMutation = useInviteStaffUser();
   const updateRoleMutation = useUpdateUserRole();
+  const updateStatusMutation = useUpdateUserStatus();
+
+  const { enrollmentEmails, enrollmentUserIds } = useMemo(() => {
+    const enrollmentEmails = new Set<string>();
+    const enrollmentUserIds = new Set<string>();
+    for (const e of enrollments) {
+      if (e.traineeEmail) enrollmentEmails.add(e.traineeEmail.toLowerCase());
+      if (e.userId) enrollmentUserIds.add(e.userId);
+    }
+    return { enrollmentEmails, enrollmentUserIds };
+  }, [enrollments]);
 
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("all");
@@ -43,8 +94,17 @@ export default function AdminUsersPage() {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
 
-  const [inviteForm, setInviteForm] = useState({ name: "", email: "", role: "trainee" });
-  const [editForm, setEditForm] = useState({ role: "trainee" });
+  const [inviteForm, setInviteForm] = useState({ name: "", email: "", role: "staff" });
+  const [editForm, setEditForm] = useState({ role: "staff" });
+
+  const editingTraineeLocked =
+    editingUser !== null &&
+    traineeHasEnrollmentHistory(editingUser, enrollmentEmails, enrollmentUserIds);
+
+  const editSubmitBlocked =
+    editingUser !== null &&
+    ((editingTraineeLocked && editForm.role !== editingUser.role) ||
+      isRoleTransitionForbidden(editingUser.role, editForm.role as UserRole));
 
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,13 +117,13 @@ export default function AdminUsersPage() {
       await inviteMutation.mutateAsync({
         name: inviteForm.name,
         email: inviteForm.email,
-        role: inviteForm.role as UserRole,
+        role: inviteForm.role as "staff" | "admin",
       });
       setIsInviteOpen(false);
-      setInviteForm({ name: "", email: "", role: "trainee" });
+      setInviteForm({ name: "", email: "", role: "staff" });
       toast({
-        title: "User Added",
-        description: `${inviteForm.email} saved to InsForge.`,
+        title: "Staff activation email sent",
+        description: `${inviteForm.email} will receive a one-time code to create their own password at ${window.location.origin}/activate-account`,
       });
     } catch (err) {
       toast({
@@ -83,6 +143,16 @@ export default function AdminUsersPage() {
   const handleEdit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingUser) return;
+    if (editSubmitBlocked) {
+      toast({
+        title: "Role change not allowed",
+        description: editingTraineeLocked
+          ? "Trainees with enrollment history need a separate staff account."
+          : "This role transition is blocked by LISTA policy.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     try {
       await updateRoleMutation.mutateAsync({
@@ -110,6 +180,38 @@ export default function AdminUsersPage() {
     const matchesRole = roleFilter === "all" || u.role === roleFilter;
     return matchesSearch && matchesRole;
   });
+
+  const handleStatusToggle = async (target: User) => {
+    if (target.email.toLowerCase() === currentUser?.email?.toLowerCase()) {
+      toast({
+        title: "Not allowed",
+        description: "You cannot deactivate your own account.",
+        variant: "destructive",
+      });
+      return;
+    }
+    const nextStatus = target.status === "deactivated" ? "active" : "deactivated";
+    try {
+      await updateStatusMutation.mutateAsync({ userId: target.id, status: nextStatus });
+      toast({
+        title: nextStatus === "deactivated" ? "Account deactivated" : "Account reactivated",
+        description: `${target.email} is now ${nextStatus}.`,
+      });
+    } catch (err) {
+      toast({
+        title: "Status update failed",
+        description: err instanceof Error ? err.message : "Unknown error",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const getStatusBadge = (status?: string) => {
+    if (status === "deactivated") {
+      return <Badge variant="outline" className="text-muted-foreground">Deactivated</Badge>;
+    }
+    return <Badge variant="outline" className="border-emerald-500/40 text-emerald-700 dark:text-emerald-400">Active</Badge>;
+  };
 
   const getRoleBadge = (role: string) => {
     switch (role) {
@@ -155,14 +257,16 @@ export default function AdminUsersPage() {
           <DialogTrigger asChild>
             <PrimaryButton className="gap-2">
               <Plus className="h-4 w-4" />
-              Invite User
+              Add staff
             </PrimaryButton>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
             <form onSubmit={handleInvite}>
               <DialogHeader>
-                <DialogTitle>Invite New User</DialogTitle>
-                <DialogDescription>Add a user record in InsForge (link auth separately if needed).</DialogDescription>
+                <DialogTitle>Add staff member</DialogTitle>
+                <DialogDescription>
+                  Creates a staff login and sends an activation code by email so they choose their own password. LISTA never stores or shows that password to admins. Use an institutional email. Trainees register via Sign up on the homepage.
+                </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <FormInputField
@@ -177,7 +281,7 @@ export default function AdminUsersPage() {
                   type="email"
                   value={inviteForm.email}
                   onChange={(e) => setInviteForm({ ...inviteForm, email: e.target.value })}
-                  placeholder="e.g. john@example.com"
+                  placeholder="e.g. name@lorenzinternational.org"
                   required
                 />
                 <motion.div variants={itemVariants} className="grid gap-1.5">
@@ -187,7 +291,6 @@ export default function AdminUsersPage() {
                       <SelectValue placeholder="Select a role" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="trainee">Trainee</SelectItem>
                       <SelectItem value="staff">Staff</SelectItem>
                       <SelectItem value="admin">Admin</SelectItem>
                     </SelectContent>
@@ -243,11 +346,13 @@ export default function AdminUsersPage() {
               {error instanceof Error ? error.message : "Failed to load users"}
             </motion.div>
           ) : (
-            <Table>
+            <div className="overflow-x-auto neat-scrollbar">
+            <Table className="min-w-[640px]">
               <TableHeader>
                 <TableRow className="bg-muted/30 hover:bg-muted/30">
                   <TableHead className="font-semibold text-muted-foreground">User</TableHead>
                   <TableHead className="font-semibold text-muted-foreground">Role</TableHead>
+                  <TableHead className="font-semibold text-muted-foreground">Status</TableHead>
                   <TableHead className="font-semibold text-muted-foreground">Joined</TableHead>
                   <TableHead className="w-12" />
                 </TableRow>
@@ -255,7 +360,7 @@ export default function AdminUsersPage() {
               <TableBody>
                 {filteredUsers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                       No users found.
                     </TableCell>
                   </TableRow>
@@ -272,6 +377,7 @@ export default function AdminUsersPage() {
                         </div>
                       </TableCell>
                       <TableCell>{getRoleBadge(user.role)}</TableCell>
+                      <TableCell>{getStatusBadge(user.status)}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">{formatJoined(user.createdAt)}</TableCell>
                       <TableCell>
                         <DropdownMenu>
@@ -285,10 +391,34 @@ export default function AdminUsersPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => openEdit(user)} className="cursor-pointer">
+                            <DropdownMenuItem
+                              onClick={() => openEdit(user)}
+                              className="cursor-pointer"
+                              disabled={user.status === "deactivated"}
+                            >
                               <Pencil className="mr-2 h-4 w-4" />
                               Edit Role
                             </DropdownMenuItem>
+                            {(user.role === "staff" || user.role === "admin") &&
+                            user.email.toLowerCase() !== currentUser?.email?.toLowerCase() ? (
+                              <DropdownMenuItem
+                                onClick={() => handleStatusToggle(user)}
+                                className="cursor-pointer"
+                                disabled={updateStatusMutation.isPending}
+                              >
+                                {user.status === "deactivated" ? (
+                                  <>
+                                    <UserCheck className="mr-2 h-4 w-4" />
+                                    Reactivate
+                                  </>
+                                ) : (
+                                  <>
+                                    <UserX className="mr-2 h-4 w-4" />
+                                    Deactivate
+                                  </>
+                                )}
+                              </DropdownMenuItem>
+                            ) : null}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
@@ -297,6 +427,7 @@ export default function AdminUsersPage() {
                 )}
               </TableBody>
             </Table>
+            </div>
           )}
         </Card>
       </motion.div>
@@ -308,26 +439,59 @@ export default function AdminUsersPage() {
               <DialogTitle>Edit User Role</DialogTitle>
               <DialogDescription>Change permissions for {editingUser?.name}.</DialogDescription>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-1.5">
+            <motion.div className="grid gap-4 py-4">
+              {editingTraineeLocked ? (
+                <Alert>
+                  <AlertTitle>Trainee role is locked</AlertTitle>
+                  <AlertDescription>
+                    This account has enrollment records. Create a separate staff login with an institutional email instead of changing this role.
+                  </AlertDescription>
+                </Alert>
+              ) : null}
+              <motion.div variants={itemVariants} className="grid gap-1.5">
                 <label className="text-sm font-semibold tracking-tight">Role</label>
-                <Select value={editForm.role} onValueChange={(val) => setEditForm({ role: val })}>
+                <Select
+                  value={editForm.role}
+                  onValueChange={(val) => setEditForm({ role: val })}
+                  disabled={editingTraineeLocked}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select a role" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="trainee">Trainee</SelectItem>
-                    <SelectItem value="staff">Staff</SelectItem>
-                    <SelectItem value="admin">Admin</SelectItem>
+                    {(["trainee", "staff", "admin"] as const).map((option) => (
+                      <SelectItem
+                        key={option}
+                        value={option}
+                        disabled={
+                          editingUser
+                            ? isEditRoleOptionDisabled(
+                                editingUser.role,
+                                option,
+                                editingTraineeLocked,
+                              )
+                            : false
+                        }
+                      >
+                        {option.charAt(0).toUpperCase() + option.slice(1)}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setIsEditOpen(false)}>
                 Cancel
               </Button>
-              <PrimaryButton type="submit" disabled={updateRoleMutation.isPending}>
+              <PrimaryButton
+                type="submit"
+                disabled={
+                  updateRoleMutation.isPending ||
+                  editSubmitBlocked ||
+                  (editingUser !== null && editForm.role === editingUser.role)
+                }
+              >
                 {updateRoleMutation.isPending ? "Saving…" : "Save Changes"}
               </PrimaryButton>
             </DialogFooter>

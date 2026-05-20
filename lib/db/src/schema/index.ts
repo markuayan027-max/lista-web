@@ -5,7 +5,7 @@ import { z } from "zod";
 export const userRoleEnum = pgEnum("user_role", ["trainee", "staff", "admin"]);
 export const userStatusEnum = pgEnum("user_status", ["active", "deactivated"]);
 
-export const users = pgTable("users", {
+export const users = pgTable("lms_users_legacy", {
   id: uuid("id").primaryKey().defaultRandom(),
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
@@ -26,7 +26,7 @@ export const users = pgTable("users", {
 
 export const enrollmentStatusEnum = pgEnum("enrollment_status", ["Pending", "Confirmed", "Rejected", "Waitlisted", "Review", "Interview", "Enrolled", "Cancelled", "Completed", "Ready to Apply"]);
 
-export const enrollments = pgTable("enrollments", {
+export const enrollments = pgTable("lms_enrollments_legacy", {
   id: uuid("id").primaryKey().defaultRandom(),
   refNo: text("ref_no").notNull().unique(),
   userId: uuid("user_id").references(() => users.id),
@@ -72,7 +72,7 @@ export const enrollments = pgTable("enrollments", {
   qualificationType: text("qualification_type"),
   motherMaidenName: text("mother_maiden_name"),
   fatherName: text("father_name"),
-  isIP: text("is_ip"),
+  isIP: boolean("is_ip"),
   indigenousGroup: text("indigenous_group"),
   motherTongue: text("mother_tongue"),
   consent: boolean("consent").notNull().default(false),

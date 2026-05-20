@@ -35,6 +35,7 @@ import {
   isTraineeApplicationFormComplete,
   maxCompletedRegistrationStep,
 } from "@/lib/profile-utils";
+import { enrollmentBlocksNewCourseApplication } from "@/lib/enrollment-status";
 
 const STEPS = [
   { id: 1, title: "Program", description: "Course selection", icon: CalendarDays },
@@ -66,9 +67,8 @@ export default function TraineeEnrollPage() {
 
     if (cloudProfile) {
       const dbData = cloudProfile as Enrollment;
-      const status = String(dbData.status).toLowerCase();
 
-      if (!["completed", "cancelled", "rejected", "ready_to_apply"].includes(status)) {
+      if (enrollmentBlocksNewCourseApplication(dbData.status)) {
         toast({ title: "Active Enrollment", description: "You already have an active application.", variant: "destructive" });
         setLocation("/trainee/tracking");
         return;

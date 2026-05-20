@@ -11,6 +11,7 @@ import {
   countInLastDays,
   countSchedulesInWeek,
   countUsersWithRoleInWindow,
+  enrollmentHasStatus,
   isFormalEnrollment,
 } from "@/lib/analytics-utils";
 import { isSameDay, parseISO } from "date-fns";
@@ -40,7 +41,9 @@ export default function StaffOverviewPage() {
     () => enrollments.filter(isFormalEnrollment),
     [enrollments],
   );
-  const pendingEnrollments = formalEnrollments.filter((e) => e.status === "pending").length;
+  const pendingEnrollments = formalEnrollments.filter((e) =>
+    enrollmentHasStatus(e, "pending"),
+  ).length;
   const activeTrainees = users.filter((u) => u.role === "trainee").length;
 
   const sessionsTrend = useMemo(() => {
@@ -56,7 +59,7 @@ export default function StaffOverviewPage() {
   }, [users]);
 
   const pendingTrend = useMemo(() => {
-    const pending = formalEnrollments.filter((e) => e.status === "pending");
+    const pending = formalEnrollments.filter((e) => enrollmentHasStatus(e, "pending"));
     const last30 = countInLastDays(pending, 30);
     const prev30 = countInLastDays(pending, 60) - last30;
     return computePeriodTrend(last30, prev30);
@@ -68,7 +71,7 @@ export default function StaffOverviewPage() {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <h1 className="text-3xl font-bold tracking-tight">Staff Overview</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Staff Overview</h1>
         <p className="text-muted-foreground mt-1">Here's what's happening across the academy today.</p>
       </motion.div>
 

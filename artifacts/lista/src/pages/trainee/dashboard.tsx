@@ -16,6 +16,7 @@ import {
   Download
 } from "lucide-react";
 import StatCard from "@/components/stat-card";
+import StatusBadge from "@/components/status-badge";
 import AnnouncementCard from "@/components/announcement-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -147,7 +148,7 @@ export default function TraineeDashboardPage() {
         className="flex flex-col md:flex-row md:items-end justify-between gap-4"
       >
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Welcome back, {user?.name?.split(' ')[0]}</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight break-words">Welcome back, {user?.name?.split(' ')[0]}</h1>
           <p className="text-muted-foreground mt-1">Here's what's happening with your learning journey.</p>
         </div>
       </motion.div>
@@ -223,11 +224,13 @@ export default function TraineeDashboardPage() {
           <StatCard
             label="Application Status"
             value={
-              activeApplication
-                ? userEnrollment!.status
-                : userEnrollment?.status === "ready_to_apply"
-                  ? "Ready to Apply"
-                  : "Not Applied"
+              activeApplication && userEnrollment?.status ? (
+                <StatusBadge status={userEnrollment.status} />
+              ) : userEnrollment?.status === "ready_to_apply" ? (
+                "Ready to Apply"
+              ) : (
+                "Not Applied"
+              )
             }
             icon={FileText}
             className="h-full"

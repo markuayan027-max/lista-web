@@ -6,6 +6,7 @@ import { canUseInsforgeSdk } from "@/lib/insforge-env";
 import { lista } from "@/lib/insforge";
 import { authHeaders } from "@/lib/auth-token";
 import { insforgeEnrollmentRowToApiData } from "@/lib/trainee-enrollment-insforge";
+import { normalizeEnrollmentStatus } from "@/lib/enrollment-status";
 import type { Course, Enrollment, User, UserRole } from "@/lib/institutional-data";
 import { resolveCourseCoverImage, resolveCourseGalleryImages } from "@/lib/course-images";
 
@@ -120,7 +121,7 @@ export function insforgeEnrollmentRowToEnrollment(row: Record<string, unknown>):
     heardFrom: str(d.heardFrom),
     notes: str(d.notes),
     consent: Boolean(d.consent),
-    status: (d.status as Enrollment["status"]) || "pending",
+    status: normalizeEnrollmentStatus(str(d.status)) as Enrollment["status"],
     createdAt: str(d.createdAt || d.submittedAt) || new Date().toISOString(),
   };
 }
@@ -129,11 +130,13 @@ function rowToUser(row: Record<string, unknown>): User {
   const first = str(row.first_name);
   const last = str(row.last_name);
   const role = str(row.role).toLowerCase();
+  const statusRaw = str(row.status).toLowerCase();
   return {
     id: str(row.id),
     name: `${first} ${last}`.trim() || str(row.email),
     email: str(row.email),
     role: (role === "admin" || role === "staff" ? role : "trainee") as UserRole,
+    status: statusRaw === "deactivated" ? "deactivated" : "active",
     avatarUrl: str(row.avatar_url),
     createdAt: row.created_at ? str(row.created_at) : undefined,
   };
@@ -292,41 +295,76 @@ export async function updateUserRole(userId: string, role: UserRole): Promise<Li
     success?: boolean;
     data?: Record<string, unknown>;
     error?: string;
+    message?: string;
   };
   if (apiRes.ok && body.success && body.data) {
     return { success: true, data: rowToUser(body.data) };
   }
   return {
     success: false,
-    error: body.error || `Role update failed (${apiRes.status})`,
+    error:
+      body.message ||
+      body.error ||
+      `Role update failed (${apiRes.status})`,
   };
 }
 
-export async function inviteUser(input: {
+/** Admin staff invite — InsForge auth + password reset email (api-server). */
+export async function inviteStaffUser(input: {
   name: string;
   email: string;
-  role: UserRole;
-}): Promise<ListaFetchResult<User>> {
-  const parts = input.name.trim().split(/\s+/);
-  const firstName = parts[0] || input.email.split("@")[0];
-  const lastName = parts.slice(1).join(" ") || "-";
-  const { data, error } = await lista
-    .from("users")
-    .insert([
-      {
-        first_name: firstName,
-        last_name: lastName,
-        email: input.email.toLowerCase(),
-        password_hash: "$2b$10$placeholder_invite_set_password",
-        role: input.role,
-        status: "active",
+  role: "staff" | "admin";
+}): Promise<ListaFetchResult<User & { inviteMessage?: string }>> {
+  const apiRes = await fetch("/api/users/invite", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify(input),
+  });
+  const body = (await apiRes.json().catch(() => ({}))) as {
+    success?: boolean;
+    data?: Record<string, unknown>;
+    error?: string;
+    message?: string;
+    activationUrl?: string;
+  };
+  if (apiRes.ok && body.success && body.data) {
+    return {
+      success: true,
+      data: {
+        ...rowToUser(body.data),
+        inviteMessage: body.message,
+        activationUrl: body.activationUrl,
       },
-    ])
-    .select("*");
-  if (error) return { success: false, error: error.message };
-  const row = (data as Record<string, unknown>[])?.[0];
-  if (!row) return { success: false, error: "Insert returned no row" };
-  return { success: true, data: rowToUser(row) };
+    };
+  }
+  return {
+    success: false,
+    error: body.message || body.error || `Invite failed (${apiRes.status})`,
+  };
+}
+
+export async function updateUserStatus(
+  userId: string,
+  status: "active" | "deactivated",
+): Promise<ListaFetchResult<User>> {
+  const apiRes = await fetch(`/api/users/${userId}/status`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify({ status }),
+  });
+  const body = (await apiRes.json().catch(() => ({}))) as {
+    success?: boolean;
+    data?: Record<string, unknown>;
+    error?: string;
+    message?: string;
+  };
+  if (apiRes.ok && body.success && body.data) {
+    return { success: true, data: rowToUser(body.data) };
+  }
+  return {
+    success: false,
+    error: body.message || body.error || `Status update failed (${apiRes.status})`,
+  };
 }
 
 export function userJoinedAt(row: Record<string, unknown>): string | null {
@@ -335,23 +373,81 @@ export function userJoinedAt(row: Record<string, unknown>): string | null {
 
 // ── Enrollments ──────────────────────────────────────────────────────────────
 
+async function fetchAllEnrollmentsViaApi(): Promise<ListaFetchResult<Enrollment[]>> {
+  const headers = authHeaders();
+  if (!("Authorization" in headers)) {
+    return { success: false, error: "Sign in required to list enrollments" };
+  }
+  try {
+    const apiRes = await fetch("/api/enrollments", { headers });
+    const body = (await apiRes.json().catch(() => ({}))) as {
+      success?: boolean;
+      data?: Record<string, unknown>[];
+      error?: string;
+    };
+    if (apiRes.ok && body.success && Array.isArray(body.data)) {
+      return {
+        success: true,
+        data: body.data.map((row) => insforgeEnrollmentRowToEnrollment(row)),
+      };
+    }
+    return {
+      success: false,
+      error:
+        body.error ||
+        (!apiRes.ok ? `Enrollment list failed (${apiRes.status})` : "Enrollment list returned no data"),
+    };
+  } catch (err) {
+    return {
+      success: false,
+      error:
+        err instanceof Error
+          ? err.message
+          : "Could not reach /api/enrollments — is api-server running?",
+    };
+  }
+}
+
 export async function fetchAllEnrollments(): Promise<ListaFetchResult<Enrollment[]>> {
-  const { data, error } = await lista
-    .from("enrollments")
-    .select("*")
-    .order("updated_at", { ascending: false });
-  if (error) return { success: false, error: error.message };
-  return {
-    success: true,
-    data: ((data as Record<string, unknown>[]) || []).map(insforgeEnrollmentRowToEnrollment),
-  };
+  const viaApi = await fetchAllEnrollmentsViaApi();
+  if (viaApi.success) return viaApi;
+  if (canUseInsforgeSdk()) {
+    const { data, error } = await lista
+      .from("lms_enrollments_legacy")
+      .select("*")
+      .order("updated_at", { ascending: false });
+    if (!error) {
+      return {
+        success: true,
+        data: ((data as Record<string, unknown>[]) || []).map(insforgeEnrollmentRowToEnrollment),
+      };
+    }
+  }
+  return viaApi;
 }
 
 export async function updateEnrollmentStatus(
   id: string,
   status: Enrollment["status"],
 ): Promise<ListaFetchResult<void>> {
-  const { error } = await lista.from("enrollments").update({ status: enrollmentStatusToDb(status) }).eq("id", id);
+  const headers = authHeaders();
+  if ("Authorization" in headers) {
+    try {
+      const apiRes = await fetch(`/api/enrollments/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", ...headers },
+        body: JSON.stringify({ status }),
+      });
+      const body = (await apiRes.json().catch(() => ({}))) as { success?: boolean; error?: string };
+      if (apiRes.ok && body.success) return { success: true, data: undefined };
+      if (apiRes.status !== 404 && apiRes.status !== 503) {
+        return { success: false, error: body.error || `Update failed (${apiRes.status})` };
+      }
+    } catch {
+      /* fall through to SDK */
+    }
+  }
+  const { error } = await lista.from("lms_enrollments_legacy").update({ status: enrollmentStatusToDb(status) }).eq("id", id);
   if (error) return { success: false, error: error.message };
   return { success: true, data: undefined };
 }
@@ -360,9 +456,23 @@ export async function bulkUpdateEnrollmentStatus(
   ids: string[],
   status: Enrollment["status"],
 ): Promise<ListaFetchResult<void>> {
+  const headers = authHeaders();
+  if ("Authorization" in headers) {
+    try {
+      const apiRes = await fetch("/api/enrollments/bulk", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", ...headers },
+        body: JSON.stringify({ ids, status }),
+      });
+      const body = (await apiRes.json().catch(() => ({}))) as { success?: boolean; error?: string };
+      if (apiRes.ok && body.success) return { success: true, data: undefined };
+    } catch {
+      /* fall through to SDK */
+    }
+  }
   const dbStatus = enrollmentStatusToDb(status);
   for (const id of ids) {
-    const { error } = await lista.from("enrollments").update({ status: dbStatus }).eq("id", id);
+    const { error } = await lista.from("lms_enrollments_legacy").update({ status: dbStatus }).eq("id", id);
     if (error) return { success: false, error: error.message };
   }
   return { success: true, data: undefined };

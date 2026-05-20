@@ -9,6 +9,8 @@ export interface AuthContextType {
   verifyEmail: (email: string, otp: string) => Promise<void>;
   resendVerificationEmail: (email: string) => Promise<void>;
   signUpWithOAuth: (provider: "google") => Promise<void>;
+  /** Finish Google/OAuth redirect — exchange code and persist lista_session. */
+  completeOAuthCallback: () => Promise<void>;
   logout: () => Promise<void>;
   isRegistered: boolean;
   completeRegistration: () => void;

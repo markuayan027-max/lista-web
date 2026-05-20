@@ -42,6 +42,7 @@ import PrintModal from "@/components/print-modal";
 import StatusBadge from "@/components/status-badge";
 import { useCourses, useEnrollments, useUpdateEnrollmentStatus } from "@/hooks/use-lista-data";
 import { format } from "date-fns";
+import { enrollmentStatusIs } from "@/lib/enrollment-status";
 
 export default function StaffEnrollmentsPage() {
   const { toast } = useToast();
@@ -55,13 +56,13 @@ export default function StaffEnrollmentsPage() {
   const [printTarget, setPrintTarget] = useState<Enrollment | null>(null);
 
   const filteredEnrollments = enrollments.filter(e => {
-    // Filter out incomplete 'Ready to Apply' submissions from staff view
-    if (e.status === 'ready_to_apply') return false;
+    if (enrollmentStatusIs(e.status, "ready_to_apply")) return false;
 
     const matchesSearch = e.traineeName.toLowerCase().includes(search.toLowerCase()) || 
                           e.refNo.toLowerCase().includes(search.toLowerCase()) ||
                           e.traineeEmail.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus = statusFilter === "all" || e.status === statusFilter;
+    const matchesStatus =
+      statusFilter === "all" || enrollmentStatusIs(e.status, statusFilter);
     const matchesCourse = courseFilter === "all" || e.courseSlug === courseFilter;
     return matchesSearch && matchesStatus && matchesCourse;
   });
@@ -99,11 +100,11 @@ export default function StaffEnrollmentsPage() {
         animate={{ opacity: 1, y: 0 }}
         className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
       >
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Manage Enrollments</h1>
-          <p className="text-muted-foreground mt-1">Review and process trainee applications. Staff do not submit TESDA forms on this page.</p>
+        <div className="min-w-0">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Manage Enrollments</h1>
+          <p className="text-muted-foreground mt-1 text-sm sm:text-base">Review and process trainee applications. Staff do not submit TESDA forms on this page.</p>
         </div>
-        <Button variant="outline" className="shrink-0 bg-card">
+        <Button variant="outline" className="shrink-0 bg-card w-full sm:w-auto touch-target">
           <Download className="mr-2 h-4 w-4" /> Export CSV
         </Button>
       </motion.div>
@@ -119,9 +120,9 @@ export default function StaffEnrollmentsPage() {
               onChange={e => setSearch(e.target.value)}
             />
           </div>
-          <div className="flex gap-2 w-full sm:w-auto">
+          <div className="flex flex-col gap-2 w-full min-w-0 sm:flex-row sm:w-auto">
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[140px] bg-card">
+              <SelectTrigger className="w-full min-w-0 sm:w-[140px] bg-card">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
@@ -132,7 +133,7 @@ export default function StaffEnrollmentsPage() {
               </SelectContent>
             </Select>
             <Select value={courseFilter} onValueChange={setCourseFilter}>
-              <SelectTrigger className="w-[180px] bg-card">
+              <SelectTrigger className="w-full min-w-0 sm:w-[180px] bg-card">
                 <SelectValue placeholder="Course" />
               </SelectTrigger>
               <SelectContent>
@@ -145,8 +146,8 @@ export default function StaffEnrollmentsPage() {
           </div>
         </div>
 
-        <div className="flex-1 overflow-auto">
-          <Table>
+        <div className="flex-1 overflow-x-auto neat-scrollbar min-h-0">
+          <Table className="min-w-[720px]">
             <TableHeader className="bg-muted/30 sticky top-0 z-10 backdrop-blur-sm">
               <TableRow>
                 <TableHead className="w-[120px] font-semibold">Ref No</TableHead>

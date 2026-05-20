@@ -6,18 +6,33 @@ type PasswordRequirementsProps = {
   password: string;
   id?: string;
   className?: string;
+  /** When true (default), the checklist is not rendered until the user types. */
+  hideUntilTyping?: boolean;
 };
 
+/** Use on password inputs: only link aria-describedby when the checklist is visible. */
+export function passwordRequirementsDescribedBy(
+  requirementsId: string,
+  password: string,
+  hideUntilTyping = true,
+): string | undefined {
+  if (hideUntilTyping && password.length === 0) return undefined;
+  return requirementsId;
+}
+
 /**
- * Accessible checklist of password rules — neutral before typing, green/red as user types.
+ * Accessible checklist of password rules — hidden until typing, then green/red per rule.
  */
 export default function PasswordRequirements({
   password,
   id = "password-requirements",
   className,
+  hideUntilTyping = true,
 }: PasswordRequirementsProps) {
-  const results = getPasswordRuleResults(password);
   const hasInput = password.length > 0;
+  if (hideUntilTyping && !hasInput) return null;
+
+  const results = getPasswordRuleResults(password);
   const allMet = isPasswordValid(password);
 
   return (

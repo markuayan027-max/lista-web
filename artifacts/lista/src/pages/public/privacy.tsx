@@ -2,14 +2,14 @@ import { Link } from "wouter";
 
 export default function PrivacyPage() {
   return (
-    <div className="container mx-auto px-4 py-16 max-w-4xl">
+    <div className="container mx-auto px-4 md:px-6 py-12 md:py-16 max-w-4xl">
       <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
         <div className="text-center space-y-4">
           <h1 className="text-4xl font-extrabold tracking-tight text-foreground">Privacy Policy</h1>
           <p className="text-muted-foreground">Effective Date: May 12, 2026</p>
         </div>
 
-        <section className="space-y-4 text-slate-700 leading-relaxed">
+        <section className="prose prose-slate max-w-none space-y-4 text-slate-700 leading-relaxed prose-headings:text-foreground">
           <p>
             Lorenz International Skills Training Academy (LISTA) is committed to protecting your privacy. This Privacy Policy explains how we collect, use, and safeguard your personal information when you use our enrollment and records system.
           </p>

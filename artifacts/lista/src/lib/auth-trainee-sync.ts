@@ -74,11 +74,17 @@ export async function syncTraineeSideEffects(
       setIsRegistered(true);
       return;
     }
+    // TTL hit: still re-check cloud — local `reg_*` can be stale on a new device or after OAuth.
     try {
-      const reg = localStorage.getItem(`reg_${mapped.id}`);
-      setIsRegistered(reg === "complete" || reg === "partial");
+      const fromCloud = await resolveTraineeRegistrationFromCloud(mapped);
+      setIsRegistered(fromCloud);
     } catch {
-      setIsRegistered(false);
+      try {
+        const reg = localStorage.getItem(`reg_${mapped.id}`);
+        setIsRegistered(reg === "complete" || reg === "partial");
+      } catch {
+        setIsRegistered(false);
+      }
     }
     return;
   }

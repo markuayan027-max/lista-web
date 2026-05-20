@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "wouter";
 import FormInputField from "@/components/form-input-field";
-import PasswordRequirements from "@/components/password-requirements";
+import PasswordRequirements, {
+  passwordRequirementsDescribedBy,
+} from "@/components/password-requirements";
 import { getPasswordValidationError, isPasswordValid } from "@/lib/password-policy";
 import PrimaryButton from "@/components/primary-button";
 import { ChevronLeft, Mail, Loader2, CheckCircle2 } from "lucide-react";
@@ -26,9 +28,17 @@ import { toast } from "sonner";
 type Step = "request" | "reset" | "done";
 
 export default function ForgotPasswordPage() {
-  const [_, setLocation] = useLocation();
+  const [path, setLocation] = useLocation();
+  const isStaffActivation = path === "/activate-account" || path.startsWith("/activate-account?");
 
-  const [step, setStep] = useState<Step>("request");
+  const queryEmail = useMemo(() => {
+    if (typeof window === "undefined") return "";
+    return new URLSearchParams(window.location.search).get("email")?.trim().toLowerCase() ?? "";
+  }, [path]);
+
+  const [step, setStep] = useState<Step>(() =>
+    isStaffActivation && queryEmail ? "reset" : "request",
+  );
 
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
@@ -49,7 +59,11 @@ export default function ForgotPasswordPage() {
         method: "POST",
         body: { email: email.trim().toLowerCase() },
       });
-      toast.success("Reset code sent! Check your inbox.");
+      toast.success(
+        isStaffActivation
+          ? "Activation code sent! Check your inbox."
+          : "Reset code sent! Check your inbox.",
+      );
       setStep("reset");
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Failed to send reset code. Try again.";
@@ -135,11 +149,18 @@ export default function ForgotPasswordPage() {
           </p>
         </div>
         <PrimaryButton
+          type="button"
           onClick={() => setLocation("/login")}
           className="w-full h-12 rounded-xl"
         >
           Back to login
         </PrimaryButton>
+        <Link
+          href="/login"
+          className="block text-sm font-semibold text-primary hover:underline"
+        >
+          Or open log in page
+        </Link>
       </div>
     );
   }
@@ -154,12 +175,22 @@ export default function ForgotPasswordPage() {
             <Mail className="w-7 h-7" />
           </div>
           <h1 className="text-4xl font-extrabold tracking-tight text-foreground">
-            Reset password
+            {isStaffActivation ? "Create your password" : "Reset password"}
           </h1>
           <p className="text-muted-foreground text-sm leading-relaxed">
-            Enter the code we sent to{" "}
-            <span className="font-bold text-foreground">{email}</span> and
-            choose a new password.
+            {isStaffActivation ? (
+              <>
+                Enter the activation code we sent to{" "}
+                <span className="font-bold text-foreground">{email}</span>, then
+                choose a password only you will know.
+              </>
+            ) : (
+              <>
+                Enter the code we sent to{" "}
+                <span className="font-bold text-foreground">{email}</span> and choose a new
+                password.
+              </>
+            )}
           </p>
         </div>
 
@@ -186,7 +217,10 @@ export default function ForgotPasswordPage() {
               placeholder="New password"
               required
               autoComplete="new-password"
-              aria-describedby="reset-password-requirements"
+              aria-describedby={passwordRequirementsDescribedBy(
+                "reset-password-requirements",
+                newPassword,
+              )}
               className="h-14 text-base rounded-xl"
             />
             <PasswordRequirements
@@ -250,10 +284,12 @@ export default function ForgotPasswordPage() {
     <div className="w-full space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="text-center space-y-2">
         <h1 className="text-4xl font-extrabold tracking-tight text-foreground">
-          Forgot password?
+          {isStaffActivation ? "Activate your staff account" : "Forgot password?"}
         </h1>
         <p className="text-muted-foreground">
-          Enter your email address and we'll send a reset code.
+          {isStaffActivation
+            ? "Enter your work email to receive a one-time code, then choose your own password. LISTA never shares this password with administrators."
+            : "Enter your email address and we'll send a reset code."}
         </p>
       </div>
 
@@ -277,6 +313,8 @@ export default function ForgotPasswordPage() {
             <span className="flex items-center justify-center gap-2">
               <Loader2 className="w-5 h-5 animate-spin" /> Sending…
             </span>
+          ) : isStaffActivation ? (
+            "Send activation code"
           ) : (
             "Send Reset Code"
           )}

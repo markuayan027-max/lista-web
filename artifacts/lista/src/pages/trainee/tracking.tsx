@@ -255,7 +255,7 @@ export default function TraineeTrackingPage() {
             <ClipboardList className="w-6 h-6" />
           </motion.div>
           <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }}>
-            <h1 className="text-3xl font-black tracking-tight text-foreground">My Applications</h1>
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-foreground">My Applications</h1>
             <p className="text-muted-foreground font-medium">
               Track submitted course applications and download your official TESDA form.
             </p>
@@ -421,7 +421,7 @@ export default function TraineeTrackingPage() {
                             key={step.id}
                             className="relative flex items-center justify-start md:justify-center mb-8 last:mb-0"
                           >
-                            <div className="hidden md:block w-1/2 pr-12 text-right">
+                            <div className="hidden md:block w-1/2 pr-12 text-right" aria-hidden>
                               {isCompleted && (
                                 <div>
                                   <h4

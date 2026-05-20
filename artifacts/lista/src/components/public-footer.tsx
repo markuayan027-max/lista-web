@@ -32,7 +32,7 @@ export default function PublicFooter() {
   ];
 
   return (
-    <footer className="bg-white border-t border-slate-100 pt-20 pb-12">
+    <footer className="bg-white border-t border-slate-100 pt-12 pb-12 md:pt-20">
       <div className="container mx-auto px-4 md:px-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-12 lg:gap-8 mb-20">
           
@@ -88,7 +88,7 @@ export default function PublicFooter() {
                 <div className="w-11 h-11 rounded-2xl bg-white border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex items-center justify-center shrink-0 group-hover:border-slate-200 group-hover:shadow-[0_8px_20px_rgba(0,0,0,0.04)] transition-all duration-300">
                   <MapPin className="h-[20px] w-[20px] text-slate-400 group-hover:text-slate-800 transition-colors duration-300" strokeWidth={1.5} />
                 </div>
-                <p className="text-sm text-muted-foreground leading-relaxed pt-2.5 group-hover:text-slate-700 transition-colors">
+                <p className="text-sm text-muted-foreground leading-relaxed pt-2.5 group-hover:text-slate-700 transition-colors text-pretty">
                   {contactInfo.mainAddress}
                 </p>
               </div>
@@ -96,7 +96,7 @@ export default function PublicFooter() {
                 <div className="w-11 h-11 rounded-2xl bg-white border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex items-center justify-center shrink-0 group-hover:border-slate-200 group-hover:shadow-[0_8px_20px_rgba(0,0,0,0.04)] transition-all duration-300">
                   <Mail className="h-[20px] w-[20px] text-slate-400 group-hover:text-slate-800 transition-colors duration-300" strokeWidth={1.5} />
                 </div>
-                <a href={`mailto:${contactInfo.email}`} className="text-sm text-muted-foreground hover:text-slate-900 transition-colors font-medium">
+                <a href={`mailto:${contactInfo.email}`} className="text-sm text-muted-foreground hover:text-slate-900 transition-colors font-medium break-all">
                   {contactInfo.email}
                 </a>
               </div>
@@ -104,7 +104,7 @@ export default function PublicFooter() {
                 <div className="w-11 h-11 rounded-2xl bg-white border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex items-center justify-center shrink-0 group-hover:border-slate-200 group-hover:shadow-[0_8px_20px_rgba(0,0,0,0.04)] transition-all duration-300">
                   <Phone className="h-[20px] w-[20px] text-slate-400 group-hover:text-slate-800 transition-colors duration-300" strokeWidth={1.5} />
                 </div>
-                <a href={`tel:${contactInfo.mobile1}`} className="text-sm text-muted-foreground hover:text-slate-900 transition-colors font-medium">
+                <a href={`tel:${contactInfo.mobile1}`} className="text-sm text-muted-foreground hover:text-slate-900 transition-colors font-medium text-pretty">
                   {contactInfo.telephone} / {contactInfo.mobile1}
                 </a>
               </div>

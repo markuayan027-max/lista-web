@@ -113,6 +113,34 @@ function mapStatusToDb(status: string | undefined): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
+function parseSupplementalFromNotes(notes: unknown): Pick<
+  Enrollment,
+  "workExperience" | "otherTrainings" | "licensureExams" | "competencyAssessments"
+> {
+  if (!notes || typeof notes !== "string" || !notes.trim().startsWith("{")) {
+    return {};
+  }
+  try {
+    const parsed = JSON.parse(notes) as Record<string, unknown>;
+    return {
+      workExperience: Array.isArray(parsed.workExperience)
+        ? (parsed.workExperience as Enrollment["workExperience"])
+        : undefined,
+      otherTrainings: Array.isArray(parsed.otherTrainings)
+        ? (parsed.otherTrainings as Enrollment["otherTrainings"])
+        : undefined,
+      licensureExams: Array.isArray(parsed.licensureExams)
+        ? (parsed.licensureExams as Enrollment["licensureExams"])
+        : undefined,
+      competencyAssessments: Array.isArray(parsed.competencyAssessments)
+        ? (parsed.competencyAssessments as Enrollment["competencyAssessments"])
+        : undefined,
+    };
+  } catch {
+    return {};
+  }
+}
+
 function supplementalEnrollmentNotes(data: {
   workExperience?: unknown;
   otherTrainings?: unknown;
@@ -136,6 +164,27 @@ function supplementalEnrollmentNotes(data: {
 
 function str(v: unknown): string {
   return v === undefined || v === null ? "" : String(v);
+}
+
+/** Restore §3–§6 arrays serialized into `notes` during API upsert. */
+function supplementalFieldsFromNotes(notesRaw: unknown): Partial<Enrollment> {
+  const notes = str(notesRaw).trim();
+  if (!notes.startsWith("{")) return {};
+  try {
+    const parsed = JSON.parse(notes) as Record<string, unknown>;
+    const pickArray = (key: string) => {
+      const value = parsed[key];
+      return Array.isArray(value) && value.length > 0 ? value : undefined;
+    };
+    return {
+      workExperience: pickArray("workExperience") as Enrollment["workExperience"],
+      otherTrainings: pickArray("otherTrainings") as Enrollment["otherTrainings"],
+      licensureExams: pickArray("licensureExams") as Enrollment["licensureExams"],
+      competencyAssessments: pickArray("competencyAssessments") as Enrollment["competencyAssessments"],
+    };
+  } catch {
+    return {};
+  }
 }
 
 /** Normalize Drizzle (camelCase) or PostgREST (snake_case) enrollment rows. */
@@ -179,6 +228,7 @@ export function insforgeEnrollmentRowToApiData(row: Record<string, unknown>): Re
   const r = normalizeEnrollmentDbRow(row);
   const statusRaw = str(r.status);
   const statusLower = statusRaw.toLowerCase().replace(/\s+/g, "_") as Enrollment["status"];
+  const supplemental = parseSupplementalFromNotes(r.notes);
 
   return {
     id: r.id,
@@ -248,6 +298,7 @@ export function insforgeEnrollmentRowToApiData(row: Record<string, unknown>): Re
     consent: r.consent === true || r.consent === "true" || r.consent === "t",
     documentStatus: "missing",
     createdAt: r.submitted_at ? str(r.submitted_at) : new Date().toISOString(),
+    ...supplementalFieldsFromNotes(r.notes),
   };
 }
 

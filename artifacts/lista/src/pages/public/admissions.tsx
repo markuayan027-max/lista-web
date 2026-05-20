@@ -134,7 +134,7 @@ export default function AdmissionsPage() {
   return (
     <div className="w-full bg-white font-sans text-slate-900 selection:bg-blue-100 selection:text-blue-900">
       {/* Hero Section - Airy & Sophisticated */}
-      <section className="relative pt-32 pb-24 lg:pt-48 lg:pb-40 overflow-hidden border-b border-slate-100">
+      <section className="relative pt-24 pb-16 md:pt-32 md:pb-24 lg:pt-48 lg:pb-40 overflow-hidden border-b border-slate-100">
         <div className="absolute inset-0 z-0">
           <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-blue-50/50 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/4"></div>
           <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-emerald-50/30 rounded-full blur-[100px] translate-y-1/2 -translate-x-1/4"></div>
@@ -158,7 +158,7 @@ export default function AdmissionsPage() {
             </motion.div>
             
             <motion.h1 
-              className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tight mb-8 leading-[1.05] text-slate-900"
+              className="text-4xl sm:text-5xl md:text-7xl font-black tracking-tight mb-8 leading-[1.05] text-slate-900 text-balance"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.1 }}
@@ -190,9 +190,11 @@ export default function AdmissionsPage() {
                   <ArrowRight className="ml-3 h-5 w-5 transition-transform group-hover:translate-x-1" />
                 </PrimaryButton>
               </Link>
-              <PrimaryButton variant="outline" size="lg" className="h-16 px-10 text-lg rounded-none border-slate-200 text-slate-600 hover:bg-slate-50">
-                View All Courses
-              </PrimaryButton>
+              <Link href="/courses">
+                <PrimaryButton variant="outline" size="lg" className="h-14 sm:h-16 px-8 sm:px-10 text-lg rounded-none border-slate-200 text-slate-600 hover:bg-slate-50 w-full sm:w-auto">
+                  View All Courses
+                </PrimaryButton>
+              </Link>
             </motion.div>
           </div>
         </div>
@@ -203,7 +205,7 @@ export default function AdmissionsPage() {
         <div className="container mx-auto px-4 md:px-6">
           <div className="flex flex-col lg:flex-row gap-20">
             <div className="lg:w-1/3">
-              <div className="sticky top-32 space-y-8">
+              <div className="lg:sticky lg:top-24 space-y-8">
                 <h2 className="text-4xl md:text-5xl font-bold tracking-tight leading-tight">
                   Enrollment <br />
                   <span className="text-blue-600">Process</span>
@@ -446,7 +448,7 @@ export default function AdmissionsPage() {
                </p>
                <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
                  <Link href={getPublicEnrollHref()}>
-                   <PrimaryButton size="lg" className="h-20 px-16 text-xl font-black rounded-none shadow-2xl shadow-blue-200/50">
+                   <PrimaryButton size="lg" className="h-14 px-8 md:h-16 md:px-12 text-lg md:text-xl font-black rounded-none shadow-2xl shadow-blue-200/50 w-full sm:w-auto">
                       Enroll Now
                    </PrimaryButton>
                  </Link>

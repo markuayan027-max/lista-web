@@ -58,7 +58,7 @@ export default function NewsDetailPage() {
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-black tracking-tight leading-[1.1] text-slate-900">
                 {post.title}
               </h1>
-              <div className="flex flex-wrap items-center justify-center gap-6 pt-4 text-sm font-medium text-slate-500">
+              <div className="flex flex-col sm:flex-row flex-wrap items-center justify-center gap-3 sm:gap-6 pt-4 text-sm font-medium text-slate-500">
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4" />
                   <span>{new Date(post.date).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}</span>
@@ -83,7 +83,7 @@ export default function NewsDetailPage() {
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8, delay: 0.2 }}
-          className="max-w-5xl mx-auto aspect-[16/9] md:aspect-[21/9] rounded-[2rem] md:rounded-[3rem] overflow-hidden shadow-2xl border-4 border-white"
+          className="max-w-5xl mx-auto aspect-[16/9] md:aspect-[21/9] max-h-[50vh] md:max-h-none rounded-[2rem] md:rounded-[3rem] overflow-hidden shadow-2xl border-4 border-white"
         >
           <OptimizedImage
             src={post.imageUrl}

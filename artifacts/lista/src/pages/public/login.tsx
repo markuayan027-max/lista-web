@@ -2,7 +2,9 @@ import { useState, useEffect, useMemo } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/context/auth-context";
 import FormInputField from "@/components/form-input-field";
-import PasswordRequirements from "@/components/password-requirements";
+import PasswordRequirements, {
+  passwordRequirementsDescribedBy,
+} from "@/components/password-requirements";
 import PrimaryButton from "@/components/primary-button";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
@@ -27,6 +29,14 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [needsEmailVerification, setNeedsEmailVerification] = useState(false);
+
+  const verifyEmailHref = useMemo(() => {
+    const target = email.trim().toLowerCase();
+    return target
+      ? `/signup?verify=1&email=${encodeURIComponent(target)}`
+      : "/signup?verify=1";
+  }, [email]);
 
   useEffect(() => {
     const fromQuery = new URLSearchParams(window.location.search).get("email");
@@ -46,13 +56,21 @@ export default function LoginPage() {
       return;
     }
     setFormError(null);
+    setNeedsEmailVerification(false);
     setIsLoading(true);
     try {
       await login(email, password);
       toast.success("Welcome back!");
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Could not sign in. Please try again.";
-      setFormError(message);
+      const mustVerify =
+        message.toLowerCase().includes("verif") || message.toLowerCase().includes("confirm");
+      setNeedsEmailVerification(mustVerify);
+      setFormError(
+        mustVerify
+          ? "Your email is not verified yet. Use the Sign up page to enter your 6-digit code (not Forgot password)."
+          : message,
+      );
       toast.error(message);
     } finally {
       setIsLoading(false);
@@ -119,7 +137,18 @@ export default function LoginPage() {
           <Alert variant="destructive" className="rounded-xl" role="alert">
             <AlertCircle className="h-4 w-4" aria-hidden />
             <AlertTitle>Could not sign in</AlertTitle>
-            <AlertDescription>{formError}</AlertDescription>
+            <AlertDescription className="space-y-2">
+              <p>{formError}</p>
+              {needsEmailVerification && (
+                <p className="text-sm">
+                  <Link href={verifyEmailHref} className="font-semibold underline">
+                    Verify email on Sign up →
+                  </Link>{" "}
+                  (enter code in the <strong>Verification code</strong> box, then click{" "}
+                  <strong>Sign Up</strong>).
+                </p>
+              )}
+            </AlertDescription>
           </Alert>
         )}
 
@@ -145,7 +174,10 @@ export default function LoginPage() {
             placeholder="••••••••"
             required
             autoComplete="current-password"
-            aria-describedby="login-password-requirements"
+            aria-describedby={passwordRequirementsDescribedBy(
+              "login-password-requirements",
+              password,
+            )}
             className="h-14 text-base rounded-xl"
           />
           <PasswordRequirements

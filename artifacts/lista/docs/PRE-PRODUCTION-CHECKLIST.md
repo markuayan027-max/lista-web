@@ -73,7 +73,7 @@
 |---|--------|----------|-------|
 | A1 | `/admin/enrollments` | Rows + filters | ⬜ |
 | A2 | Status change | Persists in InsForge | ⬜ |
-| A3 | `/admin/users` | Roles / badges | ⬜ |
+| A3 | `/admin/users` | Roles / badges; trainee w/ enrollments locked; **Add staff** sends reset email; **Deactivate** staff/admin (`USER-ROLE-GOVERNANCE-META-PROMPT.md`) | ⬜ |
 | A4 | `/admin` analytics | No crash | ⬜ |
 | A5 | `/admin/export` | Export completes | ⬜ |
 | A6 | `/admin/settings` | Loads / saves | ⬜ |

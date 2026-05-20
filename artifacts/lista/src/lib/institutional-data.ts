@@ -14,14 +14,18 @@ function formatDate(date: Date): string {
 // ============================================================================
 
 export type UserRole = 'trainee' | 'staff' | 'admin';
+export type UserStatus = 'active' | 'deactivated';
 
 export interface User {
   id: string;
   name: string;
   email: string;
   role: UserRole;
+  status?: UserStatus;
   avatarUrl?: string;
   createdAt?: string;
+  /** Set when inviting a user via admin API (email activation link). */
+  activationUrl?: string;
 }
 
 export const siteConfig = {

@@ -136,6 +136,7 @@ function Router() {
       <Route path="/news/:id"><PublicLayout><NewsDetailPage /></PublicLayout></Route>
       <Route path="/signup"><AuthLayout><SignupPage /></AuthLayout></Route>
       <Route path="/forgot-password"><AuthLayout><ForgotPasswordPage /></AuthLayout></Route>
+      <Route path="/activate-account"><AuthLayout><ForgotPasswordPage /></AuthLayout></Route>
       <Route path="/auth/callback"><AuthLayout><AuthCallbackPage /></AuthLayout></Route>
       <Route path="/privacy"><PublicLayout><PrivacyPage /></PublicLayout></Route>
       <Route path="/terms"><PublicLayout><TermsPage /></PublicLayout></Route>
@@ -144,6 +145,11 @@ function Router() {
       <Route path="/trainee/register"><Protected layout={({children}) => <>{children}</>} allowedRole="trainee"><TraineeRegistrationPage /></Protected></Route>
       <Route path="/trainee/enroll"><Protected layout={({children}) => <>{children}</>} allowedRole="trainee"><TraineeEnrollPage /></Protected></Route>
       <Route path="/trainee"><Protected layout={TraineeLayout} allowedRole="trainee"><TraineeDashboardPage /></Protected></Route>
+      <Route path="/trainee/preferences">
+        <Protected layout={TraineeLayout} allowedRole="trainee">
+          <Redirect to="/trainee/profile" />
+        </Protected>
+      </Route>
       <Route path="/trainee/profile"><Protected layout={TraineeLayout} allowedRole="trainee"><TraineeProfilePage /></Protected></Route>
       <Route path="/trainee/application"><Protected layout={TraineeLayout} allowedRole="trainee"><TraineeApplicationPage /></Protected></Route>
       <Route path="/trainee/tracking"><Protected layout={TraineeLayout} allowedRole="trainee"><TraineeTrackingPage /></Protected></Route>

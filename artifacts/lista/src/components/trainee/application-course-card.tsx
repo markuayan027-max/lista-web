@@ -28,8 +28,9 @@ export function ApplicationCourseCard({
   return (
     <motion.article
       layout
+      aria-labelledby={`course-card-title-${course.id}`}
       className={cn(
-        "group flex h-full flex-col overflow-hidden rounded-2xl border bg-card shadow-sm transition-all duration-300",
+        "group flex h-full flex-col overflow-hidden rounded-2xl border bg-card shadow-sm transition-all duration-300 focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2",
         canSelect
           ? "border-border hover:border-primary-indigo/40 hover:shadow-md hover:shadow-primary-indigo/10"
           : "border-border/60 opacity-95",
@@ -84,7 +85,10 @@ export function ApplicationCourseCard({
 
       <div className="flex flex-1 flex-col gap-4 p-5">
         <div className="space-y-1.5">
-          <h3 className="text-lg font-bold leading-snug text-foreground transition-colors group-hover:text-primary-indigo">
+          <h3
+            id={`course-card-title-${course.id}`}
+            className="text-lg font-bold leading-snug text-foreground transition-colors group-hover:text-primary-indigo"
+          >
             {course.title}
           </h3>
           <p className="line-clamp-2 text-sm text-muted-foreground">{course.shortDescription}</p>
@@ -110,39 +114,47 @@ export function ApplicationCourseCard({
         <div className="mt-auto pt-1">
           {hasActiveEnrollment ? (
             <motion.div
-              className="flex h-11 items-center justify-center gap-2 rounded-xl border border-border bg-muted text-[11px] font-bold uppercase tracking-widest text-muted-foreground"
-              aria-disabled
+              className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-border bg-muted px-3 text-[11px] font-bold uppercase tracking-widest text-muted-foreground cursor-not-allowed"
+              aria-disabled="true"
+              role="status"
             >
-              Enrollment locked <Lock className="h-3.5 w-3.5" aria-hidden />
+              Enrollment locked
+              <Lock className="h-3.5 w-3.5 shrink-0" aria-hidden />
             </motion.div>
           ) : canSelect ? (
-            <Link href={`/trainee/enroll?course=${course.slug}`}>
+            <Link href={`/trainee/enroll?course=${course.slug}`} className="block">
               <motion.button
                 type="button"
-                className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary text-[11px] font-bold uppercase tracking-widest text-primary-foreground transition-colors hover:bg-primary-indigo"
+                aria-label={`Start application for ${course.title}`}
+                className="flex min-h-11 h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary text-[11px] font-bold uppercase tracking-widest text-primary-foreground transition-colors hover:bg-primary-indigo active:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 cursor-pointer touch-target"
                 whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.99 }}
               >
-                Apply now <ArrowRight className="h-4 w-4" aria-hidden />
+                Start application
+                <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
               </motion.button>
             </Link>
           ) : !applicationFormComplete ? (
-            <Link href="/trainee/register">
+            <Link href="/trainee/register" className="block">
               <motion.button
                 type="button"
-                className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-primary-indigo/25 bg-primary-indigo/10 text-[11px] font-bold uppercase tracking-widest text-primary-indigo transition-colors hover:bg-primary-indigo/15"
+                aria-label={`Complete TESDA registration to apply for ${course.title}`}
+                className="flex min-h-11 h-11 w-full items-center justify-center gap-2 rounded-xl border border-primary-indigo/25 bg-primary-indigo/10 text-[11px] font-bold uppercase tracking-widest text-primary-indigo transition-colors hover:bg-primary-indigo/15 active:bg-primary-indigo/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 cursor-pointer touch-target"
                 whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.99 }}
               >
-                Finish TESDA form <FileText className="h-3.5 w-3.5" aria-hidden />
+                Complete TESDA form
+                <FileText className="h-3.5 w-3.5 shrink-0" aria-hidden />
               </motion.button>
             </Link>
           ) : (
             <motion.div
-              className="flex h-11 items-center justify-center gap-2 rounded-xl border border-border bg-muted text-[11px] font-bold uppercase tracking-widest text-muted-foreground"
-              aria-disabled
+              className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-border bg-muted px-3 text-[11px] font-bold uppercase tracking-widest text-muted-foreground cursor-not-allowed"
+              aria-disabled="true"
+              role="status"
             >
-              Waitlisted <Lock className="h-3.5 w-3.5" aria-hidden />
+              Waitlisted
+              <Lock className="h-3.5 w-3.5 shrink-0" aria-hidden />
             </motion.div>
           )}
         </div>

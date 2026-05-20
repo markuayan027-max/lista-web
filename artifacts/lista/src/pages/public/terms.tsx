@@ -2,14 +2,14 @@ import { Link } from "wouter";
 
 export default function TermsPage() {
   return (
-    <div className="container mx-auto px-4 py-16 max-w-4xl">
+    <div className="container mx-auto px-4 md:px-6 py-12 md:py-16 max-w-4xl">
       <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
         <div className="text-center space-y-4">
           <h1 className="text-4xl font-extrabold tracking-tight text-foreground">Terms of Service</h1>
           <p className="text-muted-foreground">Effective Date: May 12, 2026</p>
         </div>
 
-        <section className="space-y-4 text-slate-700 leading-relaxed">
+        <section className="prose prose-slate max-w-none space-y-4 text-slate-700 leading-relaxed prose-headings:text-foreground">
           <p>
             By accessing and using the Lorenz International Skills Training Academy (LISTA) portal, you agree to comply with and be bound by the following terms and conditions.
           </p>

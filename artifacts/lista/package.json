@@ -10,6 +10,8 @@
     "build": "npm run optimize:images && vite build --config vite.config.ts",
     "serve": "vite preview --config vite.config.ts --host 0.0.0.0",
     "typecheck": "tsc -p tsconfig.json --noEmit",
+    "verify:official-form": "node scripts/verify-official-form-fill.mjs",
+    "verify:sync-health": "node scripts/verify-sync-health.mjs",
     "smoke:insforge": "node scripts/insforge-smoke-probe.mjs",
     "smoke:pilot": "cd ../.. && pnpm run pilot-smoke"
   },

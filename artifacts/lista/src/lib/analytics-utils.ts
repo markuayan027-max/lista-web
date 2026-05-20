@@ -10,11 +10,20 @@ import {
 } from "date-fns";
 import type { Enrollment, User, UserRole } from "@/lib/institutional-data";
 import type { ListaAnnouncement } from "@/lib/lista-insforge-data";
+import { enrollmentStatusIs } from "@/lib/enrollment-status";
 
 const MONTH_LABELS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 export function isFormalEnrollment(e: Enrollment): boolean {
-  return e.status !== "ready_to_apply";
+  return !enrollmentStatusIs(e.status, "ready_to_apply");
+}
+
+/** @deprecated Prefer enrollmentStatusIs — kept for filters that compared raw status strings. */
+export function enrollmentHasStatus(
+  e: Enrollment,
+  ...targets: string[]
+): boolean {
+  return enrollmentStatusIs(e.status, ...targets);
 }
 
 export function parseEnrollmentDate(iso?: string): Date | null {

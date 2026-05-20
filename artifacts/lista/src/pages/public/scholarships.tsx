@@ -30,7 +30,7 @@ export default function ScholarshipsPage() {
   return (
     <div className="w-full bg-slate-50 min-h-screen pb-24">
       {/* Header & Stats Combined */}
-      <section className="relative min-h-[calc(100vh-4rem)] flex flex-col justify-center pt-24 pb-12 lg:pt-32 lg:pb-20 overflow-hidden bg-white rounded-b-[3rem] shadow-sm mb-8">
+      <section className="relative min-h-0 py-16 md:py-24 lg:min-h-[70dvh] lg:flex lg:flex-col lg:justify-center pt-20 pb-12 lg:pt-32 lg:pb-20 overflow-hidden bg-white rounded-b-[2rem] md:rounded-b-[3rem] shadow-sm mb-8">
         {/* Modern Background Decorative Elements */}
         <div className="absolute top-0 right-0 w-3/4 h-[120%] bg-blue-50/40 -skew-x-12 translate-x-1/4 -translate-y-10 z-0" />
         <div className="absolute top-1/2 left-0 w-64 h-64 bg-blue-100/20 rounded-full blur-[120px] -translate-x-1/2 z-0" />
@@ -49,7 +49,7 @@ export default function ScholarshipsPage() {
               <span className="text-xs font-bold text-blue-700 uppercase tracking-[0.25em]">Financial Opportunity</span>
             </div>
             
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tight text-slate-900 mb-6 lg:mb-8 leading-[1.05] drop-shadow-sm">
+            <h1 className="text-4xl sm:text-5xl md:text-7xl font-black tracking-tight text-slate-900 mb-6 lg:mb-8 leading-[1.05] drop-shadow-sm text-balance">
               Empowering your <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-blue-400">Educational Journey.</span>
             </h1>
@@ -58,17 +58,17 @@ export default function ScholarshipsPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 relative z-10">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 relative z-10">
             {heroStats.map((stat, i) => {
               const Icon = STAT_ICONS[stat.icon];
               return (
-              <div key={i} className="bg-white/80 backdrop-blur-md rounded-3xl border border-slate-100 shadow-[0_10px_40px_-15px_rgba(0,0,0,0.05)] p-6 flex flex-col justify-between group hover:-translate-y-1 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] transition-all duration-300">
+              <div key={i} className="bg-white/80 backdrop-blur-md rounded-3xl border border-slate-100 shadow-[0_10px_40px_-15px_rgba(0,0,0,0.05)] p-4 sm:p-6 flex flex-col justify-between group hover:-translate-y-1 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] transition-all duration-300 min-w-0">
                 <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 mb-4 group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300">
                   <Icon className="w-6 h-6" />
                 </div>
                 <div className="space-y-1">
                   <p className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight">{stat.value}</p>
-                  <p className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-[0.2em]">{stat.label}</p>
+                  <p className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-[0.2em] text-pretty">{stat.label}</p>
                 </div>
               </div>
             );

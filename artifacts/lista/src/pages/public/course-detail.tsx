@@ -15,6 +15,55 @@ import useEmblaCarousel from 'embla-carousel-react';
 import { useState, useEffect, useCallback } from "react";
 import NotFound from "@/pages/not-found";
 import { getPublicEnrollHref } from "@/lib/enroll-entry";
+import type { Course } from "@/lib/institutional-data";
+
+function CourseEnrollPanel({ course }: { course: Course }) {
+  return (
+    <>
+      <Card className="border-card-border shadow-md rounded-3xl overflow-hidden">
+        <div className="bg-slate-50 p-6 sm:p-8 border-b border-card-border text-center">
+          <div className="text-2xl sm:text-3xl font-black text-primary mb-2">Inquire for Details</div>
+          <p className="text-muted-foreground font-medium">TESDA Accredited</p>
+        </div>
+        <CardContent className="p-6 sm:p-8 space-y-6">
+          <Link href={getPublicEnrollHref({ course: course.slug })}>
+            <PrimaryButton size="lg" className="w-full h-12 sm:h-14 text-base sm:text-lg group">
+              Sign in to enroll
+              <ArrowRight className="ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
+            </PrimaryButton>
+          </Link>
+          <div className="space-y-4 pt-4 border-t border-card-border">
+            <h4 className="font-bold uppercase tracking-wider text-xs text-muted-foreground">Course Features</h4>
+            <div className="flex justify-between items-center text-sm gap-4">
+              <span className="text-muted-foreground">Duration</span>
+              <span className="font-bold">{course.durationHours} Hours</span>
+            </div>
+            <div className="flex justify-between items-center text-sm gap-4">
+              <span className="text-muted-foreground">Skill level</span>
+              <span className="font-bold">{course.ncLevel || course.level}</span>
+            </div>
+            <div className="flex justify-between items-center text-sm gap-4">
+              <span className="text-muted-foreground">Certificate</span>
+              <span className="font-bold">Included</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+      <Card className="border-card-border rounded-3xl overflow-hidden hidden lg:block">
+        <CardContent className="p-6">
+          <h4 className="font-bold uppercase tracking-wider text-xs text-muted-foreground mb-4">Provided By</h4>
+          <div className="flex items-center gap-4">
+            <AvatarInitials name="LISTA" size="lg" className="shrink-0" />
+            <div className="min-w-0">
+              <p className="font-bold text-lg leading-tight">Lorenz International</p>
+              <p className="text-sm text-muted-foreground">Skills Training Academy</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </>
+  );
+}
 
 export default function CourseDetailPage() {
   const { slug } = useParams();
@@ -33,7 +82,7 @@ export default function CourseDetailPage() {
   const courseSchedules = schedules.filter((s) => s.courseSlug === course.slug);
 
   return (
-    <ContentFadeIn className="w-full bg-slate-50 min-h-screen pb-24 block">
+    <ContentFadeIn className="w-full bg-slate-50 min-h-screen pb-28 lg:pb-24 block overflow-x-hidden">
       {/* Breadcrumb & Hero */}
       <div className="bg-white border-b border-card-border pb-12">
         <div className="container mx-auto px-4 md:px-6">
@@ -52,7 +101,7 @@ export default function CourseDetailPage() {
                   <Badge key={tag} variant="outline" className="bg-white">{tag}</Badge>
                 ))}
               </div>
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight">
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-balance">
                 {course.title} {course.ncLevel}
               </h1>
               <p className="text-xl text-muted-foreground leading-relaxed max-w-2xl">
@@ -82,8 +131,13 @@ export default function CourseDetailPage() {
 
       <div className="container mx-auto px-4 md:px-6 py-12">
         <div className="flex flex-col lg:flex-row gap-12 items-start">
+          {/* Enroll panel — first on mobile so CTA is above the fold */}
+          <div className="hidden lg:block w-full lg:w-96 lg:order-2 lg:sticky lg:top-24 space-y-6 shrink-0">
+            <CourseEnrollPanel course={course} />
+          </div>
+
           {/* Left Column: Content */}
-          <div className="flex-1 space-y-16">
+          <div className="flex-1 space-y-16 order-2 lg:order-1 min-w-0">
             <section className="space-y-6">
               <h2 className="text-3xl font-bold tracking-tight">About this course</h2>
               <div className="prose prose-slate max-w-none text-lg text-muted-foreground leading-relaxed">
@@ -166,54 +220,16 @@ export default function CourseDetailPage() {
               </div>
             </section>
           </div>
-
-          {/* Right Column: Sticky Panel */}
-          <div className="w-full lg:w-96 lg:sticky lg:top-24 space-y-6">
-            <Card className="border-card-border shadow-md rounded-3xl overflow-hidden">
-              <div className="bg-slate-50 p-8 border-b border-card-border text-center">
-                 <div className="text-3xl font-black text-primary mb-2">Inquire for Details</div>
-                 <p className="text-muted-foreground font-medium">TESDA Accredited</p>
-              </div>
-              <CardContent className="p-8 space-y-6">
-                <Link href={getPublicEnrollHref({ course: course.slug })}>
-                  <PrimaryButton size="lg" className="w-full h-14 text-lg group">
-                    Sign in to enroll
-                    <ArrowRight className="ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
-                  </PrimaryButton>
-                </Link>
-                
-                <div className="space-y-4 pt-4 border-t border-card-border">
-                  <h4 className="font-bold uppercase tracking-wider text-xs text-muted-foreground">Course Features</h4>
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-muted-foreground">Duration</span>
-                    <span className="font-bold">{course.durationHours} Hours</span>
-                  </div>
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-muted-foreground">Skill level</span>
-                    <span className="font-bold">{course.ncLevel || course.level}</span>
-                  </div>
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-muted-foreground">Certificate</span>
-                    <span className="font-bold">Included</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-card-border rounded-3xl overflow-hidden">
-               <CardContent className="p-6">
-                  <h4 className="font-bold uppercase tracking-wider text-xs text-muted-foreground mb-4">Provided By</h4>
-                  <div className="flex items-center gap-4">
-                     <AvatarInitials name="LISTA" size="lg" className="shrink-0" />
-                     <div>
-                        <p className="font-bold text-lg leading-tight">Lorenz International</p>
-                        <p className="text-sm text-muted-foreground">Skills Training Academy</p>
-                     </div>
-                  </div>
-               </CardContent>
-            </Card>
-          </div>
         </div>
+      </div>
+
+      <div className="lg:hidden fixed inset-x-0 bottom-0 z-40 border-t border-card-border bg-white/95 backdrop-blur-md p-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-[0_-8px_30px_rgba(0,0,0,0.08)]">
+        <Link href={getPublicEnrollHref({ course: course.slug })}>
+          <PrimaryButton size="lg" className="w-full h-12 text-base group">
+            Sign in to enroll
+            <ArrowRight className="ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
+          </PrimaryButton>
+        </Link>
       </div>
     </ContentFadeIn>
   );
@@ -258,13 +274,13 @@ function CourseImageSlider({ images, title }: { images: string[], title: string 
         <>
           <button 
             onClick={scrollPrev}
-            className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/80 backdrop-blur-sm shadow-md flex items-center justify-center text-slate-800 opacity-0 group-hover:opacity-100 transition-opacity z-10 hover:bg-white"
+            className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 min-h-11 min-w-11 h-11 w-11 rounded-full bg-white/90 backdrop-blur-sm shadow-md flex items-center justify-center text-slate-800 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity z-10 hover:bg-white"
           >
             <ChevronLeft className="w-6 h-6" />
           </button>
           <button 
             onClick={scrollNext}
-            className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/80 backdrop-blur-sm shadow-md flex items-center justify-center text-slate-800 opacity-0 group-hover:opacity-100 transition-opacity z-10 hover:bg-white"
+            className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 min-h-11 min-w-11 h-11 w-11 rounded-full bg-white/90 backdrop-blur-sm shadow-md flex items-center justify-center text-slate-800 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity z-10 hover:bg-white"
           >
             <ChevronRight className="w-6 h-6" />
           </button>

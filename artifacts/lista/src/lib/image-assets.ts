@@ -74,8 +74,7 @@ export const PARTNER_LOGOS_HOME: readonly PartnerLogo[] = [
     src: "/partners/deped-logo.webp",
     alt: "Department of Education (DepEd)",
     label: "DepEd",
-    fullLabel: "",
-    wide: true,
+    fullLabel: "Department of Education",
   },
   {
     src: "/partners/ati-logo.webp",

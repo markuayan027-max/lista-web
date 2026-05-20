@@ -17,6 +17,8 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import { PARTNER_LOGOS_HOME } from "@/lib/image-assets";
+import { cn } from "@/lib/utils";
 
 export default function AboutPage() {
   return (
@@ -63,7 +65,7 @@ export default function AboutPage() {
             
             <div className="lg:col-span-7">
                {/* A4 Carousel for Mission & Vision */}
-               <div className="relative group w-full max-w-[595px] mx-auto aspect-[1/1.414] bg-white shadow-[0_35px_60px_-15px_rgba(0,0,0,0.1)] rounded-sm border border-slate-100 overflow-hidden flex flex-col">
+               <div className="relative group w-full max-w-full sm:max-w-[595px] mx-auto aspect-[1/1.414] bg-white shadow-[0_35px_60px_-15px_rgba(0,0,0,0.1)] rounded-sm border border-slate-100 overflow-hidden flex flex-col">
                  {/* Decorative background for the 'A4' sheet */}
                  <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:24px_24px]" />
                  <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-bl-full blur-3xl group-hover:bg-primary/10 transition-colors" />
@@ -115,8 +117,8 @@ export default function AboutPage() {
                      <div className="w-3 h-3 rounded-full bg-primary" />
                    </div>
 
-                   <CarouselPrevious className="left-4 opacity-0 group-hover:opacity-100 transition-opacity bg-white/80 backdrop-blur-sm border-slate-200" />
-                   <CarouselNext className="right-4 opacity-0 group-hover:opacity-100 transition-opacity bg-white/80 backdrop-blur-sm border-slate-200" />
+                   <CarouselPrevious className="left-2 sm:left-4 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity bg-white/80 backdrop-blur-sm border-slate-200 min-h-11 min-w-11" />
+                   <CarouselNext className="right-2 sm:right-4 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity bg-white/80 backdrop-blur-sm border-slate-200 min-h-11 min-w-11" />
                  </Carousel>
 
                  {/* A4 Sheet Footer decoration */}
@@ -144,12 +146,9 @@ export default function AboutPage() {
               <div className="text-5xl md:text-6xl font-black text-foreground tracking-tighter">75%</div>
               <div className="text-primary font-bold uppercase tracking-[0.2em] text-[10px]">Employment Rate</div>
             </div>
-            <div className="flex flex-col items-center gap-2 mb-4">
-              <div className="flex gap-1.5 mb-2">
-                <div className="w-8 h-1 bg-blue-600 rounded-full" />
-                <div className="w-3 h-1 bg-blue-200 rounded-full" />
-              </div>
-              <span className="text-[10px] font-bold text-blue-600 uppercase tracking-[0.3em]">Accreditations</span>
+            <div className="text-center px-4 space-y-2">
+              <div className="text-5xl md:text-6xl font-black text-foreground tracking-tighter">4+</div>
+              <div className="text-primary font-bold uppercase tracking-[0.2em] text-[10px] text-pretty">National Accreditations</div>
             </div>
           </div>
         </div>
@@ -196,47 +195,45 @@ export default function AboutPage() {
       <section className="py-20 bg-slate-50 border-t border-card-border">
         <div className="container mx-auto px-4 md:px-6 text-center">
            <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-16">Officially Accredited & Recognized By</h2>
-           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12 items-center opacity-80">
-              <div className="flex flex-col items-center gap-4 group">
-                <OptimizedImage
-                  src="/TESDA_Logo_official-removebg-preview.png"
-                  alt="TESDA Logo"
-                  imgClassName="h-16 md:h-20 w-auto object-contain grayscale group-hover:grayscale-0 transition-all duration-500"
-                  objectFit="contain"
-                />
-                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">TESDA</span>
-              </div>
-              
-              <div className="flex flex-col items-center gap-4 group">
-                <OptimizedImage
-                  src="/DepEd logo.png"
-                  alt="DepEd Logo"
-                  imgClassName="h-16 md:h-20 w-auto object-contain grayscale group-hover:grayscale-0 transition-all duration-500"
-                  objectFit="contain"
-                />
-                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">DepEd</span>
-              </div>
-              
-              <div className="flex flex-col items-center gap-4 group">
-                <OptimizedImage
-                  src="/ATI (Agricultural Training Institute) LOGO.png"
-                  alt="ATI Logo"
-                  imgClassName="h-16 md:h-20 w-auto object-contain grayscale group-hover:grayscale-0 transition-all duration-500"
-                  objectFit="contain"
-                />
-                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">ATI</span>
-              </div>
-              
-              <div className="flex flex-col items-center gap-4 group">
-                <OptimizedImage
-                  src="/NVTC (National Vocational Training Council) is INTERNATIONAL LOGO.webp.png"
-                  alt="NVTC International Logo"
-                  imgClassName="h-16 md:h-20 w-auto object-contain grayscale group-hover:grayscale-0 transition-all duration-500"
-                  objectFit="contain"
-                />
-                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-center">NVTC International</span>
-              </div>
-           </div>
+           <ul className="mx-auto grid w-full max-w-5xl list-none grid-cols-2 gap-x-8 gap-y-12 p-0 lg:grid-cols-4 lg:gap-x-10 opacity-80">
+              {PARTNER_LOGOS_HOME.map(({ src, alt, label, fullLabel, wide }) => (
+                <li key={label} className="flex justify-center">
+                  <figure className="flex w-full max-w-[11.5rem] flex-col items-center group">
+                    <div
+                      className={cn(
+                        "mb-4 flex shrink-0 items-center justify-center grayscale group-hover:grayscale-0 transition-all duration-500",
+                        wide
+                          ? "h-12 w-[9.75rem] sm:h-14 sm:w-[11rem]"
+                          : "size-[5.5rem] sm:size-28",
+                      )}
+                      aria-hidden
+                    >
+                      <OptimizedImage
+                        src={src}
+                        alt={alt}
+                        width={wide ? 176 : 112}
+                        height={wide ? 56 : 112}
+                        imgClassName="max-h-full max-w-full object-contain object-center"
+                        objectFit="contain"
+                      />
+                    </div>
+                    <figcaption
+                      className={cn(
+                        "flex w-full flex-col items-center text-center",
+                        fullLabel ? "min-h-[4.5rem] gap-1.5" : "min-h-[1.25rem]",
+                      )}
+                    >
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{label}</p>
+                      {fullLabel ? (
+                        <p className="text-[11px] font-medium leading-snug text-pretty text-muted-foreground line-clamp-3">
+                          {fullLabel}
+                        </p>
+                      ) : null}
+                    </figcaption>
+                  </figure>
+                </li>
+              ))}
+           </ul>
         </div>
       </section>
 
@@ -256,7 +253,7 @@ export default function AboutPage() {
             </div>
           </div>
 
-          <div className="px-12">
+          <div className="px-4 md:px-12">
             <Carousel
               opts={{
                 align: "start",
@@ -322,8 +319,8 @@ export default function AboutPage() {
                   </CarouselItem>
                 ))}
               </CarouselContent>
-              <CarouselPrevious className="hidden md:flex -left-12" />
-              <CarouselNext className="hidden md:flex -right-12" />
+              <CarouselPrevious className="flex -left-2 sm:-left-12 min-h-11 min-w-11" />
+              <CarouselNext className="flex -right-2 sm:-right-12 min-h-11 min-w-11" />
             </Carousel>
           </div>
         </div>

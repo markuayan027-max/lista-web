@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import { useAuth } from "@/context/use-auth";
+import { loadProfilePic } from "@/lib/profile-utils";
 import { X, Printer, FileText, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Enrollment } from "@/lib/institutional-data";
@@ -19,14 +21,20 @@ export default function PrintModal({
   onClose: () => void;
 }) {
   const { toast } = useToast();
+  const { user } = useAuth();
   const { data: courses = [] } = useCourses();
   const courseTitle = courseTitleBySlug(courses, enrollment.courseSlug) ?? "";
   const [pdfLoading, setPdfLoading] = useState(false);
+  const [formReady, setFormReady] = useState(false);
   const [warningsAcknowledged, setWarningsAcknowledged] = useState(false);
+  const passportPhotoUrl = useMemo(
+    () => loadProfilePic(enrollment.userId ?? user?.id),
+    [enrollment.userId, user?.id],
+  );
 
   const fillWarnings = useMemo(
-    () => getOfficialFormFillWarnings({ enrollment, courseTitle }),
-    [enrollment, courseTitle],
+    () => getOfficialFormFillWarnings({ enrollment, courseTitle, passportPhotoUrl }),
+    [enrollment, courseTitle, passportPhotoUrl],
   );
 
   const hasFillWarnings = fillWarnings.length > 0;
@@ -34,7 +42,8 @@ export default function PrintModal({
 
   useEffect(() => {
     setWarningsAcknowledged(false);
-  }, [enrollment.id, enrollment.refNo]);
+    setFormReady(false);
+  }, [enrollment.id, enrollment.refNo, passportPhotoUrl]);
 
   const handlePrint = () => {
     if (printBlocked) {
@@ -107,7 +116,7 @@ export default function PrintModal({
             <Button
               variant="outline"
               onClick={() => void handleDownloadPdf()}
-              disabled={pdfLoading || printBlocked}
+              disabled={pdfLoading || printBlocked || !formReady}
               className="rounded-xl font-bold gap-2"
               aria-disabled={printBlocked}
               title={
@@ -117,7 +126,7 @@ export default function PrintModal({
               }
             >
               <Download className="w-4 h-4" aria-hidden />
-              {pdfLoading ? "Generating…" : "Download PDF"}
+              {!formReady ? "Preparing form…" : pdfLoading ? "Generating…" : "Download PDF"}
             </Button>
             <Button
               onClick={handlePrint}
@@ -175,6 +184,7 @@ export default function PrintModal({
             enrollment={enrollment}
             courseTitle={courseTitle}
             fillWarnings={fillWarnings}
+            onFormReady={() => setFormReady(true)}
           />
         </div>
       </div>

@@ -127,8 +127,13 @@
   * {
     @apply border-border;
   }
+  html {
+    overflow-x: clip;
+  }
+
   body {
     @apply font-sans antialiased bg-background text-foreground;
+    overflow-x: clip;
   }
 }
 @layer utilities {
@@ -189,6 +194,15 @@
     scrollbar-width: none;
   }
 
+  .pb-safe-nav {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+  }
+
+  .touch-target {
+    min-height: 2.75rem;
+    min-width: 2.75rem;
+  }
+
   .skeleton-shimmer {
     background: linear-gradient(
       90deg,
@@ -233,6 +247,11 @@
 }
 .official-html-form-root .page {
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* 2.9 Employment Status — checkbox glyphs at 736px; labels were flush at 743px */
+.official-html-form-root span.sb[style*="left:743px"] {
+  left: 758px !important;
 }
 
 /* TESDA print modal — keeps multi-page forms from being clipped by app shells */

@@ -2,7 +2,9 @@ import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/context/auth-context";
 import FormInputField from "@/components/form-input-field";
-import PasswordRequirements from "@/components/password-requirements";
+import PasswordRequirements, {
+  passwordRequirementsDescribedBy,
+} from "@/components/password-requirements";
 import { getPasswordValidationError, isPasswordValid } from "@/lib/password-policy";
 import PrimaryButton from "@/components/primary-button";
 import {
@@ -98,6 +100,18 @@ export default function SignupPage() {
     if (!user) return;
     setLocation(getRoleHomePath(user.role));
   }, [user, setLocation]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("verify") !== "1") return;
+    const fromQuery = params.get("email")?.trim().toLowerCase();
+    if (fromQuery) setEmail(fromQuery);
+    toast.info(
+      "Enter the 6-digit code from your email in Verification code, then click Sign Up. Use Resend code if needed.",
+      { duration: 8000 },
+    );
+  }, []);
 
   /* ── "Send Code" inline button ──────────────────────────────────────── */
   const handleSendCode = async () => {
@@ -374,7 +388,10 @@ export default function SignupPage() {
             placeholder="Password"
             required
             autoComplete="new-password"
-            aria-describedby="signup-password-requirements"
+            aria-describedby={passwordRequirementsDescribedBy(
+              "signup-password-requirements",
+              password,
+            )}
             className="h-14 text-base rounded-xl"
           />
           <PasswordRequirements
