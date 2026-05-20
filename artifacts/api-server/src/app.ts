@@ -1,12 +1,13 @@
 import "./load-env.js";
-import express, { type Express } from "express";
+import express from "express";
+import type { RequestHandler } from "express";
 import cors from "cors";
 import pinoHttp from "pino-http";
 import rateLimit from "express-rate-limit";
 import router from "./routes/index.js";
 import { logger } from "./lib/logger.js";
 
-const app: Express = express();
+const app = express();
 
 // Rate limiting middleware
 const limiter = rateLimit({
@@ -18,8 +19,21 @@ const limiter = rateLimit({
   skip: (_req: unknown) => process.env.NODE_ENV === "development", // Skip rate limiting in development
 });
 
+const httpLogger = pinoHttp as unknown as (options: {
+  logger: typeof logger;
+  customLogLevel: (_req: unknown, res: { statusCode?: number }, err: unknown) => string;
+  serializers: {
+    req: (req: { id?: unknown; method?: string; url?: string }) => {
+      id: unknown;
+      method: string | undefined;
+      url: string | undefined;
+    };
+    res: (res: { statusCode?: number }) => { statusCode: number | undefined };
+  };
+}) => RequestHandler;
+
 app.use(
-  pinoHttp({
+  httpLogger({
     logger,
     customLogLevel(_req: unknown, res: { statusCode?: number }, err: unknown) {
       if (err) return "error";
