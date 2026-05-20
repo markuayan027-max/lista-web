@@ -15,6 +15,7 @@ compatibility_date = "2025-11-01"
 compatibility_flags = ["nodejs_compat"]
 
 [vars]
+CF_WORKER = "1"
 NODE_ENV = "production"
 # Session validation + InsForge admin helpers (must match the project that issues user JWTs).
 INSFORGE_URL = "https://2r6c3q25.ap-southeast.insforge.app"

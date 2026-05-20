@@ -4,7 +4,7 @@
  */
 
 import { httpServerHandler } from "cloudflare:node";
-import app from "./app.js";
+import app from "./app-worker.js";
 
 const PORT = 3000;
 app.listen(PORT);
