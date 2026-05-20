@@ -1,4 +1,4 @@
-import { Router, type IRouter } from "express";
+import { Router } from "express";
 import healthRouter from "./health.js";
 import dataRouter from "./data.js";
 import traineesRouter from "./trainees.js";
@@ -8,7 +8,7 @@ import batchesRouter from "./batches.js";
 import authProxyRouter from "./auth-proxy.js";
 import homepageChatRouter from "./homepage-chat.js";
 
-const router: IRouter = Router();
+const router = Router();
 
 router.use("/auth", authProxyRouter);
 router.use(homepageChatRouter);
