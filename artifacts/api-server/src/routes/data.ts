@@ -7,6 +7,7 @@ import {
   invalidateCoursesCache,
   setCachedCourses,
 } from "../lib/courses-cache";
+import { MOCK_ANNOUNCEMENTS } from "../lib/announcements-mock.js";
 import { MOCK_COURSES } from "../lib/courses-mock.js";
 
 const router = Router();
@@ -96,9 +97,10 @@ router.get("/announcements", async (req, res) => {
     res.setHeader("X-Lista-Cache", "MISS");
     return res.json(data);
   } catch (err) {
-    logger.warn({ err }, "Database query failed for /announcements, using empty array");
-    announcementsCache = { data: [], cachedAt: Date.now() };
-    return res.json([]);
+    logger.warn({ err }, "Database query failed for /announcements, using mock seed data");
+    announcementsCache = { data: MOCK_ANNOUNCEMENTS, cachedAt: Date.now() };
+    res.setHeader("X-Lista-Source", "mock");
+    return res.json(MOCK_ANNOUNCEMENTS);
   }
 });
 

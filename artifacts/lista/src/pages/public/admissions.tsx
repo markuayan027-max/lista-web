@@ -164,8 +164,8 @@ export default function AdmissionsPage() {
       {/* Process Section - Clean & Geometric */}
       <section className="py-32 bg-white">
         <div className="container mx-auto px-4 md:px-6">
-          <div className="flex flex-col lg:flex-row gap-20">
-            <div className="lg:w-1/3">
+          <div className="flex flex-col lg:flex-row lg:items-start gap-20">
+            <div className="lg:w-1/3 lg:self-start">
               <div className="lg:sticky lg:top-24 space-y-8">
                 <h2 className="text-4xl md:text-5xl font-bold tracking-tight leading-tight">
                   Enrollment <br />
@@ -189,7 +189,7 @@ export default function AdmissionsPage() {
             </div>
 
             <div className="lg:w-2/3">
-              <RevealStagger inView staggerMs={100} className="space-y-4">
+              <RevealStagger inView={false} staggerMs={100} className="space-y-4">
                 {steps.map((step, idx) => (
                   <RevealStaggerItem
                     key={idx}

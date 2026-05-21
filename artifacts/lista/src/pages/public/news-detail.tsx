@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useParams, Link } from "wouter";
 import { useAnnouncements } from "@/hooks/use-lista-data";
-import { announcementToPost } from "@/lib/lista-insforge-data";
+import { buildPublicNewsFeed } from "@/lib/public-data-utils";
 import OptimizedImage from "@/components/optimized-image";
 import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, Calendar, User, Clock, Share2, ArrowRight, Loader2 } from "lucide-react";
@@ -13,7 +13,7 @@ import { getPublicEnrollHref } from "@/lib/enroll-entry";
 export default function NewsDetailPage() {
   const { id } = useParams();
   const { data: announcements = [], isLoading } = useAnnouncements();
-  const posts = useMemo(() => announcements.map(announcementToPost), [announcements]);
+  const posts = useMemo(() => buildPublicNewsFeed(announcements), [announcements]);
   const post = posts.find((p) => p.id === id);
 
   if (isLoading) {

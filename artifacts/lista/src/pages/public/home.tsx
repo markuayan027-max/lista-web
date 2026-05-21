@@ -23,8 +23,11 @@ import {
 import PrimaryButton from "@/components/primary-button";
 import CourseCard from "@/components/course-card";
 import { useAnnouncements, useCourses, useTestimonials } from "@/hooks/use-lista-data";
-import { announcementToPost } from "@/lib/lista-insforge-data";
-import { mapCourseToHeroItem, mapTestimonialsForHome } from "@/lib/public-data-utils";
+import {
+  buildPublicNewsFeed,
+  mapCourseToHeroItem,
+  mapTestimonialsForHome,
+} from "@/lib/public-data-utils";
 import { withBase } from "@/lib/with-base";
 import { cn } from "@/lib/utils";
 import { CourseCarouselSkeleton } from "@/components/skeletons";
@@ -35,9 +38,9 @@ export default function HomePage() {
   const coursesQuery = useCourses();
   const { data: liveCourses = [], isLoading: coursesLoading } = coursesQuery;
   const { data: liveTestimonials = [] } = useTestimonials();
-  const { data: announcements = [] } = useAnnouncements();
+  const { data: announcements = [], isLoading: announcementsLoading } = useAnnouncements();
   const programCount = liveCourses.length;
-  const livePosts = useMemo(() => announcements.map(announcementToPost), [announcements]);
+  const livePosts = useMemo(() => buildPublicNewsFeed(announcements), [announcements]);
   const [activeBenefit, setActiveBenefit] = useState<null | { title: string; desc: string; details: string; icon: any }>(null);
 
   const benefits = [
@@ -501,14 +504,14 @@ export default function HomePage() {
                   Financial constraints should never hinder your potential. Explore our comprehensive
                   merit and need-based scholarship programs designed to fully support your training.
                 </p>
-                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 mb-7 p-5 bg-blue-50 border border-blue-100 rounded-xl">
-                  <div className="text-3xl font-extrabold text-slate-900 flex items-center gap-3">
-                    <Landmark className="w-7 h-7 text-blue-600" />
-                    ₱500k
-                  </div>
+                <div className="flex items-start gap-3 mb-7 p-5 bg-blue-50 border border-blue-100 rounded-xl">
+                  <Landmark className="w-6 h-6 text-blue-600 shrink-0 mt-0.5" strokeWidth={1.5} />
                   <div>
-                    <div className="font-semibold text-slate-800">Annual Funding Pool</div>
-                    <div className="text-sm text-slate-500">Awarded to aspiring professionals</div>
+                    <div className="font-semibold text-slate-800">TESDA scholarship pathways</div>
+                    <p className="text-sm text-slate-500 mt-1 leading-relaxed">
+                      Programs such as TWSP may cover training costs when slots are available. Eligibility
+                      and benefits vary by qualification—contact admissions to confirm current openings.
+                    </p>
                   </div>
                 </div>
                 <Link href="/scholarships">
@@ -635,6 +638,21 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {announcementsLoading && livePosts.length === 0
+              ? Array.from({ length: 3 }).map((_, i) => (
+                  <div
+                    key={`news-skel-${i}`}
+                    className="flex flex-col bg-white rounded-xl border border-slate-200 overflow-hidden animate-pulse"
+                  >
+                    <div className="aspect-[16/10] bg-slate-200" />
+                    <div className="p-6 space-y-3">
+                      <div className="h-4 w-24 bg-slate-200 rounded" />
+                      <div className="h-6 w-full bg-slate-200 rounded" />
+                      <div className="h-4 w-full bg-slate-100 rounded" />
+                    </div>
+                  </div>
+                ))
+              : null}
             {livePosts.slice(0, 6).map((post, i) => (
               <Reveal
                 key={post.id}

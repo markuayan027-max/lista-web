@@ -7,7 +7,13 @@ import { lista } from "@/lib/insforge";
 import { authHeaders } from "@/lib/auth-token";
 import { insforgeEnrollmentRowToApiData } from "@/lib/trainee-enrollment-insforge";
 import { enrollmentStatusIs, normalizeEnrollmentStatus } from "@/lib/enrollment-status";
-import type { Course, Enrollment, User, UserRole } from "@/lib/institutional-data";
+import {
+  announcements as seedAnnouncementsCatalog,
+  type Course,
+  type Enrollment,
+  type User,
+  type UserRole,
+} from "@/lib/institutional-data";
 import { resolveCourseCoverImage, resolveCourseGalleryImages } from "@/lib/course-images";
 import { apiUrl } from "@/lib/api-url";
 
@@ -616,11 +622,57 @@ function normalizeAnnouncementDbRow(row: Record<string, unknown>): Record<string
   };
 }
 
+function seedCatalogAnnouncements(): ListaAnnouncement[] {
+  return seedAnnouncementsCatalog.map((a) => ({
+    id: a.id,
+    title: a.title,
+    body: a.body,
+    targetRole: a.targetRole,
+    createdAt: a.createdAt,
+    author: a.author,
+  }));
+}
+
 export async function fetchAnnouncements(): Promise<ListaFetchResult<ListaAnnouncement[]>> {
   const api = await fetchAnnouncementsFromApi();
-  if (api.success) {
+  if (api.success && api.data.length > 0) {
     return api;
   }
+
+  if (canUseInsforgeSdk()) {
+    try {
+      const { data, error } = await withTimeout(
+        (async () =>
+          lista.from("announcements").select("*").order("created_at", { ascending: false }))(),
+        FETCH_COURSES_MS,
+        "InsForge announcements",
+      );
+      if (!error) {
+        const mapped = ((data as Record<string, unknown>[]) || []).map((row) =>
+          rowToAnnouncement(normalizeAnnouncementDbRow(row)),
+        );
+        if (mapped.length > 0) {
+          return { success: true, data: mapped };
+        }
+      } else if (api.success) {
+        return api;
+      }
+    } catch (err) {
+      if (api.success) return api;
+      const msg = err instanceof Error ? err.message : String(err);
+      return {
+        success: false,
+        error: api.error ? `${api.error}; ${msg}` : msg,
+      };
+    }
+  }
+
+  const seed = seedCatalogAnnouncements();
+  if (seed.length > 0) {
+    return { success: true, data: seed };
+  }
+
+  if (api.success) return api;
   return { success: true, data: [] };
 }
 
@@ -968,7 +1020,7 @@ export function announcementToPost(a: ListaAnnouncement): ListaPost {
     content: a.body,
     date: a.createdAt,
     category: "Announcement",
-    imageUrl: "",
+    imageUrl: "/news-scholarship.png",
     author: a.author,
   };
 }

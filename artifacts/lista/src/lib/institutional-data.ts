@@ -211,16 +211,6 @@ export const officialDocuments = [
 
 export const events = [
   {
-    id: "ev1",
-    title: "19th Commencement Exercises & TESDA Scholar Payout",
-    date: "2024-03-24",
-    endDate: "2024-03-24",
-    participants: 800,
-    location: "Arturo S. Lugod Memorial Gym, Gingoog City",
-    partners: ["TESDA Region X", "DSWD – Assistance to Individuals in Crisis Situations (AICS)", "Office of the Speaker of the House"],
-    description: "On March 24, 2024, LISTA held its 19th Commencement Exercises at the Arturo S. Lugod Memorial Gym. The event doubled as a payout ceremony where over 800 TESDA TWSP scholars each received ₱3,000 in financial assistance through the DSWD AICS program. Local government officials and a representative from the Office of the Speaker of the House graced the occasion alongside School President Maggie Gudella Z. Tse.",
-  },
-  {
     id: "ev2",
     title: "National Women's Celebration Month Capability Training",
     date: "2024-03-20",
@@ -1043,17 +1033,6 @@ export const posts: Post[] = [
     category: "Announcement",
     imageUrl: "/news-scholarship.png",
     author: "Admissions Office",
-  },
-  {
-    id: "p4",
-    title: "19th Commencement: Over 800 Scholars Receive ₱3,000 Aid",
-    excerpt: "LISTA's 19th Commencement Exercises on March 24, 2024 was a landmark event where over 800 TESDA scholars received ₱3,000 financial assistance through DSWD.",
-    content: `Lorenz International Skills Training Academy, Inc. held its 19th Commencement Exercises on March 24, 2024, at the Arturo S. Lugod Memorial Gym in Gingoog City. The event was graced by local government officials and a representative from the Office of the Speaker of the House.\n\nIn a significant highlight, over 800 TESDA Training for Work Scholarship Program (TWSP) scholars each received ₱3,000 in financial assistance through the Department of Social Welfare and Development's (DSWD) Assistance to Individuals in Crisis Situations (AICS) program.\n\nThis milestone reflects LISTA's continued partnership with TESDA, DSWD, and the local government in empowering Gingoog City residents through quality technical-vocational education.`,
-    date: "2024-03-24",
-    category: "Event",
-    imageUrl: "/commencement_exercises.png",
-    sourceUrl: "https://x.com/SpeakerMartinPH/status/1771033688551419911",
-    author: "Administration",
   },
   {
     id: "p5",

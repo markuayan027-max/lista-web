@@ -1,6 +1,6 @@
 # LISTA Project — Workflow State
 
-**Last Updated:** 2026-05-21 (production lista.dpdns.org ↔ lista-web Worker)
+**Last Updated:** 2026-05-21 (public content: no ₱500k pool; hide commencement/Romualdez news)
 
 > Read this before starting. Update when you finish or hand off.
 

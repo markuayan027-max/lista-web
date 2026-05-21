@@ -1,7 +1,94 @@
-import type { Course, User } from "@/lib/institutional-data";
+import type { Course, Post, User } from "@/lib/institutional-data";
 import { resolveCourseCoverImage } from "@/lib/course-images";
-import type { DbTestimonial } from "@/lib/lista-insforge-data";
-import { contactInfo, schoolInfo } from "@/lib/institutional-data";
+import {
+  announcementToPost,
+  type DbTestimonial,
+  type ListaAnnouncement,
+  type ListaPost,
+} from "@/lib/lista-insforge-data";
+import { contactInfo, posts as institutionalPosts, schoolInfo } from "@/lib/institutional-data";
+
+/** Hide legacy commencement / speaker-linked stories from public news surfaces. */
+export function isBlockedPublicNewsItem(text: string): boolean {
+  const hay = text.toLowerCase();
+  return (
+    hay.includes("romualdez") ||
+    hay.includes("speakermartin") ||
+    hay.includes("speaker martin") ||
+    hay.includes("19th commencement") ||
+    hay.includes("office of the speaker")
+  );
+}
+
+export function isBlockedPublicAnnouncement(a: ListaAnnouncement): boolean {
+  return isBlockedPublicNewsItem(`${a.title} ${a.body}`);
+}
+
+export function isBlockedPublicPost(p: ListaPost): boolean {
+  return isBlockedPublicNewsItem(
+    `${p.title} ${p.excerpt} ${p.content} ${p.sourceUrl ?? ""}`,
+  );
+}
+
+const DEFAULT_NEWS_IMAGE = "/news-scholarship.png";
+
+export function resolveAnnouncementImageUrl(title: string, body: string): string {
+  const hay = `${title} ${body}`.toLowerCase();
+  if (hay.includes("scholarship") || hay.includes("twsp")) return DEFAULT_NEWS_IMAGE;
+  if (hay.includes("women") || hay.includes("garden"))
+    return "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?auto=format&fit=crop&q=80&w=800";
+  if (hay.includes("rabbit") || hay.includes("agri") || hay.includes("crop"))
+    return "/agriculture-training.png";
+  if (hay.includes("driving")) {
+    return "https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?auto=format&fit=crop&q=80&w=800";
+  }
+  if (hay.includes("graduate") || hay.includes("css") || hay.includes("computer"))
+    return "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=80&w=800";
+  return "/hero.png";
+}
+
+export function institutionalPostToListaPost(p: Post): ListaPost {
+  return {
+    id: p.id,
+    title: p.title,
+    excerpt: p.excerpt,
+    content: p.content,
+    date: p.date,
+    category: p.category,
+    imageUrl: p.imageUrl,
+    author: p.author,
+    sourceUrl: p.sourceUrl,
+  };
+}
+
+/** Live announcements merged with curated posts; blocked stories excluded. */
+export function buildPublicNewsFeed(announcements: ListaAnnouncement[]): ListaPost[] {
+  const live = announcements
+    .filter((a) => !isBlockedPublicAnnouncement(a))
+    .map((a) => {
+      const post = announcementToPost(a);
+      return {
+        ...post,
+        imageUrl: post.imageUrl || resolveAnnouncementImageUrl(a.title, a.body),
+      };
+    })
+    .filter((p) => !isBlockedPublicPost(p));
+
+  const fallback = institutionalPosts
+    .map(institutionalPostToListaPost)
+    .filter((p) => !isBlockedPublicPost(p));
+
+  const seen = new Set<string>();
+  const merged: ListaPost[] = [];
+  for (const post of [...live, ...fallback]) {
+    const key = post.title.trim().toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    merged.push(post);
+  }
+
+  return merged.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+}
 
 export type HeroCourseItem = {
   id: string;
