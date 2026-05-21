@@ -41,15 +41,19 @@ export default defineConfig({
     {
       command: "pnpm run dev",
       url: "http://localhost:3001/api/healthz",
-      reuseExistingServer: true,
+      reuseExistingServer: !process.env.CI,
       cwd: "./artifacts/api-server",
       timeout: 180000,
       name: "API Server",
+      env: {
+        PORT: "3001",
+        NODE_ENV: "development",
+      },
     },
     {
       command: "pnpm run dev:client",
       url: "http://localhost:5173",
-      reuseExistingServer: true,
+      reuseExistingServer: !process.env.CI,
       cwd: "./artifacts/lista",
       timeout: 120000,
       name: "Vite Dev (lista)",
