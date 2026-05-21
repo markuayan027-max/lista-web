@@ -1,137 +1,71 @@
-# LISTA Deployment Runbook (Vercel + Cloudflare)
+# LISTA deployment (Vercel)
 
-Use this as the single source of truth for smooth deployments.
+Production: **https://lista.dpdns.org** · Vercel project **`lista-frontend`** · repo **`markuayan027-max/lista-web`** · branch **`main`**.
 
-## Target architecture
+## Deploy in three steps
 
-- Frontend + API: Vercel project `lista-frontend` from `main` — static SPA + **`api/index.ts`** serverless (same origin `lista.dpdns.org/api/*`)
-- Optional later: Cloudflare Worker `lista-web` on a dedicated API hostname (`VITE_LISTA_API_BASE_URL`)
-- Do **not** rely on `https://api.lista.dpdns.org` until that host serves LISTA Express (`/api/healthz` → `{"status":"ok"}`), not InsForge platform JSON
+1. **Push** your fix to `main` on GitHub.
+2. **Copy the commit URL** (one link), e.g.  
+   `https://github.com/markuayan027-max/lista-web/commit/<full-sha>`
+3. In Vercel → **lista-frontend** → **Deployments** → **Create Deployment** → paste that **commit URL** → deploy → when **Ready**, promote to **Production** if needed.
 
-## Hard safety boundary
+You do not need branch names or manual CLI deploys for the normal path; the commit URL is enough for Vercel to build the exact revision.
 
-- `astral-api` is a different project boundary. Do not add/remove/update secrets or routes there for LISTA work.
-- LISTA changes must use LISTA-only Worker names/domains and LISTA-only secrets.
-- Frontend now supports `VITE_LISTA_API_BASE_URL` so LISTA can move to its own API host without touching shared infrastructure.
-
-## Golden path (no-error deploy)
-
-1. Ensure local branch is up to date and clean.
-2. Run Graphify query before changes:
-   - `python -m graphify query "vercel.json api rewrite cloudflare worker astral-api deployment"`
-3. If frontend build behavior changed, run:
-   - `pnpm --filter @workspace/lista run optimize:images`
-   - `pnpm --filter @workspace/lista run build`
-4. Commit and push to `main` (GitHub).
-5. Let Vercel Git integration auto-deploy from pushed commit.
-6. Confirm newest deployment is `Ready`.
-7. Smoke test:
-   - `https://lista.dpdns.org`
-   - `https://lista.dpdns.org/api/health`
-
-## Cloudflare env and AI checklist
-
-Required Worker secrets for homepage chat (on LISTA-only Worker):
-
-- `GROQ_API_KEY` (required)
-- `GROQ_MODEL` (optional, default `llama-3.3-70b-versatile`)
-
-Never commit secrets to git. Upload as Worker secrets only.
-
-Post-upload checks (must hit **lista-web**, not legacy `astral-api` / InsForge-only hosts):
-
-- `GET https://api.lista.dpdns.org/api/healthz` → `{"status":"ok"}` (LISTA Express). If you see `database`/`sdk` JSON, DNS still points at the wrong service.
-- `POST https://api.lista.dpdns.org/api/chat/homepage` → `200` with assistant text (not `404`, not `CHAT_NOT_CONFIGURED`)
-- Staff login: `GET https://api.lista.dpdns.org/api/users/me` with Bearer token → `data.role` is `staff` or `admin`
-- InsForge SQL: `SELECT email, role::text FROM public.users WHERE role IN ('admin','staff');` — **no `status` column** on current prod schema (see `artifacts/lista/sql/verify-staff-admin-roles.sql`)
-
-**Cloudflare → lista-web → Domains:** add route or custom domain `api.lista.dpdns.org` (or set `VITE_LISTA_API_BASE_URL` on Vercel to the Worker URL).
-
-## Graphify queries for future AI deploys
-
-Run from repo root unless noted:
+## After deploy — smoke (must pass before trusting live data)
 
 ```powershell
-python -m graphify query "vercel.json buildCommand outputDirectory rewrites api lista.dpdns.org"
-python -m graphify query ".vercelignore frontend-only deployment api exclusion"
-python -m graphify query "artifacts/lista/scripts/optimize-public-images.mjs incremental sourceFingerprint"
-python -m graphify query "artifacts/api-server/src/routes/homepage-chat.ts GROQ_API_KEY GROQ_MODEL"
-python -m graphify query "artifacts/api-server/src/routes/index.ts Router typing use"
+node artifacts/lista/scripts/post-deploy-api-verify.mjs
 ```
 
-If graph is stale after edits:
+Or by hand:
+
+| Check | Expected |
+|--------|----------|
+| `GET https://lista.dpdns.org/api/healthz` | `200` and `{"status":"ok"}` |
+| `GET https://lista.dpdns.org/api/courses` | `200` and a JSON array (live DB or fallback list) |
+
+If either fails, **courses / enrollments in the UI will stay empty** even when the deployment shows **Ready**.
+
+## Vercel env (lista-frontend → Settings → Environment Variables)
+
+Required for **Production** (same names for Preview if you test previews):
+
+| Variable | Purpose |
+|----------|---------|
+| `DATABASE_URL` | Postgres for courses, enrollments, staff roles |
+| `INSFORGE_URL` | Auth / JWT validation (must match your InsForge tenant) |
+| `VITE_INSFORGE_URL` | Frontend InsForge client (build-time) |
+
+Optional: `LOG_LEVEL`, `LISTA_APP_URL` / `VITE_APP_URL` for activation links.
+
+## When Ready but live data is broken
+
+| Symptom | Likely cause | Fix |
+|---------|----------------|-----|
+| `FUNCTION_INVOCATION_FAILED` on `/api/*` | API serverless crash (often pino worker threads on Vercel) | Use latest `main` with `vercel-entry` + `VERCEL=1` console logger; redeploy from commit URL |
+| `/api/health` returns InsForge JSON (`database`, `sdk`) | Wrong handler / old deploy | Redeploy; health must be `{"status":"ok"}` at `/api/healthz` |
+| `/api/courses` → `500` / DB errors | Missing or wrong `DATABASE_URL` on Vercel | Set secret, redeploy |
+| Admin lands on `/trainee/register` | `/api/users/me` failing | Fix API + confirm `public.users` roles (see `artifacts/lista/sql/verify-staff-admin-roles.sql`) |
+
+## What ships on Vercel
+
+- **SPA:** `artifacts/lista/dist/public` (build includes `optimize:images` + Vite)
+- **API:** `api/index.js` → `artifacts/api-server/dist/vercel-entry.mjs` (Express, same origin `/api/*`)
+- **Config:** root `vercel.json` — do not remove root `api/` from the repo (`.vercelignore` must not exclude it)
+
+## Optional: Cloudflare Worker `lista-web`
+
+Only if you move API off Vercel (`VITE_LISTA_API_BASE_URL`). Default production path is **same-origin Vercel API**. Do not change **`astral-api`** for LISTA.
+
+Build from repo root: `pnpm install --frozen-lockfile` then `pnpm --filter @workspace/api-server exec wrangler deploy`. Secrets: `DATABASE_URL`, `GROQ_API_KEY`, `INSFORGE_URL` on **lista-web** only.
+
+## Graphify (before large deploy-related edits)
 
 ```powershell
+python -m graphify query "vercel.json api/index vercel-entry DATABASE_URL"
 python -m graphify update .
 ```
 
-## Cloudflare Workers Builds (`lista-web`)
+## Handoff line for agents
 
-The Worker **`lista-web`** must deploy the Express API using Wrangler from this repo (monorepo + workspace packages). Do **not** point Workers Builds only at `artifacts/api-server` with `npm install` / `npm run build` there — installs will miss `@workspace/db` and `@workspace/api-zod`.
-
-**Recommended Git-connected build (repository root):**
-
-| Setting | Value |
-|--------|--------|
-| Root directory | *(repository root — leave empty / default)* |
-| Build command | `pnpm install --frozen-lockfile` |
-| Deploy command | `pnpm --filter @workspace/api-server exec wrangler deploy` |
-
-Config lives in `artifacts/api-server/wrangler.toml` (`name = "lista-web"`, `main = "src/worker.ts"`). Express is wired through Node HTTP on Workers (`nodejs_compat` + `httpServerHandler` from `cloudflare:node`).
-
-**Secrets / vars (LISTA-only Worker — never on `astral-api`):**
-
-| Name | Where | Purpose |
-|------|--------|---------|
-| `DATABASE_URL` | **Secret** | Postgres for `@workspace/db`. On Workers use [Hyperdrive](https://developers.cloudflare.com/hyperdrive/) and set this secret to the Hyperdrive connection string. |
-| `GROQ_API_KEY` | **Secret** | Homepage AI chat (`/api/chat/homepage`). Aliases: `GROQ_KEY`, `VITE_GROQ_API_KEY`. |
-| `GROQ_MODEL` | `[vars]` in `wrangler.toml` (override in dashboard if needed) | Groq model id; default `llama-3.3-70b-versatile`. |
-| `INSFORGE_URL` | `[vars]` in `wrangler.toml` (override if tenant differs) | Must match the InsForge host that issues user JWTs (session + `/api/users/me`). |
-| `LISTA_APP_URL` or `VITE_APP_URL` | Optional **var/secret** | Public site origin for staff activation links (`insforge-auth-admin.ts`). |
-| `LOG_LEVEL` | `[vars]` | e.g. `info`. |
-
-See also `artifacts/api-server/.env.example` for the full list and local dev notes.
-
-Dry-run bundle locally (no Cloudflare auth upload):
-
-```powershell
-cd artifacts/api-server
-pnpm exec wrangler deploy --dry-run
-```
-
-## Failure matrix and fixes
-
-1. Vercel fails with TypeScript errors in `artifacts/api-server/*`
-   - Cause: Vercel is compiling backend code path
-   - Fix: keep Vercel frontend-only; ensure `.vercelignore` excludes `api`
-
-2. Vercel fails: missing image optimizer script
-   - Cause: script path ignored by git/ignore patterns
-   - Fix: include `artifacts/lista/scripts/optimize-public-images.mjs` in tracked files
-
-3. Vercel deploy is `Ready` but API endpoints fail
-   - Cause: frontend deployed, Cloudflare Worker stale/missing route
-   - Fix: deploy/update Worker code and recheck `/api/health` and `/api/chat/homepage`
-
-4. Chat endpoint returns unavailable/config errors
-   - Cause: missing Worker secrets
-   - Fix: upload `GROQ_API_KEY` (and optional `GROQ_MODEL`) to LISTA Worker secrets
-
-## Stable config snapshot
-
-- Root `vercel.json`:
-  - `buildCommand`: `pnpm --filter @workspace/lista run build`
-  - `outputDirectory`: `artifacts/lista/dist/public`
-  - `functions`: `api/index.ts` (Express `@workspace/api-server`)
-  - rewrite `/api/(.*)` -> `/api` (same-origin serverless, not external host)
-- `.vercelignore` must **not** ignore root `api/` (required for Vercel Functions)
-- Image optimizer supports incremental skip for unchanged images (faster builds)
-- Frontend supports `VITE_LISTA_API_BASE_URL` for dedicated LISTA API separation
-
-## Operator prompt template (for future AI)
-
-Use this exact instruction:
-
-> Deploy LISTA using the runbook at `artifacts/lista/docs/DEPLOYMENT-RUNBOOK.md`.  
-> First run Graphify queries in that doc, then execute the golden path, verify Vercel `Ready`, verify `https://lista.dpdns.org/api/health`, and report final deployment URL + commit hash + any deviations.
-
+> Deploy LISTA: push to `main`, give the user the **GitHub commit URL**, they deploy in Vercel from that URL, then run `post-deploy-api-verify.mjs` on `https://lista.dpdns.org`.
