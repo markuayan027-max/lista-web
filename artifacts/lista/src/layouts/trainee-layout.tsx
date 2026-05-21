@@ -106,7 +106,7 @@ export default function TraineeLayout({ children }: { children: React.ReactNode 
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto p-4 md:p-8 pb-24 md:pb-8">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-8 pb-24 md:pb-8 min-w-0">
           <div className="max-w-7xl mx-auto">{children}</div>
         </main>
       </div>

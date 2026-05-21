@@ -226,7 +226,7 @@ export default function TraineeTrackingPage() {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="space-y-8 max-w-6xl mx-auto pb-20"
+      className="space-y-8 max-w-6xl mx-auto pb-4 md:pb-8"
     >
       {printTarget && (
         <PrintModal enrollment={printTarget} onClose={() => setPrintTarget(null)} />

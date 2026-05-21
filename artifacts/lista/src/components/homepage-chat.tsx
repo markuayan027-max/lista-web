@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useLocation } from "wouter";
 import {
   MessageCircle,
   MessagesSquare,
@@ -54,6 +55,9 @@ function rateLimitFriendlyMessage(err: HomepageChatError): string {
 }
 
 export default function HomepageChat({ programCount }: HomepageChatProps) {
+  const [location] = useLocation();
+  const path = location.split("?")[0] ?? "";
+  const courseDetailStickyBar = /^\/courses\/[^/]+$/.test(path);
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<HomepageChatMessage[]>([WELCOME]);
   const [input, setInput] = useState("");
@@ -335,7 +339,9 @@ export default function HomepageChat({ programCount }: HomepageChatProps) {
         onClick={() => setOpen((v) => !v)}
         className={cn(
           "fixed z-50 h-14 w-14 rounded-full bg-blue-700 shadow-lg shadow-blue-900/20 hover:bg-blue-800",
-          "bottom-[max(1.25rem,env(safe-area-inset-bottom))] right-4 md:right-6",
+          courseDetailStickyBar
+            ? "bottom-[5.5rem] right-4 lg:bottom-[max(1.25rem,env(safe-area-inset-bottom))] lg:right-6"
+            : "bottom-[max(1.25rem,env(safe-area-inset-bottom))] right-4 md:right-6",
           open && "ring-2 ring-blue-300 ring-offset-2",
         )}
         aria-expanded={open}

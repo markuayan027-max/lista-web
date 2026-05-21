@@ -682,8 +682,8 @@ export default function TraineeRegistrationPage() {
                    <div className="h-px w-8 bg-border" />
                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Registry Flow</span>
                  </div>
-                 <h2 className="text-5xl font-black text-foreground tracking-tight leading-none mb-4">{STEPS.find(s => s.id === currentStep)?.title}</h2>
-                 <p className="text-lg text-muted-foreground font-medium max-w-md leading-relaxed">{STEPS.find(s => s.id === currentStep)?.description}. Please provide accurate information as per your official documents.</p>
+                 <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-foreground tracking-tight leading-none mb-4">{STEPS.find(s => s.id === currentStep)?.title}</h2>
+                 <p className="text-base sm:text-lg text-muted-foreground font-medium max-w-md leading-relaxed">{STEPS.find(s => s.id === currentStep)?.description}. Please provide accurate information as per your official documents.</p>
                </motion.div>
                
                {/* Mobile progress bar */}
@@ -1099,7 +1099,7 @@ export default function TraineeRegistrationPage() {
                       </div>
                     )}
 
-                    <div className="flex items-center gap-4 pt-12 border-t border-border/50">
+                    <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 pt-8 sm:pt-12 border-t border-border/50 max-md:sticky max-md:bottom-0 max-md:z-20 max-md:bg-white max-md:py-4 max-md:pb-[max(1rem,env(safe-area-inset-bottom))] max-md:-mx-4 max-md:px-4 max-md:border-t max-md:shadow-[0_-8px_24px_rgba(0,0,0,0.06)]">
                       {currentStep > 1 && (
                         <Button 
                           variant="ghost" 
@@ -1125,7 +1125,7 @@ export default function TraineeRegistrationPage() {
                       {currentStep < 4 ? (
                         <Button 
                           className={cn(
-                            "h-14 px-12 rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all",
+                            "h-14 w-full sm:w-auto px-8 sm:px-12 rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all",
                             isStepValid() 
                               ? "bg-primary text-white hover:bg-primary/90 shadow-xl shadow-muted/30 active:scale-[0.98]" 
                               : "bg-muted text-muted-foreground cursor-not-allowed opacity-50"
@@ -1137,7 +1137,7 @@ export default function TraineeRegistrationPage() {
                         </Button>
                       ) : (
                         <Button 
-                          className="h-14 px-12 bg-primary text-white hover:bg-primary/90 rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-xl shadow-muted/30 transition-all active:scale-[0.98]" 
+                          className="h-14 w-full sm:w-auto px-8 sm:px-12 bg-primary text-white hover:bg-primary/90 rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-xl shadow-muted/30 transition-all active:scale-[0.98]" 
                           onClick={handleSubmit}
                           disabled={!formData.consent || isSubmitting}
                         >

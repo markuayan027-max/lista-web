@@ -107,7 +107,7 @@ export default function TraineeApplicationPage() {
   }
 
   return (
-    <motion.main className="space-y-8 sm:space-y-10 max-w-6xl mx-auto pb-16 sm:pb-20 px-4 sm:px-6 lg:px-0">
+    <motion.main className="space-y-8 sm:space-y-10 max-w-6xl mx-auto pb-4 md:pb-8 px-4 sm:px-6 lg:px-0">
       <nav aria-label="Breadcrumb" className="text-sm text-muted-foreground">
         <ol className="flex flex-wrap items-center gap-1.5">
           <li>
