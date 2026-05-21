@@ -6,6 +6,7 @@
 
 import type { Enrollment } from "@/lib/institutional-data";
 import { authHeadersAsync, ensureAccessToken } from "@/lib/auth-token";
+import { apiUrl } from "@/lib/api-url";
 import { ensurePublicTraineeUser } from "@/lib/ensure-public-trainee";
 import { lista } from "@/lib/insforge";
 import { loadLocalProfile, mergeTraineeProfileSources } from "@/lib/profile-utils";
@@ -389,7 +390,7 @@ async function registerTraineeViaApiFallback(
     };
   }
   try {
-    const response = await fetch("/api/trainees/register", {
+    const response = await fetch(apiUrl("/api/trainees/register"), {
       method: "POST",
       headers: { "Content-Type": "application/json", ...headers },
       body: JSON.stringify(enrollmentToRegisterApiBody(prepared)),
