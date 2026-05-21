@@ -1,0 +1,31 @@
+# Daily ping to keep Worker/API warm and detect outages early.
+# No secrets required. See artifacts/lista/docs/PRODUCTION-MAINTENANCE.md
+name: LISTA keepalive
+
+on:
+  schedule:
+    - cron: "15 3 * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Worker healthz
+        run: |
+          URL="https://lista-web.campionsamuel-tech.workers.dev/api/healthz"
+          code=$(curl -sS -o /tmp/health.json -w "%{http_code}" "$URL")
+          cat /tmp/health.json
+          if [ "$code" != "200" ]; then
+            echo "::error::Worker healthz returned HTTP $code"
+            exit 1
+          fi
+          grep -q '"status":"ok"' /tmp/health.json || grep -q '"status": "ok"' /tmp/health.json
+
+      - name: Frontend reachable
+        run: |
+          code=$(curl -sS -o /dev/null -w "%{http_code}" "https://lista.dpdns.org/")
+          if [ "$code" != "200" ] && [ "$code" != "304" ]; then
+            echo "::warning::Frontend returned HTTP $code (may be CDN redirect)"
+          fi

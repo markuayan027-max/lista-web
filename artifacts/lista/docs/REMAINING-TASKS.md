@@ -35,7 +35,7 @@ Execute in order. Mark done in this file or `workflow-state.md` as you go.
 |---|------|-------|--------|
 | 3.1 | Cloudflare Worker `wrangler deploy` with `CLOUDFLARE_API_TOKEN` | lista-web lifecycle API | ⬜ |
 | 3.2 | InsForge: confirm migration `008-multi-enrollment-lifecycle.sql` on prod | You ran SQL | 🟢 |
-| 3.3 | Weekly DB backup per `PRODUCTION-MAINTENANCE.md` | Ops | ⬜ |
+| 3.3 | Weekly DB backup — GitHub Actions `lista-db-backup.yml` | Add `DATABASE_URL` secret, run once | ⬜ |
 
 ---
 
