@@ -5,6 +5,8 @@ node_modules
 pnpm-store
 **/.turbo
 **/dist
+!artifacts/api-server/dist
+!artifacts/api-server/dist/**
 **/build
 **/.next
 playwright-report
