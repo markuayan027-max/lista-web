@@ -1,4 +1,5 @@
 -- LISTA InsForge — address Backend Advisor issues (RLS + FK indexes)
+-- Safe to re-run: every policy is DROP IF EXISTS before CREATE.
 -- Apply in InsForge SQL Editor (run entire file) or MCP run-raw-sql.
 -- Public catalog tables (courses, FAQs, testimonials) stay readable by anon by design.
 
@@ -45,6 +46,9 @@ CREATE POLICY announcements_select_authenticated ON public.announcements
   );
 
 DROP POLICY IF EXISTS announcements_write_staff ON public.announcements;
+DROP POLICY IF EXISTS announcements_insert_staff ON public.announcements;
+DROP POLICY IF EXISTS announcements_update_staff ON public.announcements;
+DROP POLICY IF EXISTS announcements_delete_staff ON public.announcements;
 CREATE POLICY announcements_insert_staff ON public.announcements
   FOR INSERT TO authenticated
   WITH CHECK (public.is_staff_or_admin());
@@ -82,6 +86,9 @@ CREATE POLICY schedules_public_read ON public.schedules
   USING (true);
 
 DROP POLICY IF EXISTS schedules_write_staff ON public.schedules;
+DROP POLICY IF EXISTS schedules_insert_staff ON public.schedules;
+DROP POLICY IF EXISTS schedules_update_staff ON public.schedules;
+DROP POLICY IF EXISTS schedules_delete_staff ON public.schedules;
 CREATE POLICY schedules_insert_staff ON public.schedules
   FOR INSERT TO authenticated
   WITH CHECK (public.is_staff_or_admin());
@@ -119,6 +126,9 @@ CREATE POLICY course_batches_delete_staff ON public.course_batches
 
 -- ── Staff write on catalog tables ───────────────────────────────────────────
 DROP POLICY IF EXISTS courses_write_staff ON public.lms_courses_legacy;
+DROP POLICY IF EXISTS lms_courses_write_staff ON public.lms_courses_legacy;
+DROP POLICY IF EXISTS lms_courses_update_staff ON public.lms_courses_legacy;
+DROP POLICY IF EXISTS lms_courses_delete_staff ON public.lms_courses_legacy;
 CREATE POLICY lms_courses_write_staff ON public.lms_courses_legacy
   FOR INSERT TO authenticated
   WITH CHECK (public.is_staff_or_admin());
@@ -130,6 +140,9 @@ CREATE POLICY lms_courses_delete_staff ON public.lms_courses_legacy
   USING (public.is_staff_or_admin());
 
 DROP POLICY IF EXISTS faqs_write_staff ON public.faqs;
+DROP POLICY IF EXISTS faqs_insert_staff ON public.faqs;
+DROP POLICY IF EXISTS faqs_update_staff ON public.faqs;
+DROP POLICY IF EXISTS faqs_delete_staff ON public.faqs;
 CREATE POLICY faqs_insert_staff ON public.faqs
   FOR INSERT TO authenticated WITH CHECK (public.is_staff_or_admin());
 CREATE POLICY faqs_update_staff ON public.faqs
@@ -139,6 +152,9 @@ CREATE POLICY faqs_delete_staff ON public.faqs
   FOR DELETE TO authenticated USING (public.is_staff_or_admin());
 
 DROP POLICY IF EXISTS testimonials_write_staff ON public.testimonials;
+DROP POLICY IF EXISTS testimonials_insert_staff ON public.testimonials;
+DROP POLICY IF EXISTS testimonials_update_staff ON public.testimonials;
+DROP POLICY IF EXISTS testimonials_delete_staff ON public.testimonials;
 CREATE POLICY testimonials_insert_staff ON public.testimonials
   FOR INSERT TO authenticated WITH CHECK (public.is_staff_or_admin());
 CREATE POLICY testimonials_update_staff ON public.testimonials
