@@ -742,6 +742,11 @@ export interface Enrollment {
   consent: boolean;
   batchId?: string;
   batchCode?: string;
+  isActive?: boolean;
+  cycleNumber?: number;
+  previousEnrollmentId?: string;
+  tesdaNcSentAt?: string;
+  placementType?: string;
   status:
     | "pending"
     | "confirmed"

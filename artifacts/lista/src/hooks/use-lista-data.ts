@@ -19,6 +19,9 @@ import {
   fetchTestimonials,
   fetchUsers,
   inviteStaffUser,
+  joinEnrollmentBatch,
+  markEnrollmentTesdaNcSent,
+  transferEnrollmentBatch,
   updateCourseBatchStatus,
   updateAnnouncement,
   updateEnrollmentStatus,
@@ -26,6 +29,8 @@ import {
   updateUserRole,
   updateUserStatus,
 } from "@/lib/lista-insforge-data";
+import { quickApplyTraineeCourse } from "@/lib/trainee-enrollment-insforge";
+import { insforgeEnrollmentRowToEnrollment } from "@/lib/lista-insforge-data";
 import type { DbSchedule, ListaAnnouncement } from "@/lib/lista-insforge-data";
 import type { Enrollment, UserRole } from "@/lib/institutional-data";
 
@@ -58,7 +63,14 @@ export function useUsers() {
 }
 
 /** Shared trainee profile query — dedupes dashboard, schedule, tracking, application, etc. */
-export function useTraineeProfile(email: string | undefined) {
+export type TraineeProfileQuery = {
+  enrollment: Enrollment | null;
+  activeEnrollment: Enrollment | null;
+  history: Enrollment[];
+  canQuickApply: boolean;
+};
+
+export function useTraineeProfileBundle(email: string | undefined) {
   const { user, loading } = useAuth();
   const normalized = email?.trim().toLowerCase() ?? "";
   const isSelf = Boolean(
@@ -66,21 +78,87 @@ export function useTraineeProfile(email: string | undefined) {
   );
   return useQuery({
     queryKey: listaKeys.traineeProfile(normalized),
-    queryFn: async () => {
+    queryFn: async (): Promise<TraineeProfileQuery> => {
       const res = await fetchTraineeEnrollmentByEmail(normalized);
       if (!res.success) {
         const msg = res.error ?? "";
         if (msg && !msg.toLowerCase().includes("not found")) {
           throw new Error(msg);
         }
-        return null;
+        return { enrollment: null, activeEnrollment: null, history: [], canQuickApply: false };
       }
-      if (!res.data) return null;
-      return res.data as unknown as Enrollment;
+      const toEnrollment = (row: Record<string, unknown> | undefined | null) =>
+        row ? (insforgeEnrollmentRowToEnrollment(row) as Enrollment) : null;
+      const enrollment = toEnrollment(res.data ?? null);
+      const activeEnrollment = toEnrollment(res.activeEnrollment ?? res.data ?? null);
+      const history = (res.history ?? []).map((row) => insforgeEnrollmentRowToEnrollment(row) as Enrollment);
+      return {
+        enrollment: activeEnrollment ?? enrollment,
+        activeEnrollment,
+        history: history.length > 0 ? history : enrollment ? [enrollment] : [],
+        canQuickApply: Boolean(res.canQuickApply),
+      };
     },
     enabled: !loading && isSelf,
     staleTime: 60_000,
     retry: 1,
+  });
+}
+
+/** Active enrollment row for pages that expect a single profile record. */
+export function useTraineeProfile(email: string | undefined) {
+  const bundle = useTraineeProfileBundle(email);
+  return {
+    ...bundle,
+    data: bundle.data?.activeEnrollment ?? bundle.data?.enrollment ?? null,
+  };
+}
+
+export function useQuickApplyTrainee() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ email, courseSlug }: { email: string; courseSlug: string }) => {
+      const res = await quickApplyTraineeCourse(email, courseSlug);
+      if (!res.success) throw new Error(res.error || "Apply failed");
+      return res.data;
+    },
+    onSuccess: (_data, vars) => {
+      void qc.invalidateQueries({ queryKey: listaKeys.traineeProfile(vars.email.trim().toLowerCase()) });
+      void qc.invalidateQueries({ queryKey: listaKeys.enrollments });
+    },
+  });
+}
+
+export function useMarkTesdaNcSent() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, note }: { id: string; note?: string }) =>
+      unwrap(await markEnrollmentTesdaNcSent(id, note)),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: listaKeys.enrollments });
+    },
+  });
+}
+
+export function useJoinEnrollmentBatch() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ enrollmentId, batchId }: { enrollmentId: string; batchId: string }) =>
+      unwrap(await joinEnrollmentBatch(enrollmentId, batchId)),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: listaKeys.enrollments });
+    },
+  });
+}
+
+export function useTransferEnrollmentBatch() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ enrollmentId, batchId }: { enrollmentId: string; batchId: string }) =>
+      unwrap(await transferEnrollmentBatch(enrollmentId, batchId)),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: listaKeys.enrollments });
+    },
   });
 }
 
@@ -219,13 +297,10 @@ export function useDerivedCertificates() {
 /** Trainee-safe certificates — scopes to the signed-in user's enrollment via API, not all rows. */
 export function useTraineeDerivedCertificates(email: string | undefined) {
   const { data: courses = [], isLoading: coursesLoading } = useCourses();
-  const selfEnrollmentQuery = useTraineeProfile(email);
+  const bundleQuery = useTraineeProfileBundle(email);
   const enrollments = useMemo(
-    () =>
-      selfEnrollmentQuery.data
-        ? [selfEnrollmentQuery.data as unknown as Enrollment]
-        : ([] as Enrollment[]),
-    [selfEnrollmentQuery.data],
+    () => bundleQuery.data?.history ?? ([] as Enrollment[]),
+    [bundleQuery.data?.history],
   );
   const certificates = useMemo(
     () => deriveCertificatesFromEnrollments(enrollments, courses),
@@ -233,7 +308,7 @@ export function useTraineeDerivedCertificates(email: string | undefined) {
   );
   return {
     data: certificates,
-    isLoading: selfEnrollmentQuery.isLoading || coursesLoading,
+    isLoading: bundleQuery.isLoading || coursesLoading,
   };
 }
 

@@ -122,6 +122,13 @@ export function insforgeEnrollmentRowToEnrollment(row: Record<string, unknown>):
     heardFrom: str(d.heardFrom),
     notes: str(d.notes),
     consent: Boolean(d.consent),
+    batchId: str(d.batchId) || undefined,
+    batchCode: str(d.batchCode) || undefined,
+    isActive: d.isActive !== false,
+    cycleNumber: d.cycleNumber != null ? Number(d.cycleNumber) : undefined,
+    previousEnrollmentId: str(d.previousEnrollmentId) || undefined,
+    tesdaNcSentAt: str(d.tesdaNcSentAt) || undefined,
+    placementType: str(d.placementType) || undefined,
     status: normalizeEnrollmentStatus(str(d.status)) as Enrollment["status"],
     createdAt: str(d.createdAt || d.submittedAt) || new Date().toISOString(),
   };
@@ -843,17 +850,102 @@ export function deriveCertificatesFromEnrollments(
     .map((e) => {
       const course = courses.find((c) => c.slug === e.courseSlug);
       const row = e as Enrollment & { updatedAt?: string };
+      const ncSent = Boolean(e.tesdaNcSentAt);
       return {
         id: `cert-${e.id}`,
         userId: e.userId,
         courseSlug: e.courseSlug,
         ncLevel: course?.ncLevel ?? "NC II",
-        status: "issued" as const,
-        progressStage: "passed",
-        issuedAt: row.updatedAt ?? e.createdAt,
+        status: (ncSent ? "issued" : "pending") as ListaCertificate["status"],
+        progressStage: ncSent ? "passed" : "awaiting_tesda_email",
+        issuedAt: row.tesdaNcSentAt ?? row.updatedAt ?? e.createdAt,
         fileUrl: "#",
       };
     });
+}
+
+export async function markEnrollmentTesdaNcSent(
+  id: string,
+  note?: string,
+): Promise<ListaFetchResult<Enrollment>> {
+  const headers = authHeaders();
+  if (!("Authorization" in headers)) {
+    return { success: false, error: "Sign in required" };
+  }
+  try {
+    const apiRes = await fetch(apiUrl(`/api/enrollments/${id}/tesda-nc-sent`), {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...headers },
+      body: JSON.stringify({ sent: true, note }),
+    });
+    const body = (await apiRes.json().catch(() => ({}))) as {
+      success?: boolean;
+      data?: Record<string, unknown>;
+      error?: string;
+    };
+    if (!apiRes.ok || !body.success || !body.data) {
+      return { success: false, error: body.error || `Update failed (${apiRes.status})` };
+    }
+    return { success: true, data: insforgeEnrollmentRowToEnrollment(body.data) };
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : "Request failed" };
+  }
+}
+
+export async function joinEnrollmentBatch(
+  enrollmentId: string,
+  batchId: string,
+): Promise<ListaFetchResult<Enrollment>> {
+  const headers = authHeaders();
+  if (!("Authorization" in headers)) {
+    return { success: false, error: "Sign in required" };
+  }
+  try {
+    const apiRes = await fetch(apiUrl(`/api/enrollments/${enrollmentId}/join-batch`), {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...headers },
+      body: JSON.stringify({ batchId }),
+    });
+    const body = (await apiRes.json().catch(() => ({}))) as {
+      success?: boolean;
+      data?: Record<string, unknown>;
+      error?: string;
+    };
+    if (!apiRes.ok || !body.success || !body.data) {
+      return { success: false, error: body.error || `Join failed (${apiRes.status})` };
+    }
+    return { success: true, data: insforgeEnrollmentRowToEnrollment(body.data) };
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : "Request failed" };
+  }
+}
+
+export async function transferEnrollmentBatch(
+  enrollmentId: string,
+  batchId: string,
+): Promise<ListaFetchResult<Enrollment>> {
+  const headers = authHeaders();
+  if (!("Authorization" in headers)) {
+    return { success: false, error: "Sign in required" };
+  }
+  try {
+    const apiRes = await fetch(apiUrl(`/api/enrollments/${enrollmentId}/batch`), {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...headers },
+      body: JSON.stringify({ batchId }),
+    });
+    const body = (await apiRes.json().catch(() => ({}))) as {
+      success?: boolean;
+      data?: Record<string, unknown>;
+      error?: string;
+    };
+    if (!apiRes.ok || !body.success || !body.data) {
+      return { success: false, error: body.error || `Transfer failed (${apiRes.status})` };
+    }
+    return { success: true, data: insforgeEnrollmentRowToEnrollment(body.data) };
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : "Request failed" };
+  }
 }
 
 export type ListaPost = {

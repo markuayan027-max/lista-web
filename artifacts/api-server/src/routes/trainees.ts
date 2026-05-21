@@ -1,14 +1,33 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
-import { courseBatches, enrollments, users } from "@workspace/db/schema";
-import { and, asc, eq, lt, sql as dsql } from "drizzle-orm";
+import { enrollments, users } from "@workspace/db/schema";
+import { and, desc, eq, sql as dsql } from "drizzle-orm";
 import { z } from "zod";
 import { logger } from "../lib/logger.js";
 import { assertEmailAccess, requireAuth } from "../middleware/auth.js";
 import { ensureBatchSchemaReady } from "./batches.js";
+import {
+  assignBatchIfApplicable,
+  canStartNewApplication,
+  deactivateEnrollment,
+  ensureEnrollmentLifecycleSchema,
+  generateRefNo,
+  getActiveEnrollmentByEmail,
+  getEnrollmentHistoryByEmail,
+  statusBlocksNewApplication,
+} from "../lib/enrollment-lifecycle.js";
 
 const router = Router();
 router.use(requireAuth);
+
+function coerceIsIp(value: unknown): boolean | null {
+  if (value === undefined || value === null || value === "") return null;
+  if (typeof value === "boolean") return value;
+  const s = String(value).trim().toLowerCase();
+  if (s === "true" || s === "yes" || s === "1") return true;
+  if (s === "false" || s === "no" || s === "0") return false;
+  return null;
+}
 
 const registerSchema = z.object({
   refNo: z.string().min(1),
@@ -136,7 +155,7 @@ function enrollmentValuesFromRegister(data: RegisterBody, notesExtra?: string) {
     qualificationType: data.qualificationType,
     motherMaidenName: data.motherMaidenName,
     fatherName: data.fatherName,
-    isIP: data.isIP,
+    isIP: coerceIsIp(data.isIP),
     indigenousGroup: data.indigenousGroup,
     motherTongue: data.motherTongue,
     consent: data.consent ?? false,
@@ -159,99 +178,61 @@ router.post("/register", async (req, res) => {
     const [pubUser] = await db.select({ id: users.id }).from(users).where(eq(users.email, email)).limit(1);
     const valuesWithUser = { ...values, userId: pubUser?.id ?? null };
 
-    async function assignBatchIfApplicable(enrollmentId: string, courseSlug: string | undefined, status: string) {
-      const normalizedStatus = String(status || "").toLowerCase();
-      const canAssign = Boolean(courseSlug) && normalizedStatus !== "ready to apply";
-      if (!canAssign) return { assigned: false as const };
+    await ensureEnrollmentLifecycleSchema();
+    const active = await getActiveEnrollmentByEmail(email);
 
-      // Find earliest open batch with available seats.
-      const [batch] = await db
-        .select()
-        .from(courseBatches)
-        .where(
-          and(
-            dsql`lower(${courseBatches.courseSlug}) = lower(${courseSlug})`,
-            dsql`${courseBatches.status} = 'open'`,
-            lt(courseBatches.seatsTaken, courseBatches.capacity),
-          ),
-        )
-        .orderBy(asc(courseBatches.startDate), asc(courseBatches.createdAt))
-        .limit(1);
-
-      if (!batch) {
-        await db
-          .update(enrollments)
-          .set({ status: "Waitlisted", batchId: null, batchCode: null, updatedAt: new Date() })
-          .where(eq(enrollments.id, enrollmentId));
-        return { assigned: false as const, waitlisted: true as const };
-      }
-
-      const newSeats = (batch.seatsTaken ?? 0) + 1;
-      await db
-        .update(courseBatches)
-        .set({
-          seatsTaken: newSeats,
-          status: newSeats >= batch.capacity ? "closed" : "open",
-          updatedAt: new Date(),
-        })
-        .where(eq(courseBatches.id, batch.id));
-
-      await db
-        .update(enrollments)
-        .set({
-          batchId: batch.id,
-          batchCode: batch.batchCode,
-          status: "Pending",
-          updatedAt: new Date(),
-        })
-        .where(eq(enrollments.id, enrollmentId));
-
-      return { assigned: true as const, batchId: batch.id, batchCode: batch.batchCode };
-    }
-
-    const [existing] = await db
-      .select()
-      .from(enrollments)
-      .where(eq(enrollments.email, email))
-      .limit(1);
-
-    if (existing) {
+    if (active && statusBlocksNewApplication(String(active.status ?? ""))) {
       const { refNo: _keepRef, ...patch } = values;
       const [updated] = await db
         .update(enrollments)
-        .set({ ...patch, updatedAt: new Date() })
-        .where(eq(enrollments.id, existing.id))
+        .set({ ...patch, isActive: true, updatedAt: new Date() })
+        .where(eq(enrollments.id, active.id))
         .returning();
-      // Re-assign batch if a new course is being applied (and no batch yet).
-      if (updated?.course) {
-        await assignBatchIfApplicable(updated.id, String(updated.course ?? ""), String(updated.status ?? ""));
+      if (updated?.course && String(updated.course).trim()) {
+        await assignBatchIfApplicable(
+          updated.id,
+          String(updated.course ?? ""),
+          String(updated.status ?? ""),
+          "auto_assign",
+        );
       }
-      logger.info({ email }, "Enrollment updated via register (existing email)");
+      logger.info({ email }, "Profile updated on active enrollment");
       return res.status(200).json({ success: true, data: updated, updated: true });
     }
 
+    const history = await getEnrollmentHistoryByEmail(email, 1);
+    const last = history[0];
+    const nextCycle = (last?.cycleNumber ?? 0) + 1;
+    const insertValues = {
+      ...valuesWithUser,
+      refNo: generateRefNo(),
+      isActive: true,
+      cycleNumber: nextCycle,
+      previousEnrollmentId: last?.id ?? null,
+    };
+
     try {
-      const [enrollment] = await db.insert(enrollments).values(valuesWithUser).returning();
+      const [enrollment] = await db.insert(enrollments).values(insertValues).returning();
       if (enrollment?.course) {
-        await assignBatchIfApplicable(enrollment.id, String(enrollment.course ?? ""), String(enrollment.status ?? ""));
+        await assignBatchIfApplicable(
+          enrollment.id,
+          String(enrollment.course ?? ""),
+          String(enrollment.status ?? ""),
+          "auto_assign",
+        );
       }
       return res.status(201).json({ success: true, data: enrollment });
     } catch (insertError) {
       if (!isUniqueViolation(insertError)) {
         throw insertError;
       }
+      const fallbackActive = await getActiveEnrollmentByEmail(email);
+      if (!fallbackActive) throw insertError;
       const [updated] = await db
         .update(enrollments)
-        .set({ ...valuesWithUser, updatedAt: new Date() })
-        .where(eq(enrollments.email, email))
+        .set({ ...insertValues, updatedAt: new Date() })
+        .where(eq(enrollments.id, fallbackActive.id))
         .returning();
-      if (!updated) {
-        throw insertError;
-      }
-      if (updated?.course) {
-        await assignBatchIfApplicable(updated.id, String(updated.course ?? ""), String(updated.status ?? ""));
-      }
-      logger.info({ email }, "Enrollment updated via register (unique conflict)");
       return res.status(200).json({ success: true, data: updated, updated: true });
     }
   } catch (error) {
@@ -281,18 +262,171 @@ router.get("/profile", async (req, res) => {
 
   try {
     await ensureBatchSchemaReady();
-    const [enrollment] = await db
-      .select()
-      .from(enrollments)
-      .where(eq(enrollments.email, normalizedEmail))
-      .limit(1);
-    if (!enrollment) {
+    await ensureEnrollmentLifecycleSchema();
+    const active = await getActiveEnrollmentByEmail(normalizedEmail);
+    const history = await getEnrollmentHistoryByEmail(normalizedEmail);
+    if (!active && history.length === 0) {
       return res.status(404).json({ success: false, error: "Profile not found" });
     }
 
-    return res.json({ success: true, data: enrollment });
+    const canQuickApply =
+      !active ||
+      canStartNewApplication({
+        status: active.status,
+        tesdaNcSentAt: active.tesdaNcSentAt,
+        isActive: active.isActive,
+      });
+
+    return res.json({
+      success: true,
+      data: active ?? history[0],
+      activeEnrollment: active,
+      history,
+      canQuickApply,
+    });
   } catch (error) {
     console.error("Error fetching trainee profile:", error);
+    return res.status(500).json({ success: false, error: "Internal Server Error" });
+  }
+});
+
+const applySchema = z.object({
+  courseSlug: z.string().min(1),
+  batchId: z.string().uuid().optional(),
+  preferredSchedule: z.string().optional(),
+  enrollmentType: z.string().optional(),
+});
+
+router.post("/apply", async (req, res) => {
+  try {
+    await ensureBatchSchemaReady();
+    await ensureEnrollmentLifecycleSchema();
+    const body = applySchema.parse(req.body);
+    const email = (req.body.traineeEmail as string | undefined)?.trim().toLowerCase()
+      ?? req.authUser?.email?.trim().toLowerCase();
+    if (!email) {
+      return res.status(400).json({ success: false, error: "Email is required" });
+    }
+    if (!assertEmailAccess(req, email)) {
+      return res.status(403).json({ success: false, error: "Forbidden" });
+    }
+
+    const active = await getActiveEnrollmentByEmail(email);
+    if (active && statusBlocksNewApplication(String(active.status ?? ""))) {
+      return res.status(409).json({
+        success: false,
+        error: "You already have an active application. Cancel it or wait for staff to complete the cycle.",
+      });
+    }
+
+    const history = await getEnrollmentHistoryByEmail(email, 1);
+    const template = active ?? history[0];
+    if (!template) {
+      return res.status(400).json({
+        success: false,
+        error: "Complete your TESDA profile before applying to a course.",
+      });
+    }
+
+    if (active && !canStartNewApplication({
+      status: active.status,
+      tesdaNcSentAt: active.tesdaNcSentAt,
+      isActive: active.isActive,
+    })) {
+      return res.status(409).json({
+        success: false,
+        error: "Your current training cycle must be completed and TESDA NC marked as sent before a new application.",
+      });
+    }
+
+    if (active) {
+      await deactivateEnrollment(active.id);
+    }
+
+    const nextCycle = (history[0]?.cycleNumber ?? 0) + 1;
+    const [created] = await db
+      .insert(enrollments)
+      .values({
+        refNo: generateRefNo(),
+        userId: template.userId,
+        firstName: template.firstName,
+        middleName: template.middleName,
+        lastName: template.lastName,
+        extensionName: template.extensionName,
+        traineeName: template.traineeName,
+        dob: template.dob,
+        birthPlace: template.birthPlace,
+        age: template.age,
+        gender: template.gender,
+        civilStatus: template.civilStatus,
+        nationality: template.nationality,
+        email,
+        contact: template.contact,
+        telephone: template.telephone,
+        address: template.address,
+        barangay: template.barangay,
+        district: template.district,
+        city: template.city,
+        province: template.province,
+        region: template.region,
+        zipCode: template.zipCode,
+        education: template.education,
+        school: template.school,
+        yearGraduated: template.yearGraduated,
+        course: body.courseSlug,
+        schedule: body.preferredSchedule ?? template.schedule,
+        enrollType: body.enrollmentType ?? template.enrollType,
+        scholarship: template.scholarship,
+        employment: template.employment,
+        employmentType: template.employmentType,
+        companyName: template.companyName,
+        notes: template.notes,
+        consent: template.consent,
+        status: "Pending",
+        isActive: true,
+        cycleNumber: nextCycle,
+        previousEnrollmentId: template.id,
+        uli: template.uli,
+        voucherNo: template.voucherNo,
+        psaNo: template.psaNo,
+        learnerClassification: template.learnerClassification,
+        clientType: template.clientType,
+        qualificationType: template.qualificationType,
+        motherMaidenName: template.motherMaidenName,
+        fatherName: template.fatherName,
+        isIP: coerceIsIp(template.isIP),
+        indigenousGroup: template.indigenousGroup,
+        motherTongue: template.motherTongue,
+      })
+      .returning();
+
+    if (!created) {
+      return res.status(500).json({ success: false, error: "Could not create application" });
+    }
+
+    const assignResult = await assignBatchIfApplicable(
+      created.id,
+      body.courseSlug,
+      "pending",
+      "auto_assign",
+    );
+
+    const [fresh] = await db
+      .select()
+      .from(enrollments)
+      .where(eq(enrollments.id, created.id))
+      .limit(1);
+
+    return res.status(201).json({
+      success: true,
+      data: fresh,
+      batchAssignment: assignResult,
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ success: false, error: "Validation Error", details: error.errors });
+    }
+    logger.error({ err: error }, "POST /api/trainees/apply failed");
     return res.status(500).json({ success: false, error: "Internal Server Error" });
   }
 });
@@ -414,7 +548,7 @@ router.put("/profile", async (req, res) => {
       qualificationType: parsedData.qualificationType,
       motherMaidenName: parsedData.motherMaidenName,
       fatherName: parsedData.fatherName,
-      isIP: parsedData.isIP,
+      isIP: coerceIsIp(parsedData.isIP),
       indigenousGroup: parsedData.indigenousGroup,
       motherTongue: parsedData.motherTongue,
       consent: parsedData.consent,
@@ -429,10 +563,30 @@ router.put("/profile", async (req, res) => {
     logger.info({ email, status: filteredPayload.status }, "Attempting profile update");
     // #endregion
 
+    const active = await getActiveEnrollmentByEmail(normalizedEmail);
+    const targetId = active?.id;
+    if (!targetId) {
+      const [latest] = await db
+        .select()
+        .from(enrollments)
+        .where(eq(enrollments.email, normalizedEmail))
+        .orderBy(desc(enrollments.updatedAt))
+        .limit(1);
+      if (!latest) {
+        return res.status(404).json({ success: false, error: "Profile not found" });
+      }
+      const [updated] = await db
+        .update(enrollments)
+        .set(filteredPayload)
+        .where(eq(enrollments.id, latest.id))
+        .returning();
+      return res.json({ success: true, data: updated });
+    }
+
     const [updated] = await db
       .update(enrollments)
       .set(filteredPayload)
-      .where(eq(enrollments.email, normalizedEmail))
+      .where(eq(enrollments.id, targetId))
       .returning();
 
     if (!updated) {

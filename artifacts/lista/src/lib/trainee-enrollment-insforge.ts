@@ -299,17 +299,32 @@ export function insforgeEnrollmentRowToApiData(row: Record<string, unknown>): Re
     consent: r.consent === true || r.consent === "true" || r.consent === "t",
     batchId: r.batch_id ?? r.batchId,
     batchCode: r.batch_code ?? r.batchCode,
+    isActive: r.is_active !== false && r.is_active !== "false",
+    cycleNumber: r.cycle_number != null ? Number(r.cycle_number) : undefined,
+    previousEnrollmentId: str(r.previous_enrollment_id ?? r.previousEnrollmentId) || undefined,
+    tesdaNcSentAt: str(r.tesda_nc_sent_at ?? r.tesdaNcSentAt) || undefined,
+    placementType: str(r.placement_type ?? r.placementType) || undefined,
     documentStatus: "missing",
     createdAt: r.submitted_at ? str(r.submitted_at) : new Date().toISOString(),
     ...supplementalFieldsFromNotes(r.notes),
   };
 }
 
+export type TraineeProfileApiPayload = {
+  enrollment: Record<string, unknown>;
+  activeEnrollment?: Record<string, unknown> | null;
+  history?: Record<string, unknown>[];
+  canQuickApply?: boolean;
+};
+
 const ENROLLMENT_LOOKUP_MS = 10_000;
 
 type TraineeProfileResult = {
   success: boolean;
   data?: Record<string, unknown>;
+  activeEnrollment?: Record<string, unknown> | null;
+  history?: Record<string, unknown>[];
+  canQuickApply?: boolean;
   error?: string;
 };
 
@@ -317,7 +332,7 @@ const profileFetchInFlight = new Map<string, Promise<TraineeProfileResult>>();
 
 async function fetchTraineeEnrollmentViaApi(
   email: string,
-): Promise<{ success: boolean; data?: Record<string, unknown>; error?: string }> {
+): Promise<TraineeProfileResult> {
   const normalized = normalizeTraineeEmail(email);
   const headers = await authHeadersAsync();
   if (!("Authorization" in headers)) {
@@ -345,11 +360,26 @@ async function fetchTraineeEnrollmentViaApi(
       }
       return { success: false, error: message };
     }
-    const json = (await res.json()) as { success?: boolean; data?: Record<string, unknown>; error?: string };
+    const json = (await res.json()) as {
+      success?: boolean;
+      data?: Record<string, unknown>;
+      activeEnrollment?: Record<string, unknown> | null;
+      history?: Record<string, unknown>[];
+      canQuickApply?: boolean;
+      error?: string;
+    };
     if (!json.success || !json.data) {
       return { success: false, error: json.error || "Profile not found" };
     }
-    return { success: true, data: insforgeEnrollmentRowToApiData(json.data) };
+    return {
+      success: true,
+      data: insforgeEnrollmentRowToApiData(json.data),
+      activeEnrollment: json.activeEnrollment
+        ? insforgeEnrollmentRowToApiData(json.activeEnrollment)
+        : null,
+      history: (json.history ?? []).map((row) => insforgeEnrollmentRowToApiData(row)),
+      canQuickApply: json.canQuickApply,
+    };
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     const timedOut = msg.toLowerCase().includes("abort");
@@ -658,6 +688,37 @@ export async function fetchTraineeEnrollmentByEmail(
 
   profileFetchInFlight.set(normalized, promise);
   return promise;
+}
+
+export async function quickApplyTraineeCourse(
+  email: string,
+  courseSlug: string,
+): Promise<{ success: boolean; data?: Partial<Enrollment>; error?: string }> {
+  const headers = await authHeadersAsync();
+  if (!("Authorization" in headers)) {
+    return { success: false, error: "Sign in required" };
+  }
+  try {
+    const res = await fetch(apiUrl("/api/trainees/apply"), {
+      method: "POST",
+      headers: { ...headers, "Content-Type": "application/json" },
+      body: JSON.stringify({ traineeEmail: email, courseSlug }),
+    });
+    const json = (await res.json().catch(() => ({}))) as {
+      success?: boolean;
+      data?: Record<string, unknown>;
+      error?: string;
+    };
+    if (!res.ok || !json.success || !json.data) {
+      return { success: false, error: json.error || `HTTP ${res.status}` };
+    }
+    return {
+      success: true,
+      data: normalizeEnrollmentFromApi(insforgeEnrollmentRowToApiData(json.data)) ?? undefined,
+    };
+  } catch (err) {
+    return { success: false, error: formatEnrollmentSyncError(err) };
+  }
 }
 
 export async function registerTraineeFromForm(

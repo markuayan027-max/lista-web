@@ -89,7 +89,9 @@ export default function TraineeCertificatePage() {
                       <span>Recorded completed {ended}</span>
                     </div>
                     <p className="text-xs text-muted-foreground leading-relaxed">
-                      Official NC from TESDA: check your Gmail (TESDA).
+                      {cert.progressStage === "passed"
+                        ? "TESDA NC marked sent — check your Gmail for the official document from TESDA."
+                        : "Awaiting staff to mark TESDA NC sent. Official NC is emailed by TESDA, not downloaded here."}
                     </p>
                     <Button
                       type="button"

@@ -21,6 +21,9 @@ import {
   useCourses,
   useCourseBatches,
   useEnrollments,
+  useJoinEnrollmentBatch,
+  useMarkTesdaNcSent,
+  useTransferEnrollmentBatch,
   useUpdateEnrollmentStatus,
 } from "@/hooks/use-lista-data";
 import { TableSkeleton } from "@/components/skeletons";
@@ -46,6 +49,9 @@ export default function AdminEnrollmentsPage() {
   const { data: courseBatches = [] } = useCourseBatches();
   const updateStatus = useUpdateEnrollmentStatus();
   const bulkUpdate = useBulkUpdateEnrollmentStatus();
+  const markNcSent = useMarkTesdaNcSent();
+  const joinBatch = useJoinEnrollmentBatch();
+  const transferBatch = useTransferEnrollmentBatch();
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -79,6 +85,59 @@ export default function AdminEnrollmentsPage() {
     } catch (err) {
       toast({
         title: "Update failed",
+        description: err instanceof Error ? err.message : "Unknown error",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleMarkNcSent = async (id: string) => {
+    try {
+      await markNcSent.mutateAsync({ id });
+      toast({ title: "TESDA NC marked sent", description: "Cycle closed for quick re-apply." });
+    } catch (err) {
+      toast({
+        title: "Update failed",
+        description: err instanceof Error ? err.message : "Unknown error",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleJoinBatch = async (enrollment: Enrollment) => {
+    const batches = courseBatches.filter(
+      (b) => b.courseSlug === enrollment.courseSlug && b.status === "open" && b.seatsTaken < b.capacity,
+    );
+    if (batches.length === 0) {
+      toast({ title: "No open batch", variant: "destructive" });
+      return;
+    }
+    const batchId = window.prompt(
+      `Batch ID:\n${batches.map((b) => `${b.batchCode} → ${b.id}`).join("\n")}`,
+      batches[0]?.id,
+    );
+    if (!batchId?.trim()) return;
+    try {
+      await joinBatch.mutateAsync({ enrollmentId: enrollment.id, batchId: batchId.trim() });
+      toast({ title: "Joined batch" });
+    } catch (err) {
+      toast({
+        title: "Join failed",
+        description: err instanceof Error ? err.message : "Unknown error",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleTransferBatch = async (enrollment: Enrollment) => {
+    const batchId = window.prompt("Target batch ID:");
+    if (!batchId?.trim()) return;
+    try {
+      await transferBatch.mutateAsync({ enrollmentId: enrollment.id, batchId: batchId.trim() });
+      toast({ title: "Transferred" });
+    } catch (err) {
+      toast({
+        title: "Transfer failed",
         description: err instanceof Error ? err.message : "Unknown error",
         variant: "destructive",
       });
@@ -374,6 +433,31 @@ export default function AdminEnrollmentsPage() {
                                 >
                                   <X className="mr-2 h-4 w-4" /> Reject
                                 </DropdownMenuItem>
+                                {enrollmentStatusIs(enrollment.status, "completed") && !enrollment.tesdaNcSentAt && (
+                                  <DropdownMenuItem
+                                    className="cursor-pointer rounded-lg"
+                                    onClick={() => handleMarkNcSent(enrollment.id)}
+                                  >
+                                    <CheckCircle2 className="mr-2 h-4 w-4" /> Mark TESDA NC sent
+                                  </DropdownMenuItem>
+                                )}
+                                {(enrollmentStatusIs(enrollment.status, "waitlisted", "pending") ||
+                                  !enrollment.batchId) && (
+                                  <DropdownMenuItem
+                                    className="cursor-pointer rounded-lg"
+                                    onClick={() => handleJoinBatch(enrollment)}
+                                  >
+                                    <Users className="mr-2 h-4 w-4" /> Join batch
+                                  </DropdownMenuItem>
+                                )}
+                                {enrollment.batchId && (
+                                  <DropdownMenuItem
+                                    className="cursor-pointer rounded-lg"
+                                    onClick={() => handleTransferBatch(enrollment)}
+                                  >
+                                    <ChevronRight className="mr-2 h-4 w-4" /> Transfer batch
+                                  </DropdownMenuItem>
+                                )}
                               </DropdownMenuContent>
                             </DropdownMenu>
                           </div>

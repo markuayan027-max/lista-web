@@ -1,12 +1,12 @@
 # LISTA Project — Workflow State
 
-**Last Updated:** 2026-05-20 (deploy optimization: incremental image build cache)
+**Last Updated:** 2026-05-21 (production lista.dpdns.org ↔ lista-web Worker)
 
 > Read this before starting. Update when you finish or hand off.
 
 ---
 
-**Current Phase:** Pre-launch hardening (E2E + live smoke)
+**Current Phase:** Pre-launch hardening (production smoke + deploy verify)
 
 ---
 
@@ -37,15 +37,18 @@
 - **Admin live login** — **verified** 2026-05-20 via `node artifacts/lista/scripts/admin-live-smoke.mjs` (env vars only; no secrets in repo).
 - **Admin E2E meta** — live login ✅ all tabs; enrollments empty → **`GET /api/enrollments`** added (restart `pnpm dev` to verify A2).
 - **Phase 4 manual remainder:** email signup OTP (row 1), second-browser cloud profile (row 10).
+- **Production smoke (2026-05-21):** `lista.dpdns.org` → Cloudflare `lista-web` for courses/chat/enrollments; Vercel `/api/*` still 500 (legacy). Commits `17fb88d` (Worker URL build) + `a8f15ed` (staff/admin block `/trainee/register`, profile `apiUrl()`). **Redeploy Vercel** from latest `main` to pick up `a8f15ed`.
+- **Feature inventory:** `artifacts/lista/docs/FEATURE-INVENTORY-ALL-ROLES.md` — full public + Admin/Staff/Trainee route/feature list for drafting 20 live test scenarios.
+- **50-scenario + lifecycle plan (2026-05-21):** `SMOKE-50-SCENARIOS.md`, `PRODUCTION-MAINTENANCE.md`, `.github/workflows/lista-ci.yml`, baseline `docs/deploy-baselines/2026-05-21-prod-baseline.md`, SQL `sql/008-multi-enrollment-lifecycle.sql`, API lifecycle routes, trainee Quick Apply + staff/admin NC/join/transfer UI.
 
 ---
 
 ## Next (pre-launch)
 
+- Apply `008-multi-enrollment-lifecycle.sql` on InsForge **branch** then prod; deploy Worker + Vercel; run Phase B smoke IDs from `SMOKE-50-SCENARIOS.md`
 - Execute checklist T1–T10 with real InsForge credentials
 - Multi-account E2E spec (draft isolation A → B)
 - Print/PDF E2E spec (TESDA form regression)
-- One enrollment per email (schema/product)
 - Optional: `admin/export.tsx` secondary blue accents
 - **Done (2026-05-20):** Public marketing responsive UX — navbar/footer, admissions/scholarships heroes, course-detail mobile enroll bar, about carousels/stats, assessment/news/legal pages. Meta-prompt: `artifacts/lista/docs/PUBLIC-HOMEPAGE-RESPONSIVE-UX-META-PROMPT.md`
 
@@ -66,3 +69,4 @@
 | 2026-05-20 | Deploy optimization | `optimize-public-images.mjs` now skips unchanged files using manifest fingerprint/build-time checks for faster Vercel builds |
 | 2026-05-20 | API separation guard | Added `VITE_LISTA_API_BASE_URL` frontend API override + runbook hard boundary to keep LISTA off shared `astral-api` infra |
 | 2026-05-20 | Cloudflare `lista-web` | `artifacts/api-server/wrangler.toml` + `src/worker.ts` (Express + `httpServerHandler`); `pnpm cf:deploy`; runbook Workers Builds table (repo root + pnpm filter) |
+| 2026-05-21 | Prod connect + smoke | `VITE_LISTA_API_BASE_URL` in `vercel.json`; CORS on Worker; live Admin/Staff/Trainee login OK; trainee registration partial save during browser E2E; browser session cleared to `/login` |

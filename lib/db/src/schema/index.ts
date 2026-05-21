@@ -78,6 +78,13 @@ export const enrollments = pgTable("lms_enrollments_legacy", {
   consent: boolean("consent").notNull().default(false),
   batchId: uuid("batch_id"),
   batchCode: text("batch_code"),
+  isActive: boolean("is_active").notNull().default(true),
+  cycleNumber: integer("cycle_number").notNull().default(1),
+  previousEnrollmentId: uuid("previous_enrollment_id"),
+  tesdaNcSentAt: timestamp("tesda_nc_sent_at"),
+  tesdaNcSentBy: uuid("tesda_nc_sent_by"),
+  tesdaNcNote: text("tesda_nc_note"),
+  placementType: text("placement_type"),
   submittedAt: timestamp("submitted_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, (table) => {
@@ -86,6 +93,7 @@ export const enrollments = pgTable("lms_enrollments_legacy", {
     userIdIdx: index("enrollment_user_id_idx").on(table.userId),
     statusIdx: index("enrollment_status_idx").on(table.status),
     batchIdIdx: index("enrollment_batch_id_idx").on(table.batchId),
+    emailActiveIdx: index("enrollment_email_active_idx").on(table.email, table.isActive),
   }
 });
 

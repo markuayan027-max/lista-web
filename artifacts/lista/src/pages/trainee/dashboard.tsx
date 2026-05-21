@@ -26,8 +26,10 @@ import {
   useTraineeDerivedCertificates,
   useSchedules,
   useTraineeProfile,
+  useTraineeProfileBundle,
   listaKeys,
 } from "@/hooks/use-lista-data";
+import QuickApplyModal from "@/components/trainee/quick-apply-modal";
 import { useQueryClient } from "@tanstack/react-query";
 import { courseTitleBySlug } from "@/lib/lista-insforge-data";
 import type { Enrollment } from "@/lib/institutional-data";
@@ -68,8 +70,10 @@ export default function TraineeDashboardPage() {
   const { data: announcements = [] } = useAnnouncements();
   const { data: certificates = [] } = useTraineeDerivedCertificates(user?.email);
   const { data: profileRow } = useTraineeProfile(user?.email);
+  const { data: profileBundle } = useTraineeProfileBundle(user?.email);
   const [printTarget, setPrintTarget] = useState<any>(null);
   const [isCancelling, setIsCancelling] = useState(false);
+  const [quickApplyOpen, setQuickApplyOpen] = useState(false);
 
   const userEnrollment = (profileRow as Enrollment | null) ?? null;
 
@@ -126,6 +130,11 @@ export default function TraineeDashboardPage() {
 
   return (
     <div className="space-y-8">
+      <QuickApplyModal
+        open={quickApplyOpen}
+        onOpenChange={setQuickApplyOpen}
+        profile={profileRow}
+      />
       {/* Print modal */}
       <AnimatePresence>
         {printTarget && (
@@ -290,13 +299,28 @@ export default function TraineeDashboardPage() {
                     const statusLower = userEnrollment?.status?.toLowerCase() || '';
 
                     if (!activeApplication) {
-                      if (statusLower === "ready_to_apply") {
+                      if (statusLower === "ready_to_apply" || profileBundle?.canQuickApply) {
                         return (
                           <div className="w-full flex flex-col items-center gap-4 py-4 bg-primary-indigo/10 rounded-xl border border-primary-indigo/20">
-                            <div className="text-primary-indigo font-bold text-sm">Profile Complete! You are ready to apply.</div>
-                            <Button size="sm" asChild className="bg-primary-indigo hover:bg-primary-indigo/90 text-primary-foreground">
-                              <Link href="/trainee/application">Select a Course Now</Link>
-                            </Button>
+                            <div className="text-primary-indigo font-bold text-sm">
+                              {profileBundle?.canQuickApply
+                                ? "You may start a new course application."
+                                : "Profile complete — you are ready to apply."}
+                            </div>
+                            <div className="flex flex-wrap gap-2 justify-center">
+                              {profileBundle?.canQuickApply ? (
+                                <Button
+                                  size="sm"
+                                  className="bg-primary-indigo hover:bg-primary-indigo/90 text-primary-foreground"
+                                  onClick={() => setQuickApplyOpen(true)}
+                                >
+                                  Quick apply
+                                </Button>
+                              ) : null}
+                              <Button size="sm" variant="outline" asChild>
+                                <Link href="/trainee/application">Browse courses</Link>
+                              </Button>
+                            </div>
                           </div>
                         );
                       }

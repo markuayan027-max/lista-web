@@ -94,11 +94,11 @@ router.get("/announcements", async (req, res) => {
     const data = await db.select().from(announcements);
     announcementsCache = { data, cachedAt: Date.now() };
     res.setHeader("X-Lista-Cache", "MISS");
-    res.json(data);
+    return res.json(data);
   } catch (err) {
     logger.warn({ err }, "Database query failed for /announcements, using empty array");
     announcementsCache = { data: [], cachedAt: Date.now() };
-    res.json([]);
+    return res.json([]);
   }
 });
 

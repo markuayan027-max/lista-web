@@ -2,14 +2,18 @@
 
 Production: **https://lista.dpdns.org** · Vercel project **`lista-frontend`** · repo **`markuayan027-max/lista-web`** · branch **`main`**.
 
-## Deploy in three steps
+## Deploy (default) — one commit URL
 
-1. **Push** your fix to `main` on GitHub.
-2. **Copy the commit URL** (one link), e.g.  
+**Agents:** hand off **only** this paste target (see `.cursor/rules/lista-vercel-deploy-url.mdc`).
+
+1. **Push** to `main` on GitHub (`markuayan027-max/lista-web`).
+2. **Copy the commit URL** (full SHA):
+
    `https://github.com/markuayan027-max/lista-web/commit/<full-sha>`
-3. In Vercel → **lista-frontend** → **Deployments** → **Create Deployment** → paste that **commit URL** → deploy → when **Ready**, promote to **Production** if needed.
 
-You do not need branch names or manual CLI deploys for the normal path; the commit URL is enough for Vercel to build the exact revision.
+3. Vercel → **lista-frontend** → **Deployments** → **Create Deployment** → **Branch, Commit, or URL** → paste that URL → deploy → **Production** when Ready.
+
+No branch name, short SHA, or CLI deploy needed for the normal path.
 
 ## After deploy — smoke (must pass before trusting live data)
 

@@ -13,16 +13,18 @@ function chatLimitMessage(retryAfterSec?: number) {
   };
 }
 
-function baseOptions(overrides: Partial<Options>): Options {
+function baseOptions(overrides: { windowMs: number; max: number; message?: Options["message"] }): Options {
   return {
     standardHeaders: true,
     legacyHeaders: false,
-    handler: (req, res, _next, options) => {
+    windowMs: overrides.windowMs,
+    max: overrides.max,
+    message: overrides.message,
+    handler: (_req, res, _next, options) => {
       const retryAfter = Math.ceil(options.windowMs / 1000);
       res.status(429).json(chatLimitMessage(retryAfter));
     },
-    ...overrides,
-  };
+  } as Options;
 }
 
 /** Short burst window — stops rapid spam / bot floods */

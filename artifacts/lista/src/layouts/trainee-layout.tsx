@@ -1,10 +1,9 @@
-import { useState } from "react";
 import { useAuth } from "@/context/auth-context";
 import { useLocation, Redirect } from "wouter";
 import { ModernSidebar } from "@/components/modern-sidebar";
 import BottomNavTrainee from "@/components/bottom-nav-trainee";
 import AvatarInitials from "@/components/avatar-initials";
-import { LogOut, Bell, Menu } from "lucide-react";
+import { LogOut, Bell } from "lucide-react";
 import {
   traineeModernSidebarMenu,
   traineePreferencesNavItems,
@@ -19,7 +18,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 const traineeSidebarProps = {
   menuItems: traineeModernSidebarMenu(),
@@ -33,7 +31,6 @@ const traineeSidebarProps = {
 export default function TraineeLayout({ children }: { children: React.ReactNode }) {
   const { user, logout, isRegistered } = useAuth();
   const [location, setLocation] = useLocation();
-  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   if (user?.role === "trainee" && !isRegistered && location !== "/trainee/register") {
     return <Redirect to="/trainee/register" />;
@@ -55,23 +52,7 @@ export default function TraineeLayout({ children }: { children: React.ReactNode 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <header className="h-16 bg-card border-b border-card-border flex items-center justify-between px-4 md:px-8 shrink-0">
           <div className="flex items-center gap-4">
-            <div className="md:hidden">
-              <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
-                <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-10 w-10" aria-label="Open menu">
-                    <Menu className="h-5 w-5" />
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="left" className="p-0 w-[min(100vw,280px)] border-0">
-                  <ModernSidebar
-                    {...traineeSidebarProps}
-                    variant="drawer"
-                    onNavigate={() => setMobileNavOpen(false)}
-                  />
-                </SheetContent>
-              </Sheet>
-            </div>
-            <h1 className="text-lg font-bold tracking-tight hidden md:block">Trainee Portal</h1>
+            <h1 className="text-lg font-bold tracking-tight">Trainee Portal</h1>
           </div>
 
           <div className="flex items-center gap-3">

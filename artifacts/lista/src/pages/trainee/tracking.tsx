@@ -16,7 +16,9 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
-import { useCourses, useTraineeProfile, listaKeys } from "@/hooks/use-lista-data";
+import { useCourses, useTraineeProfile, useTraineeProfileBundle, listaKeys } from "@/hooks/use-lista-data";
+import StatusBadge from "@/components/status-badge";
+import { enrollmentStatusIs } from "@/lib/enrollment-status";
 import { useQueryClient } from "@tanstack/react-query";
 import { courseTitleBySlug } from "@/lib/lista-insforge-data";
 import type { Enrollment } from "@/lib/institutional-data";
@@ -138,6 +140,7 @@ export default function TraineeTrackingPage() {
   const queryClient = useQueryClient();
   const { data: courses = [] } = useCourses();
   const profileQuery = useTraineeProfile(user?.email);
+  const { data: profileBundle } = useTraineeProfileBundle(user?.email);
   const userEnrollment = (profileQuery.data as Enrollment | null) ?? null;
   const loadState = profileQuery.isLoading ? "loading" : "idle";
   const fetchError =
@@ -158,6 +161,16 @@ export default function TraineeTrackingPage() {
 
   const enrollment =
     userEnrollment && hasSubmittedCourseApplication(userEnrollment) ? userEnrollment : null;
+
+  const pastApplications = useMemo(() => {
+    const history = profileBundle?.history ?? [];
+    return history.filter(
+      (row) =>
+        row.id !== enrollment?.id &&
+        hasSubmittedCourseApplication(row) &&
+        !enrollmentStatusIs(row.status, "ready_to_apply"),
+    );
+  }, [profileBundle?.history, enrollment?.id]);
 
   const profileOnly = Boolean(userEnrollment && !enrollment);
 
@@ -274,6 +287,42 @@ export default function TraineeTrackingPage() {
           Refresh
         </Button>
       </header>
+
+      {pastApplications.length > 0 && (
+        <Card className="border-card-border">
+          <CardContent className="p-5 space-y-4">
+            <div>
+              <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
+                Past applications
+              </h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                Earlier enrollment cycles. Your current application is shown below when active.
+              </p>
+            </div>
+            <ul className="space-y-3">
+              {pastApplications.map((past) => (
+                <li
+                  key={past.id}
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-xl border border-border bg-muted/30 px-4 py-3"
+                >
+                  <div className="min-w-0">
+                    <p className="font-semibold text-sm truncate">
+                      {courseTitleBySlug(courses, past.courseSlug) || past.courseSlug}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {past.refNo} · {formatSubmittedDate(past.createdAt)}
+                    </p>
+                  </div>
+                  <StatusBadge status={past.status as Enrollment["status"]} />
+                </li>
+              ))}
+            </ul>
+            <Button variant="outline" size="sm" className="rounded-xl" asChild>
+              <Link href="/trainee/certificate">View completion history</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {view === "loading" && <TrackingSkeleton />}
 

@@ -40,7 +40,15 @@ import { useToast } from "@/hooks/use-toast";
 import type { Enrollment } from "@/lib/institutional-data";
 import PrintModal from "@/components/print-modal";
 import StatusBadge from "@/components/status-badge";
-import { useCourses, useEnrollments, useUpdateEnrollmentStatus } from "@/hooks/use-lista-data";
+import {
+  useCourseBatches,
+  useCourses,
+  useEnrollments,
+  useJoinEnrollmentBatch,
+  useMarkTesdaNcSent,
+  useTransferEnrollmentBatch,
+  useUpdateEnrollmentStatus,
+} from "@/hooks/use-lista-data";
 import { format } from "date-fns";
 import { enrollmentStatusIs } from "@/lib/enrollment-status";
 
@@ -48,7 +56,11 @@ export default function StaffEnrollmentsPage() {
   const { toast } = useToast();
   const { data: enrollments = [], isLoading } = useEnrollments();
   const { data: courses = [] } = useCourses();
+  const { data: courseBatches = [] } = useCourseBatches();
   const updateStatus = useUpdateEnrollmentStatus();
+  const markNcSent = useMarkTesdaNcSent();
+  const joinBatch = useJoinEnrollmentBatch();
+  const transferBatch = useTransferEnrollmentBatch();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [courseFilter, setCourseFilter] = useState("all");
@@ -66,6 +78,63 @@ export default function StaffEnrollmentsPage() {
     const matchesCourse = courseFilter === "all" || e.courseSlug === courseFilter;
     return matchesSearch && matchesStatus && matchesCourse;
   });
+
+  const handleMarkNcSent = async (id: string) => {
+    try {
+      await markNcSent.mutateAsync({ id });
+      toast({
+        title: "TESDA NC marked sent",
+        description: "Trainee can start a new application after this cycle closes.",
+      });
+    } catch (err) {
+      toast({
+        title: "Update failed",
+        description: err instanceof Error ? err.message : "Unknown error",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleJoinBatch = async (enrollment: Enrollment) => {
+    const slug = enrollment.courseSlug;
+    const batches = courseBatches.filter(
+      (b) => b.courseSlug === slug && b.status === "open" && b.seatsTaken < b.capacity,
+    );
+    if (batches.length === 0) {
+      toast({ title: "No open batch", description: "Create or open a batch first.", variant: "destructive" });
+      return;
+    }
+    const batchId = window.prompt(
+      `Enter batch ID to join:\n${batches.map((b) => `${b.batchCode} → ${b.id}`).join("\n")}`,
+      batches[0]?.id,
+    );
+    if (!batchId?.trim()) return;
+    try {
+      await joinBatch.mutateAsync({ enrollmentId: enrollment.id, batchId: batchId.trim() });
+      toast({ title: "Joined batch", description: "Trainee assigned to batch." });
+    } catch (err) {
+      toast({
+        title: "Join failed",
+        description: err instanceof Error ? err.message : "Unknown error",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleTransferBatch = async (enrollment: Enrollment) => {
+    const batchId = window.prompt("Enter target batch ID for transfer:");
+    if (!batchId?.trim()) return;
+    try {
+      await transferBatch.mutateAsync({ enrollmentId: enrollment.id, batchId: batchId.trim() });
+      toast({ title: "Transferred", description: "Batch updated for this enrollment." });
+    } catch (err) {
+      toast({
+        title: "Transfer failed",
+        description: err instanceof Error ? err.message : "Unknown error",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleAction = async (id: string, action: 'confirmed' | 'rejected') => {
     try {
@@ -315,6 +384,34 @@ export default function StaffEnrollmentsPage() {
                     </Button>
                   </div>
                 )}
+
+                <div className="pt-4 border-t border-card-border flex flex-col gap-2">
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Lifecycle</p>
+                  {(selectedEnrollment.status === "waitlisted" || !selectedEnrollment.batchId) && (
+                    <Button variant="outline" size="sm" onClick={() => handleJoinBatch(selectedEnrollment)}>
+                      Join open batch
+                    </Button>
+                  )}
+                  {selectedEnrollment.batchId && (
+                    <Button variant="outline" size="sm" onClick={() => handleTransferBatch(selectedEnrollment)}>
+                      Transfer batch
+                    </Button>
+                  )}
+                  {selectedEnrollment.status === "completed" && !selectedEnrollment.tesdaNcSentAt && (
+                    <Button
+                      size="sm"
+                      className="bg-primary-indigo hover:bg-primary-indigo/90 text-primary-foreground"
+                      onClick={() => handleMarkNcSent(selectedEnrollment.id)}
+                    >
+                      Mark TESDA NC sent
+                    </Button>
+                  )}
+                  {selectedEnrollment.tesdaNcSentAt && (
+                    <p className="text-xs text-muted-foreground">
+                      TESDA NC marked sent {format(new Date(selectedEnrollment.tesdaNcSentAt), "MMM d, yyyy")}
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
           )}

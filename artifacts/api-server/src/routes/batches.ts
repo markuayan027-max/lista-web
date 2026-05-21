@@ -67,6 +67,8 @@ async function ensureEnrollmentBatchColumns() {
 export async function ensureBatchSchemaReady() {
   await ensureCourseBatchesTable();
   await ensureEnrollmentBatchColumns();
+  const { ensureEnrollmentLifecycleSchema } = await import("../lib/enrollment-lifecycle.js");
+  await ensureEnrollmentLifecycleSchema();
 }
 
 router.get("/", async (req, res) => {
