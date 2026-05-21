@@ -9,7 +9,7 @@ import PrimaryButton from "@/components/primary-button";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { safeRedirectPath } from "@/lib/enroll-entry";
-import { getRoleHomePath } from "@/lib/role-navigation";
+import { resolvePostLoginPath } from "@/lib/role-navigation";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, Loader2 } from "lucide-react";
 
@@ -45,8 +45,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!user) return;
-    const destination = postLoginPath ?? getRoleHomePath(user.role);
-    setLocation(destination);
+    setLocation(resolvePostLoginPath(user.role, postLoginPath));
   }, [user, setLocation, postLoginPath]);
 
   const handleSubmit = async (e: React.FormEvent) => {

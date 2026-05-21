@@ -47,3 +47,18 @@ export function getRoleHomePath(role: User["role"]): string {
   if (role === "staff") return "/staff";
   return "/trainee";
 }
+
+/** After login: staff/admin must not land on trainee-only redirect targets. */
+export function resolvePostLoginPath(
+  role: User["role"],
+  redirect: string | null | undefined,
+): string {
+  const safe = redirect?.startsWith("/") && !redirect.startsWith("//") ? redirect : null;
+  if (role === "admin" || role === "staff") {
+    if (!safe || safe.startsWith("/trainee")) return getRoleHomePath(role);
+    if (role === "admin" && !safe.startsWith("/admin")) return "/admin";
+    if (role === "staff" && !safe.startsWith("/staff")) return "/staff";
+    return safe;
+  }
+  return safe ?? getRoleHomePath(role);
+}

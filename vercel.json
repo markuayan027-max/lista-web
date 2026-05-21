@@ -1,11 +1,11 @@
 {
   "name": "lista-frontend",
   "installCommand": "pnpm install",
-  "buildCommand": "pnpm --filter @workspace/lista run build",
+  "buildCommand": "pnpm --filter @workspace/api-server run build && pnpm --filter @workspace/lista run build",
   "outputDirectory": "artifacts/lista/dist/public",
   "framework": null,
   "functions": {
-    "api/index.ts": {
+    "api/index.js": {
       "maxDuration": 60,
       "memory": 1024
     }

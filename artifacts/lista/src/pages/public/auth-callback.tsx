@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/context/auth-context";
-import { getRoleHomePath } from "@/lib/role-navigation";
+import { resolvePostLoginPath } from "@/lib/role-navigation";
 import { safeRedirectPath } from "@/lib/enroll-entry";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -31,7 +31,7 @@ export default function AuthCallbackPage() {
 
   useEffect(() => {
     if (!user) return;
-    setLocation(postLoginPath ?? getRoleHomePath(user.role));
+    setLocation(resolvePostLoginPath(user.role, postLoginPath));
   }, [user, setLocation, postLoginPath]);
 
   if (error) {
