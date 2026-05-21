@@ -92,6 +92,8 @@ graphify-out/
 .kilocode/
 .cursor/
 .github/
+!.github/workflows/
+!.github/workflows/**
 .vercel
 
 pnpm-lock.yaml
