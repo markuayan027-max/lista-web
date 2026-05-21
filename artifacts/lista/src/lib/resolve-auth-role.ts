@@ -33,7 +33,7 @@ export function roleFromInsForgeUser(insUser: Record<string, unknown>): UserRole
   return "trainee";
 }
 
-/** Role: LISTA API public.users → InsForge metadata → trainee. */
+/** Role: LISTA API public.users → InsForge session metadata → trainee. */
 export async function resolveUserRole(
   email: string,
   insUser: Record<string, unknown>,
@@ -51,8 +51,10 @@ export async function resolveUserRole(
         if (apiRole === "trainee") return "trainee";
       }
     } catch {
-      // api-server down — fall through
+      // api-server unreachable — fall through
     }
   }
-  return roleFromInsForgeUser(insUser);
+  const fromSession = roleFromInsForgeUser(insUser);
+  if (fromSession === "admin" || fromSession === "staff") return fromSession;
+  return "trainee";
 }

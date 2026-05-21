@@ -12,7 +12,6 @@ test-results
 **/coverage
 **/*.log
 .vercel
-api
 **/graphify-out
 attached_assets
 promotional_materials

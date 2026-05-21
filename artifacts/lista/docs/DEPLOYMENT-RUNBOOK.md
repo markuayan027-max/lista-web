@@ -4,9 +4,9 @@ Use this as the single source of truth for smooth deployments.
 
 ## Target architecture
 
-- Frontend: Vercel project `lista-frontend` from `main`
-- API (target): dedicated LISTA Worker/domain (for example `lista-api` on `api-lista.dpdns.org`)
-- Current fallback rewrite: `/api/*` -> `https://api.lista.dpdns.org/api/*` (migrate to LISTA-only host when available)
+- Frontend + API: Vercel project `lista-frontend` from `main` — static SPA + **`api/index.ts`** serverless (same origin `lista.dpdns.org/api/*`)
+- Optional later: Cloudflare Worker `lista-web` on a dedicated API hostname (`VITE_LISTA_API_BASE_URL`)
+- Do **not** rely on `https://api.lista.dpdns.org` until that host serves LISTA Express (`/api/healthz` → `{"status":"ok"}`), not InsForge platform JSON
 
 ## Hard safety boundary
 
@@ -122,8 +122,9 @@ pnpm exec wrangler deploy --dry-run
 - Root `vercel.json`:
   - `buildCommand`: `pnpm --filter @workspace/lista run build`
   - `outputDirectory`: `artifacts/lista/dist/public`
-  - rewrite `/api/(.*)` -> `https://api.lista.dpdns.org/api/$1`
-- `.vercelignore` includes `api` to prevent backend compile on Vercel
+  - `functions`: `api/index.ts` (Express `@workspace/api-server`)
+  - rewrite `/api/(.*)` -> `/api` (same-origin serverless, not external host)
+- `.vercelignore` must **not** ignore root `api/` (required for Vercel Functions)
 - Image optimizer supports incremental skip for unchanged images (faster builds)
 - Frontend supports `VITE_LISTA_API_BASE_URL` for dedicated LISTA API separation
 

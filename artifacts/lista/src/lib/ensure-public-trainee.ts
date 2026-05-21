@@ -1,4 +1,5 @@
 import { authHeadersAsync, ensureAccessToken } from "@/lib/auth-token";
+import { apiUrl } from "@/lib/api-url";
 
 export type EnsurePublicTraineeResult = {
   success: boolean;
@@ -20,7 +21,7 @@ async function ensurePublicTraineeUserOnce(input: {
   }
 
   try {
-    const res = await fetch("/api/users/ensure-trainee", {
+    const res = await fetch(apiUrl("/api/users/ensure-trainee"), {
       method: "POST",
       headers: { "Content-Type": "application/json", ...headers },
       body: JSON.stringify({
