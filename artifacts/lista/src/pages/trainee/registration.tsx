@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useLocation } from "wouter";
+import { Redirect, useLocation } from "wouter";
 import { useAuth } from "@/context/auth-context";
+import { getRoleHomePath, skipsTraineeApplication } from "@/lib/role-navigation";
 import { cn } from "@/lib/utils";
 import { 
   User, 
@@ -592,6 +593,10 @@ export default function TraineeRegistrationPage() {
         </div>
       </div>
     );
+  }
+
+  if (user && skipsTraineeApplication(user)) {
+    return <Redirect to={getRoleHomePath(user.role)} />;
   }
 
   return (

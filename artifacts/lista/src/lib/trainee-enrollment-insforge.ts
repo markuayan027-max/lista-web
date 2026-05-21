@@ -328,7 +328,7 @@ async function fetchTraineeEnrollmentViaApi(
   const timer = setTimeout(() => controller.abort(), ENROLLMENT_LOOKUP_MS);
   try {
     const res = await fetch(
-      `/api/trainees/profile?email=${encodeURIComponent(normalized)}`,
+      apiUrl(`/api/trainees/profile?email=${encodeURIComponent(normalized)}`),
       { headers: { ...headers }, signal: controller.signal },
     );
     if (res.status === 404) {
@@ -846,7 +846,7 @@ export async function updateTraineeEnrollmentByEmail(
       normalizedForm.status = (s.charAt(0).toUpperCase() + s.slice(1)) as any;
     }
 
-    const response = await fetch(`/api/trainees/profile?email=${encodeURIComponent(normalized)}`, {
+    const response = await fetch(apiUrl(`/api/trainees/profile?email=${encodeURIComponent(normalized)}`), {
       method: "PUT",
       headers: { "Content-Type": "application/json", ...(await authHeadersAsync()) },
       body: JSON.stringify(normalizedForm),
