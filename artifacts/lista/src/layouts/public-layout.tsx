@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { Redirect } from "wouter";
 import Navbar from "@/components/navbar";
 import PublicFooter from "@/components/public-footer";
-import HomepageChat from "@/components/homepage-chat";
+import HomepageChatDeferred from "@/components/homepage-chat-deferred";
 import { useCourses } from "@/hooks/use-lista-data";
 import { useAuth } from "@/context/auth-context";
 import { getRoleHomePath } from "@/lib/role-navigation";
@@ -30,7 +30,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
         {children}
       </main>
       <PublicFooter />
-      <HomepageChat programCount={programCount} />
+      <HomepageChatDeferred programCount={programCount} />
     </div>
   );
 }

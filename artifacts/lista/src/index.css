@@ -239,6 +239,101 @@
       transform: translateY(0);
     }
   }
+
+  /* Homepage reveals — CSS replacement for framer-motion on / (same motion feel, no JS lib) */
+  .lista-reveal {
+    opacity: 0;
+  }
+
+  .lista-reveal--active {
+    animation-duration: 0.5s;
+    animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+    animation-fill-mode: both;
+  }
+
+  .lista-reveal--bottom.lista-reveal--active {
+    animation-name: lista-reveal-y;
+  }
+
+  .lista-reveal--left.lista-reveal--active {
+    animation-name: lista-reveal-x-left;
+  }
+
+  .lista-reveal--right.lista-reveal--active {
+    animation-name: lista-reveal-x-right;
+  }
+
+  .lista-reveal--scale.lista-reveal--active {
+    animation-name: lista-reveal-scale;
+    animation-duration: 0.6s;
+  }
+
+  @keyframes lista-reveal-y {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes lista-reveal-x-left {
+    from {
+      opacity: 0;
+      transform: translateX(-30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes lista-reveal-x-right {
+    from {
+      opacity: 0;
+      transform: translateX(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes lista-reveal-scale {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  .lista-stagger__item {
+    opacity: 0;
+  }
+
+  .lista-stagger--active .lista-stagger__item {
+    animation: lista-reveal-y 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: calc(var(--lista-stagger-i, 0) * var(--lista-stagger-step, 100ms));
+  }
+
+  .lista-trust-marquee {
+    animation: lista-trust-marquee 20s linear infinite;
+    will-change: transform;
+  }
+
+  @keyframes lista-trust-marquee {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
 }
 
 /* Official application form preview (screen) */

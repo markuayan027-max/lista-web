@@ -1,4 +1,4 @@
-import type { LucideIcon } from "lucide-react";
+import type { LucideIcon } from "@/lib/lucide-types";
 import { Bell, Calendar, LayoutDashboard, Search, Users } from "lucide-react";
 
 export type StaffNavPlacement = "sidebar" | "account";

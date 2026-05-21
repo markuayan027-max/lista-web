@@ -13,7 +13,7 @@ import {
   mapCourseToHeroItem,
   type HeroCourseItem,
 } from "@/lib/public-data-utils";
-import { motion, AnimatePresence } from "framer-motion";
+import { Reveal, RevealStagger, RevealStaggerItem } from "@/components/lista-reveal";
 import { cn } from "@/lib/utils";
 import { resolveCourseCoverImage } from "@/lib/course-images";
 import OptimizedImage from "@/components/optimized-image";
@@ -33,10 +33,9 @@ function CourseListing({ course }: { course: ListingCourse }) {
 
   return (
     <Link href={`/courses/${course.slug}`}>
-      <motion.div
-        whileHover={{ y: -2 }}
+      <div
         className={cn(
-          "group relative bg-white border border-border rounded-xl overflow-hidden transition-all duration-200 h-full cursor-pointer hover:border-slate-300 hover:shadow-md",
+          "group relative bg-white border border-border rounded-xl overflow-hidden transition-all duration-200 h-full cursor-pointer hover:border-slate-300 hover:shadow-md hover:-translate-y-0.5",
         )}
       >
         {course.isFrozen && (
@@ -112,7 +111,7 @@ function CourseListing({ course }: { course: ListingCourse }) {
             )}
           </div>
         </div>
-      </motion.div>
+      </div>
     </Link>
   );
 }
@@ -164,7 +163,7 @@ export default function CoursesPage() {
 
   if (coursesError) {
     return (
-      <motion.div className="max-w-lg mx-auto py-24 px-6 text-center space-y-4">
+      <Reveal className="max-w-lg mx-auto py-24 px-6 text-center space-y-4">
         <AlertCircle className="h-12 w-12 text-destructive mx-auto" aria-hidden />
         <h2 className="text-xl font-bold text-foreground">Could not load programs</h2>
         <p className="text-sm text-muted-foreground">
@@ -175,7 +174,7 @@ export default function CoursesPage() {
           <RefreshCw className="h-4 w-4" />
           Retry
         </Button>
-      </motion.div>
+      </Reveal>
     );
   }
 
@@ -281,43 +280,33 @@ export default function CoursesPage() {
                     </div>
                   </div>
 
-                  <AnimatePresence>
-                    <motion.div
-                      layout
-                      className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"
-                    >
-                      {sectorCourses.map((course, i) => (
-                        <motion.div
-                          key={course.id}
-                          initial={{ opacity: 0, y: 12 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: i * 0.06 }}
-                        >
-                          <CourseListing course={course} />
-                        </motion.div>
-                      ))}
-                    </motion.div>
-                  </AnimatePresence>
+                  <RevealStagger
+                    inView
+                    staggerMs={60}
+                    className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"
+                  >
+                    {sectorCourses.map((course, i) => (
+                      <RevealStaggerItem key={course.id} index={i}>
+                        <CourseListing course={course} />
+                      </RevealStaggerItem>
+                    ))}
+                  </RevealStagger>
                 </div>
               ))}
             </div>
           ) : filteredCourses.length > 0 ? (
-            <AnimatePresence>
-              <motion.div layout className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-                {filteredCourses.map((course, i) => (
-                  <motion.div
-                    key={course.id}
-                    layout
-                    initial={{ opacity: 0, scale: 0.97 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.97 }}
-                    transition={{ delay: i * 0.04 }}
-                  >
-                    <CourseListing course={course} />
-                  </motion.div>
-                ))}
-              </motion.div>
-            </AnimatePresence>
+            <RevealStagger
+              key={`${selectedCategory}-${searchQuery}`}
+              inView={false}
+              staggerMs={40}
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"
+            >
+              {filteredCourses.map((course, i) => (
+                <RevealStaggerItem key={course.id} index={i}>
+                  <CourseListing course={course} />
+                </RevealStaggerItem>
+              ))}
+            </RevealStagger>
           ) : (
             <div className="text-center py-20 border border-border rounded-xl">
               <Search className="h-8 w-8 text-slate-300 mx-auto mb-3" />

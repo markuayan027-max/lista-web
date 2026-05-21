@@ -184,8 +184,8 @@ export default function TraineeEnrollPage() {
     }
   };
 
-  const handleDownloadExcel = () => formData && exportSingleTraineeToExcel(formData as any);
-  const handleDownloadWord = () => formData && exportSingleTraineeToWord(formData as any);
+  const handleDownloadExcel = () => formData && void exportSingleTraineeToExcel(formData as any);
+  const handleDownloadWord = () => formData && void exportSingleTraineeToWord(formData as any);
 
   const stepVariants = {
     hidden: { opacity: 0, x: 4 },

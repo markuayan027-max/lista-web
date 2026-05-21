@@ -1,6 +1,6 @@
 import { Switch, Route, Router as WouterRouter, Redirect, useLocation } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { type ComponentType, type ReactNode, useEffect } from "react";
+import { Suspense, type ComponentType, type ReactNode, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -13,46 +13,7 @@ import TraineeLayout from "@/layouts/trainee-layout";
 import StaffLayout from "@/layouts/staff-layout";
 import AdminLayout from "@/layouts/admin-layout";
 
-import HomePage from "@/pages/public/home";
-import AboutPage from "@/pages/public/about";
-import CoursesPage from "@/pages/public/courses";
-import CourseDetailPage from "@/pages/public/course-detail";
-import AssessmentPage from "@/pages/public/assessment";
-import ScholarshipsPage from "@/pages/public/scholarships";
-import LoginPage from "@/pages/public/login";
-import SignupPage from "@/pages/public/signup";
-import ForgotPasswordPage from "@/pages/public/forgot-password";
-import AuthCallbackPage from "@/pages/public/auth-callback";
-import AdmissionsPage from "@/pages/public/admissions";
-import NewsDetailPage from "@/pages/public/news-detail";
-import PrivacyPage from "@/pages/public/privacy";
-import TermsPage from "@/pages/public/terms";
-
-import TraineeDashboardPage from "@/pages/trainee/dashboard";
-import TraineeProfilePage from "@/pages/trainee/profile";
-import TraineeRegistrationPage from "@/pages/trainee/registration";
-import TraineeEnrollPage from "@/pages/trainee/enroll";
-import TraineeApplicationPage from "@/pages/trainee/application";
-import TraineeTrackingPage from "@/pages/trainee/tracking";
-import TraineeSchedulePage from "@/pages/trainee/schedule";
-import TraineeCertificatePage from "@/pages/trainee/certificate";
-import TraineeAnnouncementsPage from "@/pages/trainee/announcements";
-import TraineeHelpPage from "@/pages/trainee/help";
-
-import StaffOverviewPage from "@/pages/staff/overview";
-import StaffEnrollmentsPage from "@/pages/staff/enrollments";
-import StaffSearchPage from "@/pages/staff/search";
-import StaffSchedulePage from "@/pages/staff/schedule";
-import StaffAnnouncementsPage from "@/pages/staff/announcements";
-
-import AdminAnalyticsPage from "@/pages/admin/analytics";
-import AdminEnrollmentsPage from "@/pages/admin/enrollments";
-import AdminUsersPage from "@/pages/admin/users";
-import AdminAnnouncementsPage from "@/pages/admin/announcements";
-import AdminSchedulePage from "@/pages/admin/schedule";
-import AdminCertificatesPage from "@/pages/admin/certificates";
-import AdminExportPage from "@/pages/admin/export";
-import AdminSettingsPage from "@/pages/admin/settings";
+import * as Pages from "@/route-pages";
 
 const queryClient = new QueryClient();
 
@@ -117,67 +78,81 @@ function Protected({
   return <Layout>{children}</Layout>;
 }
 
+function RouteFallback() {
+  return (
+    <div
+      className="flex min-h-[50vh] items-center justify-center bg-background"
+      aria-busy="true"
+      aria-label="Loading page"
+    >
+      <div className="h-10 w-10 rounded-xl skeleton-shimmer" />
+    </div>
+  );
+}
+
 function Router() {
   return (
+    <Suspense fallback={<RouteFallback />}>
     <Switch>
       {/* Public Routes */}
-      <Route path="/"><PublicLayout><HomePage /></PublicLayout></Route>
-      <Route path="/about"><PublicLayout><AboutPage /></PublicLayout></Route>
-      <Route path="/admissions"><PublicLayout><AdmissionsPage /></PublicLayout></Route>
-      <Route path="/courses"><PublicLayout><CoursesPage /></PublicLayout></Route>
-      <Route path="/courses/:slug"><PublicLayout><CourseDetailPage /></PublicLayout></Route>
-      <Route path="/assessment"><PublicLayout><AssessmentPage /></PublicLayout></Route>
-      <Route path="/scholarships"><PublicLayout><ScholarshipsPage /></PublicLayout></Route>
+      <Route path="/"><PublicLayout><Pages.HomePage /></PublicLayout></Route>
+      <Route path="/about"><PublicLayout><Pages.AboutPage /></PublicLayout></Route>
+      <Route path="/admissions"><PublicLayout><Pages.AdmissionsPage /></PublicLayout></Route>
+      <Route path="/courses"><PublicLayout><Pages.CoursesPage /></PublicLayout></Route>
+      <Route path="/courses/:slug"><PublicLayout><Pages.CourseDetailPage /></PublicLayout></Route>
+      <Route path="/assessment"><PublicLayout><Pages.AssessmentPage /></PublicLayout></Route>
+      <Route path="/scholarships"><PublicLayout><Pages.ScholarshipsPage /></PublicLayout></Route>
       {/* 2026-05-13: consolidate enrollment entrypoint to trainee registration */}
       <Route path="/enroll">
         <Redirect to="/login?redirect=%2Ftrainee%2Fregister" />
       </Route>
-      <Route path="/login"><AuthLayout><LoginPage /></AuthLayout></Route>
-      <Route path="/news/:id"><PublicLayout><NewsDetailPage /></PublicLayout></Route>
-      <Route path="/signup"><AuthLayout><SignupPage /></AuthLayout></Route>
-      <Route path="/forgot-password"><AuthLayout><ForgotPasswordPage /></AuthLayout></Route>
-      <Route path="/activate-account"><AuthLayout><ForgotPasswordPage /></AuthLayout></Route>
-      <Route path="/auth/callback"><AuthLayout><AuthCallbackPage /></AuthLayout></Route>
-      <Route path="/privacy"><PublicLayout><PrivacyPage /></PublicLayout></Route>
-      <Route path="/terms"><PublicLayout><TermsPage /></PublicLayout></Route>
+      <Route path="/login"><AuthLayout><Pages.LoginPage /></AuthLayout></Route>
+      <Route path="/news/:id"><PublicLayout><Pages.NewsDetailPage /></PublicLayout></Route>
+      <Route path="/signup"><AuthLayout><Pages.SignupPage /></AuthLayout></Route>
+      <Route path="/forgot-password"><AuthLayout><Pages.ForgotPasswordPage /></AuthLayout></Route>
+      <Route path="/activate-account"><AuthLayout><Pages.ForgotPasswordPage /></AuthLayout></Route>
+      <Route path="/auth/callback"><AuthLayout><Pages.AuthCallbackPage /></AuthLayout></Route>
+      <Route path="/privacy"><PublicLayout><Pages.PrivacyPage /></PublicLayout></Route>
+      <Route path="/terms"><PublicLayout><Pages.TermsPage /></PublicLayout></Route>
 
       {/* Trainee Routes */}
-      <Route path="/trainee/register"><Protected layout={({children}) => <>{children}</>} allowedRole="trainee"><TraineeRegistrationPage /></Protected></Route>
-      <Route path="/trainee/enroll"><Protected layout={({children}) => <>{children}</>} allowedRole="trainee"><TraineeEnrollPage /></Protected></Route>
-      <Route path="/trainee"><Protected layout={TraineeLayout} allowedRole="trainee"><TraineeDashboardPage /></Protected></Route>
+      <Route path="/trainee/register"><Protected layout={({children}) => <>{children}</>} allowedRole="trainee"><Pages.TraineeRegistrationPage /></Protected></Route>
+      <Route path="/trainee/enroll"><Protected layout={({children}) => <>{children}</>} allowedRole="trainee"><Pages.TraineeEnrollPage /></Protected></Route>
+      <Route path="/trainee"><Protected layout={TraineeLayout} allowedRole="trainee"><Pages.TraineeDashboardPage /></Protected></Route>
       <Route path="/trainee/preferences">
         <Protected layout={TraineeLayout} allowedRole="trainee">
           <Redirect to="/trainee/profile" />
         </Protected>
       </Route>
-      <Route path="/trainee/profile"><Protected layout={TraineeLayout} allowedRole="trainee"><TraineeProfilePage /></Protected></Route>
-      <Route path="/trainee/application"><Protected layout={TraineeLayout} allowedRole="trainee"><TraineeApplicationPage /></Protected></Route>
-      <Route path="/trainee/tracking"><Protected layout={TraineeLayout} allowedRole="trainee"><TraineeTrackingPage /></Protected></Route>
-      <Route path="/trainee/schedule"><Protected layout={TraineeLayout} allowedRole="trainee"><TraineeSchedulePage /></Protected></Route>
-      <Route path="/trainee/certificate"><Protected layout={TraineeLayout} allowedRole="trainee"><TraineeCertificatePage /></Protected></Route>
-      <Route path="/trainee/announcements"><Protected layout={TraineeLayout} allowedRole="trainee"><TraineeAnnouncementsPage /></Protected></Route>
-      <Route path="/trainee/help"><Protected layout={TraineeLayout} allowedRole="trainee"><TraineeHelpPage /></Protected></Route>
+      <Route path="/trainee/profile"><Protected layout={TraineeLayout} allowedRole="trainee"><Pages.TraineeProfilePage /></Protected></Route>
+      <Route path="/trainee/application"><Protected layout={TraineeLayout} allowedRole="trainee"><Pages.TraineeApplicationPage /></Protected></Route>
+      <Route path="/trainee/tracking"><Protected layout={TraineeLayout} allowedRole="trainee"><Pages.TraineeTrackingPage /></Protected></Route>
+      <Route path="/trainee/schedule"><Protected layout={TraineeLayout} allowedRole="trainee"><Pages.TraineeSchedulePage /></Protected></Route>
+      <Route path="/trainee/certificate"><Protected layout={TraineeLayout} allowedRole="trainee"><Pages.TraineeCertificatePage /></Protected></Route>
+      <Route path="/trainee/announcements"><Protected layout={TraineeLayout} allowedRole="trainee"><Pages.TraineeAnnouncementsPage /></Protected></Route>
+      <Route path="/trainee/help"><Protected layout={TraineeLayout} allowedRole="trainee"><Pages.TraineeHelpPage /></Protected></Route>
 
       {/* Staff Routes */}
-      <Route path="/staff"><Protected layout={StaffLayout} allowedRole="staff"><StaffOverviewPage /></Protected></Route>
-      <Route path="/staff/enrollments"><Protected layout={StaffLayout} allowedRole="staff"><StaffEnrollmentsPage /></Protected></Route>
-      <Route path="/staff/search"><Protected layout={StaffLayout} allowedRole="staff"><StaffSearchPage /></Protected></Route>
-      <Route path="/staff/schedule"><Protected layout={StaffLayout} allowedRole="staff"><StaffSchedulePage /></Protected></Route>
-      <Route path="/staff/announcements"><Protected layout={StaffLayout} allowedRole="staff"><StaffAnnouncementsPage /></Protected></Route>
+      <Route path="/staff"><Protected layout={StaffLayout} allowedRole="staff"><Pages.StaffOverviewPage /></Protected></Route>
+      <Route path="/staff/enrollments"><Protected layout={StaffLayout} allowedRole="staff"><Pages.StaffEnrollmentsPage /></Protected></Route>
+      <Route path="/staff/search"><Protected layout={StaffLayout} allowedRole="staff"><Pages.StaffSearchPage /></Protected></Route>
+      <Route path="/staff/schedule"><Protected layout={StaffLayout} allowedRole="staff"><Pages.StaffSchedulePage /></Protected></Route>
+      <Route path="/staff/announcements"><Protected layout={StaffLayout} allowedRole="staff"><Pages.StaffAnnouncementsPage /></Protected></Route>
 
       {/* Admin Routes */}
-      <Route path="/admin"><Protected layout={AdminLayout} allowedRole="admin"><AdminAnalyticsPage /></Protected></Route>
-      <Route path="/admin/enrollments"><Protected layout={AdminLayout} allowedRole="admin"><AdminEnrollmentsPage /></Protected></Route>
-      <Route path="/admin/users"><Protected layout={AdminLayout} allowedRole="admin"><AdminUsersPage /></Protected></Route>
-      <Route path="/admin/announcements"><Protected layout={AdminLayout} allowedRole="admin"><AdminAnnouncementsPage /></Protected></Route>
-      <Route path="/admin/schedule"><Protected layout={AdminLayout} allowedRole="admin"><AdminSchedulePage /></Protected></Route>
-      <Route path="/admin/certificates"><Protected layout={AdminLayout} allowedRole="admin"><AdminCertificatesPage /></Protected></Route>
-      <Route path="/admin/export"><Protected layout={AdminLayout} allowedRole="admin"><AdminExportPage /></Protected></Route>
-      <Route path="/admin/settings"><Protected layout={AdminLayout} allowedRole="admin"><AdminSettingsPage /></Protected></Route>
+      <Route path="/admin"><Protected layout={AdminLayout} allowedRole="admin"><Pages.AdminAnalyticsPage /></Protected></Route>
+      <Route path="/admin/enrollments"><Protected layout={AdminLayout} allowedRole="admin"><Pages.AdminEnrollmentsPage /></Protected></Route>
+      <Route path="/admin/users"><Protected layout={AdminLayout} allowedRole="admin"><Pages.AdminUsersPage /></Protected></Route>
+      <Route path="/admin/announcements"><Protected layout={AdminLayout} allowedRole="admin"><Pages.AdminAnnouncementsPage /></Protected></Route>
+      <Route path="/admin/schedule"><Protected layout={AdminLayout} allowedRole="admin"><Pages.AdminSchedulePage /></Protected></Route>
+      <Route path="/admin/certificates"><Protected layout={AdminLayout} allowedRole="admin"><Pages.AdminCertificatesPage /></Protected></Route>
+      <Route path="/admin/export"><Protected layout={AdminLayout} allowedRole="admin"><Pages.AdminExportPage /></Protected></Route>
+      <Route path="/admin/settings"><Protected layout={AdminLayout} allowedRole="admin"><Pages.AdminSettingsPage /></Protected></Route>
 
       {/* Not Found */}
       <Route><PublicLayout><NotFound /></PublicLayout></Route>
     </Switch>
+    </Suspense>
   );
 }
 

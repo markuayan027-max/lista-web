@@ -6,7 +6,7 @@ import OptimizedImage from "@/components/optimized-image";
 import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, Calendar, User, Clock, Share2, ArrowRight, Loader2 } from "lucide-react";
 import NotFound from "@/pages/not-found";
-import { motion } from "framer-motion";
+import { Reveal } from "@/components/lista-reveal";
 import PrimaryButton from "@/components/primary-button";
 import { getPublicEnrollHref } from "@/lib/enroll-entry";
 
@@ -46,12 +46,7 @@ export default function NewsDetailPage() {
           </div>
 
           <div className="max-w-4xl mx-auto">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="space-y-6 text-center"
-            >
+            <Reveal duration={500} className="space-y-6 text-center">
               <Badge className="bg-primary/10 text-primary hover:bg-primary/20 px-4 py-1 rounded-full uppercase tracking-widest text-[10px] font-bold">
                 {post.category}
               </Badge>
@@ -72,17 +67,17 @@ export default function NewsDetailPage() {
                   <span>5 min read</span>
                 </div>
               </div>
-            </motion.div>
+            </Reveal>
           </div>
         </div>
       </section>
 
       {/* Featured Image */}
       <section className="-mt-16 container mx-auto px-4 md:px-6">
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
+        <Reveal
+          from="scale"
+          delay={200}
+          duration={800}
           className="max-w-5xl mx-auto aspect-[16/9] md:aspect-[21/9] max-h-[50vh] md:max-h-none rounded-[2rem] md:rounded-[3rem] overflow-hidden shadow-2xl border-4 border-white"
         >
           <OptimizedImage
@@ -91,7 +86,7 @@ export default function NewsDetailPage() {
             priority
             imgClassName="w-full h-full object-cover"
           />
-        </motion.div>
+        </Reveal>
       </section>
 
       {/* Content Area */}

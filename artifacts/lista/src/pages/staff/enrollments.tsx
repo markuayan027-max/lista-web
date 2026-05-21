@@ -256,7 +256,7 @@ export default function StaffEnrollmentsPage() {
                           variant="ghost" 
                           size="icon" 
                           className="h-8 w-8 text-emerald-600" 
-                          onClick={() => exportSingleTraineeToExcel(enrollment)}
+                          onClick={() => void exportSingleTraineeToExcel(enrollment)}
                           title="Download Excel"
                         >
                           <FileSpreadsheet className="h-4 w-4" />
@@ -353,7 +353,7 @@ export default function StaffEnrollmentsPage() {
                     <Button
                       variant="outline"
                       className="flex-1 gap-2 border-emerald-200 text-emerald-700 hover:bg-emerald-50"
-                      onClick={() => exportSingleTraineeToExcel(selectedEnrollment)}
+                      onClick={() => void exportSingleTraineeToExcel(selectedEnrollment)}
                     >
                       <FileSpreadsheet className="h-4 w-4" /> Excel
                     </Button>

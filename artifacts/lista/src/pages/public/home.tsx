@@ -1,14 +1,24 @@
 import { useState, useMemo } from "react";
 import { Link } from "wouter";
 import { getPublicEnrollHref } from "@/lib/enroll-entry";
-import { motion, AnimatePresence } from "framer-motion";
+import { Reveal, RevealStagger, RevealStaggerItem } from "@/components/lista-reveal";
 import {
-  ArrowRight, CheckCircle, GraduationCap, Award,
-  ExternalLink, FileCheck, Landmark, HeartHandshake,
-  FileImage, ShieldCheck, Stethoscope, Compass,
-  Users, BookOpen, TrendingUp, ClipboardList,
-  UserCheck, Library, BriefcaseBusiness, Trophy,
-  Star, MapPin, Phone, Info, X
+  ArrowRight,
+  BriefcaseBusiness,
+  CheckCircle,
+  ClipboardList,
+  Compass,
+  ExternalLink,
+  FileCheck,
+  FileImage,
+  GraduationCap,
+  HeartHandshake,
+  Landmark,
+  MapPin,
+  ShieldCheck,
+  Stethoscope,
+  Users,
+  X,
 } from "lucide-react";
 import PrimaryButton from "@/components/primary-button";
 import CourseCard from "@/components/course-card";
@@ -21,16 +31,6 @@ import { CourseCarouselSkeleton } from "@/components/skeletons";
 import { ContentFadeIn } from "@/components/skeletons/primitives";
 import OptimizedImage from "@/components/optimized-image";
 import { PARTNER_LOGOS_HOME } from "@/lib/image-assets";
-const containerVars = {
-  hidden: { opacity: 0 },
-  show: { opacity: 1, transition: { staggerChildren: 0.1 } },
-};
-
-const itemVars = {
-  hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.5 } },
-};
-
 export default function HomePage() {
   const coursesQuery = useCourses();
   const { data: liveCourses = [], isLoading: coursesLoading } = coursesQuery;
@@ -97,12 +97,7 @@ export default function HomePage() {
 
           {/* Main headline */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-12 py-6 md:py-10 items-center">
-            <motion.div
-              className="flex flex-col justify-center"
-              initial={{ opacity: 0, x: -30 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-            >
+            <Reveal from="left" duration={800} className="flex flex-col justify-center">
               <h1 className="text-[clamp(2.5rem,5vw,4.5rem)] font-bold tracking-[-0.03em] text-foreground leading-[1.08] mb-6">
                 Skills that build<br />
                 <span className="text-blue-700">real careers.</span>
@@ -123,13 +118,13 @@ export default function HomePage() {
                   </PrimaryButton>
                 </Link>
               </div>
-            </motion.div>
+            </Reveal>
 
-            <motion.div
+            <Reveal
+              from="right"
+              delay={200}
+              duration={800}
               className="relative w-full max-w-lg mx-auto lg:max-w-none lg:pl-6"
-              initial={{ opacity: 0, x: 30 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
             >
               <div className="relative aspect-[4/3] lg:aspect-[16/10] rounded-2xl overflow-hidden shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)] bg-slate-100">
                 <OptimizedImage
@@ -151,7 +146,7 @@ export default function HomePage() {
                    </div>
                 </div>
               </div>
-            </motion.div>
+            </Reveal>
           </div>
 
         </div>
@@ -219,13 +214,7 @@ export default function HomePage() {
           <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 items-start gap-8 lg:gap-12">
             
             {/* Left: Content & Heading */}
-            <motion.div 
-              className="lg:col-span-5 order-2 lg:order-1 pt-4"
-              initial={{ opacity: 0, x: -20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-            >
+            <Reveal inView from="left" delay={200} duration={600} className="lg:col-span-5 order-2 lg:order-1 pt-4">
               <div className="space-y-6">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-[10px] font-black uppercase tracking-[0.2em] border border-blue-100">
                   Real Skills
@@ -238,16 +227,10 @@ export default function HomePage() {
                   We help you learn the skills that companies want. Whether you finished Grade 6, High School, or College, we have a program that will help you find a job or get promoted.
                 </p>
               </div>
-            </motion.div>
+            </Reveal>
 
             {/* Right: Video Promotion */}
-            <motion.div 
-              className="lg:col-span-7 order-1 lg:order-2 flex flex-col items-center"
-              initial={{ opacity: 0, scale: 0.95 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
-            >
+            <Reveal inView from="scale" duration={600} className="lg:col-span-7 order-1 lg:order-2 flex flex-col items-center">
               {/* Video Card */}
               <div className="w-full relative aspect-video rounded-2xl overflow-hidden shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)] bg-slate-900 group">
                 <video 
@@ -276,39 +259,38 @@ export default function HomePage() {
                   </div>
                 </div>
               </div>
-          </motion.div>
+            </Reveal>
         </div>
 
         {/* Single Line Action Bar: Categories + CTA + Stats (Spans full width below both) */}
-        <motion.div 
+        <Reveal
+          inView
+          delay={400}
+          duration={600}
           className="mt-12 w-full flex flex-col lg:flex-row lg:flex-nowrap items-stretch lg:items-center justify-center lg:justify-between gap-4 p-3 sm:p-4 bg-slate-50/80 rounded-3xl border border-slate-100 backdrop-blur-sm shadow-xl shadow-slate-200/20"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.4 }}
         >
           {/* 1. Category Quick Links — scroll on narrow screens, hidden scrollbar */}
           <div className="min-w-0 w-full lg:flex-1 flex items-center gap-2 overflow-x-auto hide-scrollbar py-1 -mx-1 px-1 snap-x snap-mandatory">
             {benefits.map((item, index) => (
-              <motion.button
+              <button
                 key={index}
+                type="button"
                 onClick={() => setActiveBenefit(item)}
-                className="flex shrink-0 snap-start items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-white border border-slate-100 hover:border-blue-200 hover:shadow-md transition-all whitespace-nowrap group"
-                whileHover={{ y: -2 }}
+                className="flex shrink-0 snap-start items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-white border border-slate-100 hover:border-blue-200 hover:shadow-md hover:-translate-y-0.5 transition-all whitespace-nowrap group"
               >
                 <div className="w-7 h-7 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
                   <item.icon className="w-4 h-4" />
                 </div>
                 <span className="font-bold text-slate-700 text-[11px] uppercase tracking-wider">{item.title.replace('For ', '')}</span>
-              </motion.button>
+              </button>
             ))}
           </div>
 
           {/* Vertical Divider (Desktop Only) */}
-          <motion.div className="hidden lg:block h-10 w-px bg-slate-200 shrink-0" />
+          <div className="hidden lg:block h-10 w-px bg-slate-200 shrink-0" />
 
           {/* 2. CTA & Stats Group */}
-          <motion.div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-4 sm:gap-6 py-1 shrink-0 w-full lg:w-auto">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-4 sm:gap-6 py-1 shrink-0 w-full lg:w-auto">
             <Link href="/courses" className="w-full sm:w-auto">
               <PrimaryButton size="sm" className="w-full sm:w-auto h-11 px-6 sm:px-8 text-[11px] font-black uppercase tracking-widest bg-blue-700 hover:bg-blue-800 text-white shadow-lg shadow-blue-700/20 group whitespace-nowrap rounded-2xl">
                 Explore All Programs
@@ -316,7 +298,7 @@ export default function HomePage() {
               </PrimaryButton>
             </Link>
             
-            <motion.div className="flex items-center justify-center sm:justify-start gap-4 border-t sm:border-t-0 sm:border-l border-slate-200 pt-4 sm:pt-0 sm:pl-6">
+            <div className="flex items-center justify-center sm:justify-start gap-4 border-t sm:border-t-0 sm:border-l border-slate-200 pt-4 sm:pt-0 sm:pl-6">
               <div className="flex -space-x-3">
                 {[1,2,3,4].map(i => (
                   <div key={i} className="w-8 h-8 rounded-full border-2 border-white bg-slate-200 overflow-hidden shadow-sm hover:z-10 transition-all">
@@ -338,27 +320,22 @@ export default function HomePage() {
                   {programCount > 0 ? "Programs Available" : "Catalog loading"}
                 </div>
               </div>
-            </motion.div>
-          </motion.div>
-        </motion.div>
+            </div>
+          </div>
+        </Reveal>
 
         {/* Benefit Details Popup (Modal) */}
-        <AnimatePresence>
           {activeBenefit && (
             <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-              <motion.div 
-                className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
+              <div
+                className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200"
+                role="presentation"
                 onClick={() => setActiveBenefit(null)}
               />
-              <motion.div 
-                className="relative bg-white w-full max-w-md rounded-2xl shadow-2xl border border-slate-100 overflow-hidden"
-                initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              <div
+                className="relative bg-white w-full max-w-md rounded-2xl shadow-2xl border border-slate-100 overflow-hidden animate-in fade-in zoom-in-95 slide-in-from-bottom-4 duration-300"
+                role="dialog"
+                aria-modal="true"
               >
                 <div className="p-8">
                   <div className="flex items-center justify-between mb-6">
@@ -383,10 +360,9 @@ export default function HomePage() {
                     Got it, thanks!
                   </PrimaryButton>
                 </div>
-              </motion.div>
+              </div>
             </div>
           )}
-        </AnimatePresence>
       </div>
     </section>
 
@@ -422,19 +398,21 @@ export default function HomePage() {
               <CourseCarouselSkeleton count={4} />
             ) : (
               <ContentFadeIn>
-                <motion.div
-                  variants={containerVars}
-                  initial="hidden"
-                  whileInView="show"
-                  viewport={{ once: true, margin: "-100px" }}
+                <RevealStagger
+                  inView
+                  staggerMs={100}
                   className="flex overflow-x-auto snap-x snap-mandatory gap-6 pb-8 md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 md:overflow-visible md:pb-0 hide-scrollbar"
                 >
-                  {displayCourses.map((course) => (
-                    <motion.div key={course.id} variants={itemVars} className="snap-start shrink-0 w-[85vw] md:w-auto">
+                  {displayCourses.map((course, i) => (
+                    <RevealStaggerItem
+                      key={course.id}
+                      index={i}
+                      className="snap-start shrink-0 w-[85vw] md:w-auto"
+                    >
                       <CourseCard course={course} hideLockOverlay={true} />
-                    </motion.div>
+                    </RevealStaggerItem>
                   ))}
-                </motion.div>
+                </RevealStagger>
               </ContentFadeIn>
             )}
           </div>
@@ -599,13 +577,12 @@ export default function HomePage() {
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {testimonials.map((testimonial, i) => (
-              <motion.div
+              <Reveal
                 key={testimonial.id}
+                inView
+                delay={i * 100}
+                duration={400}
                 className="bg-slate-50 p-8 rounded-xl border border-slate-200 flex flex-col hover:border-blue-200 hover:shadow-sm transition-all"
-                initial={{ opacity: 0, y: 10 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1, duration: 0.4 }}
               >
                 {/* Quote mark */}
                 <div className="text-4xl font-serif text-blue-200 leading-none mb-4 select-none">"</div>
@@ -625,7 +602,7 @@ export default function HomePage() {
                     </p>
                   </div>
                 </div>
-              </motion.div>
+              </Reveal>
             ))}
           </div>
         </div>
@@ -659,13 +636,11 @@ export default function HomePage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {livePosts.slice(0, 6).map((post, i) => (
-              <motion.div
+              <Reveal
                 key={post.id}
+                inView
+                delay={i * 80}
                 className="group flex flex-col bg-white rounded-xl border border-slate-200 overflow-hidden hover:border-blue-200 hover:shadow-md transition-all duration-300"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.08 }}
               >
                 <div className="aspect-[16/10] overflow-hidden bg-slate-100">
                   <OptimizedImage
@@ -706,7 +681,7 @@ export default function HomePage() {
                     )}
                   </div>
                 </div>
-              </motion.div>
+              </Reveal>
             ))}
           </div>
         </div>
@@ -715,13 +690,7 @@ export default function HomePage() {
       {/* ── Final CTA ── */}
       <section className="py-24 bg-blue-700 text-white text-center">
         <div className="container mx-auto px-4 md:px-6">
-          <motion.div
-            className="max-w-3xl mx-auto space-y-7"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-          >
+          <Reveal inView duration={500} className="max-w-3xl mx-auto space-y-7">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 text-white/90 text-xs font-bold uppercase tracking-widest border border-white/20">
               <GraduationCap className="h-3.5 w-3.5" />
               Applications Now Open
@@ -743,7 +712,7 @@ export default function HomePage() {
                 </PrimaryButton>
               </Link>
             </div>
-          </motion.div>
+          </Reveal>
         </div>
       </section>
 

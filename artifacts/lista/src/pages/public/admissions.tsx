@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { Reveal, RevealStagger, RevealStaggerItem } from "@/components/lista-reveal";
 import { 
   FileText, 
   Search, 
@@ -13,7 +13,6 @@ import {
   Image as ImageIcon, 
   Mail,
   Phone,
-  MapPin,
   Clock,
   HelpCircle,
   ChevronRight
@@ -21,25 +20,6 @@ import {
 import { Link } from "wouter";
 import PrimaryButton from "@/components/primary-button";
 import { getPublicEnrollHref } from "@/lib/enroll-entry";
-
-const containerVars = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-    },
-  },
-};
-
-const itemVars = {
-  hidden: { opacity: 0, y: 30 },
-  show: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] },
-  },
-};
 
 const steps = [
   {
@@ -143,11 +123,7 @@ export default function AdmissionsPage() {
         
         <div className="container mx-auto px-4 md:px-6 relative z-10">
           <div className="max-w-4xl">
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6 }}
-            >
+            <Reveal from="left" duration={600}>
               <div className="flex items-center gap-3 mb-6">
                 <div className="relative flex items-center justify-center">
                   <div className="w-2.5 h-2.5 rounded-full bg-blue-600 ring-4 ring-blue-100" />
@@ -155,34 +131,19 @@ export default function AdmissionsPage() {
                 </div>
                 <span className="text-[10px] font-bold text-blue-600 uppercase tracking-[0.3em] bg-blue-50/50 px-2 py-1 rounded">Admission Guide</span>
               </div>
-            </motion.div>
+            </Reveal>
             
-            <motion.h1 
-              className="text-4xl sm:text-5xl md:text-7xl font-black tracking-tight mb-8 leading-[1.05] text-slate-900 text-balance"
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.1 }}
-            >
+            <Reveal delay={100} duration={800} className="text-4xl sm:text-5xl md:text-7xl font-black tracking-tight mb-8 leading-[1.05] text-slate-900 text-balance">
               How to Enroll <br />
               <span className="text-slate-300">at</span> LISTA
-            </motion.h1>
+            </Reveal>
             
-            <motion.p 
-              className="text-xl md:text-2xl text-slate-500 leading-relaxed mb-12 max-w-2xl font-medium"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-            >
+            <Reveal delay={200} duration={800} className="text-xl md:text-2xl text-slate-500 leading-relaxed mb-12 max-w-2xl font-medium">
               Follow these simple steps to start your training with us. <br />
               <span className="text-blue-600 font-semibold text-lg italic mt-2 block">Dali ug sayon nga proseso para sa imong kaugmaon.</span>
-            </motion.p>
+            </Reveal>
             
-            <motion.div 
-              className="flex flex-col sm:flex-row gap-4"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.3 }}
-            >
+            <Reveal delay={300} duration={800} className="flex flex-col sm:flex-row gap-4">
               {/* 2026-05-13: single application entrypoint */}
               <Link href={getPublicEnrollHref()}>
                 <PrimaryButton size="lg" className="h-16 px-10 text-lg rounded-none bg-blue-600 hover:bg-blue-700 transition-colors duration-500 group">
@@ -195,7 +156,7 @@ export default function AdmissionsPage() {
                   View All Courses
                 </PrimaryButton>
               </Link>
-            </motion.div>
+            </Reveal>
           </div>
         </div>
       </section>
@@ -228,17 +189,11 @@ export default function AdmissionsPage() {
             </div>
 
             <div className="lg:w-2/3">
-              <motion.div 
-                variants={containerVars}
-                initial="hidden"
-                whileInView="show"
-                viewport={{ once: true, margin: "-100px" }}
-                className="space-y-4"
-              >
+              <RevealStagger inView staggerMs={100} className="space-y-4">
                 {steps.map((step, idx) => (
-                  <motion.div 
-                    key={idx} 
-                    variants={itemVars}
+                  <RevealStaggerItem
+                    key={idx}
+                    index={idx}
                     className="group relative bg-slate-50/50 border border-slate-100 p-10 rounded-[2rem] hover:bg-white hover:shadow-2xl hover:shadow-slate-200/50 hover:border-blue-100 transition-all duration-700"
                   >
                     <div className="absolute top-10 right-10 text-6xl font-black text-slate-100 group-hover:text-blue-50 transition-colors pointer-events-none">
@@ -262,9 +217,9 @@ export default function AdmissionsPage() {
                         </p>
                       </div>
                     </div>
-                  </motion.div>
+                  </RevealStaggerItem>
                 ))}
-              </motion.div>
+              </RevealStagger>
             </div>
           </div>
         </div>
@@ -281,12 +236,7 @@ export default function AdmissionsPage() {
             </div>
             
             {/* Prominent Bisaya Instruction */}
-            <motion.div 
-              className="flex flex-col gap-4 max-w-2xl mx-auto"
-              initial={{ scale: 0.9, opacity: 0 }}
-              whileInView={{ scale: 1, opacity: 1 }}
-              viewport={{ once: true }}
-            >
+            <Reveal inView from="scale" duration={600} className="flex flex-col gap-4 max-w-2xl mx-auto">
               <div className="bg-blue-50 border border-blue-100 px-8 py-4 rounded-2xl">
                 <p className="text-blue-800 font-bold text-lg">
                   ⚠️ Palihog ibutang ang tanang dokumento sa usa ka <span className="underline decoration-blue-300 decoration-2 underline-offset-4">"long brown envelope"</span>.
@@ -301,18 +251,16 @@ export default function AdmissionsPage() {
                   Pahibalo: Kinahanglan dad-on ang mga dokumento ug maghimo og account (pag-fill up sa form) BAG-O moadto sa main building.
                 </p>
               </div>
-            </motion.div>
+            </Reveal>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {requirements.map((req, idx) => (
-              <motion.div 
+              <Reveal
                 key={idx}
+                inView
+                delay={idx * 100}
                 className="bg-white border border-slate-200/60 p-10 rounded-[3rem] shadow-sm hover:shadow-xl transition-all duration-700"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: idx * 0.1 }}
               >
                 <div className="w-14 h-14 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 mb-8">
                   <req.icon className="w-7 h-7" />
@@ -331,7 +279,7 @@ export default function AdmissionsPage() {
                     </li>
                   ))}
                 </ul>
-              </motion.div>
+              </Reveal>
             ))}
           </div>
         </div>

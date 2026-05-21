@@ -1,4 +1,4 @@
-import { Building2, Users, Target, Award, Globe, BookOpen, FileCheck, Eye } from "lucide-react";
+import { Eye, FileCheck, Globe, Target } from "lucide-react";
 import AvatarInitials from "@/components/avatar-initials";
 import { leadership, officialDocuments } from "@/lib/institutional-data";
 import OptimizedImage from "@/components/optimized-image";

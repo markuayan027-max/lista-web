@@ -56,6 +56,35 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes("node_modules")) return;
+          if (id.includes("recharts") || id.includes("d3-")) return "charts";
+          if (id.includes("framer-motion")) return "motion";
+          if (id.includes("@radix-ui")) return "radix";
+          if (
+            id.includes("html2pdf") ||
+            id.includes("jspdf") ||
+            id.includes("html2canvas")
+          ) {
+            return "pdf";
+          }
+          if (id.includes("xlsx") || id.includes("docx") || id.includes("file-saver")) {
+            return "office";
+          }
+          if (id.includes("@insforge")) return "insforge";
+          if (
+            id.includes("/react/") ||
+            id.includes("react-dom") ||
+            id.includes("@tanstack/react-query") ||
+            id.includes("wouter")
+          ) {
+            return "react-vendor";
+          }
+        },
+      },
+    },
   },
   server: {
     port,

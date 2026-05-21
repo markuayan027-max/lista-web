@@ -281,7 +281,7 @@ export default function AdminExportPage() {
                   className="w-full font-semibold bg-emerald-600 hover:bg-emerald-700 text-white"
                   disabled={batchLoading === "excel"}
                   onClick={() =>
-                    doBatch(() => Promise.resolve(exportTraineesToExcel(enrollments)), "excel")
+                    doBatch(() => exportTraineesToExcel(enrollments), "excel")
                   }
                 >
                   {batchLoading === "excel" ? (
@@ -345,7 +345,7 @@ export default function AdminExportPage() {
                   className="flex-1 font-semibold text-emerald-700 border-emerald-300 hover:bg-emerald-50"
                   disabled={batchLoading === "filtered-xl"}
                   onClick={() =>
-                    doBatch(() => Promise.resolve(exportTraineesToExcel(filtered, "LISTA_Filtered")), "filtered-xl")
+                    doBatch(() => exportTraineesToExcel(filtered, "LISTA_Filtered"), "filtered-xl")
                   }
                 >
                   {batchLoading === "filtered-xl" ? (

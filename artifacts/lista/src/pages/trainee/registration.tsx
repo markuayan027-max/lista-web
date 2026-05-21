@@ -499,7 +499,7 @@ export default function TraineeRegistrationPage() {
   };
 
   const handleDownloadExcel = () => {
-    exportSingleTraineeToExcel(formData as any);
+    void exportSingleTraineeToExcel(formData as any);
   };
 
   const handleDownloadWord = () => {

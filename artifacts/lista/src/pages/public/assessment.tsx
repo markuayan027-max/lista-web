@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, RefreshCw } from "lucide-react";
 import OptimizedImage from "@/components/optimized-image";
 import PrimaryButton from "@/components/primary-button";
@@ -144,14 +143,10 @@ export default function AssessmentPage() {
     <div className="w-full min-h-[calc(100vh-80px)] bg-slate-50 flex items-center justify-center py-8 sm:py-12 overflow-x-hidden">
       <div className="container mx-auto px-4 md:px-6 max-w-3xl">
         
-        <AnimatePresence mode="wait">
-          {!started ? (
-            <motion.div
+        {!started ? (
+            <div
               key="intro"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="bg-white rounded-3xl p-10 md:p-16 text-center border border-card-border shadow-sm"
+              className="bg-white rounded-3xl p-10 md:p-16 text-center border border-card-border shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-500"
             >
               <div className="mx-auto mb-8 sm:mb-10 w-full max-w-lg max-h-[40vh] sm:max-h-none aspect-[3/4] sm:aspect-[3/4] flex items-center justify-center overflow-hidden rounded-2xl">
                 <OptimizedImage
@@ -168,15 +163,11 @@ export default function AssessmentPage() {
               <PrimaryButton size="lg" onClick={handleStart} className="h-14 px-10 text-lg">
                 Start Assessment
               </PrimaryButton>
-            </motion.div>
+            </div>
           ) : !showResults ? (
-            <motion.div
+            <div
               key={`q-${currentStep}`}
-              initial={{ opacity: 0, x: 40 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -40 }}
-              transition={{ duration: 0.3 }}
-              className="bg-white rounded-3xl p-8 md:p-12 border border-card-border shadow-sm"
+              className="bg-white rounded-3xl p-8 md:p-12 border border-card-border shadow-sm animate-in fade-in slide-in-from-right-8 duration-300"
             >
               <div className="mb-8 space-y-4">
                 <div className="flex justify-between text-sm font-bold text-muted-foreground uppercase tracking-wider">
@@ -201,13 +192,11 @@ export default function AssessmentPage() {
                   </button>
                 ))}
               </div>
-            </motion.div>
+            </div>
           ) : (
-            <motion.div
+            <div
               key="results"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="space-y-12"
+              className="space-y-12 animate-in fade-in zoom-in-95 duration-500"
             >
               <div className="text-center space-y-6">
                 <div className="mx-auto mb-2 w-24 h-24 flex items-center justify-center">
@@ -242,9 +231,8 @@ export default function AssessmentPage() {
                   </PrimaryButton>
                 </Link>
               </div>
-            </motion.div>
+            </div>
           )}
-        </AnimatePresence>
 
       </div>
     </div>

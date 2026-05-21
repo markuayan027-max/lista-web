@@ -1,4 +1,3 @@
-import { motion } from "framer-motion";
 import OptimizedImage from "@/components/optimized-image";
 import { PARTNER_LOGOS_MARQUEE } from "@/lib/image-assets";
 
@@ -17,11 +16,7 @@ export default function TrustMarquee() {
       </div>
 
       <div className="flex w-full relative">
-        <motion.div
-          className="flex whitespace-nowrap"
-          animate={{ x: [0, -1035] }}
-          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-        >
+        <div className="flex whitespace-nowrap lista-trust-marquee">
           {marqueeItems.map((partner, idx) => (
             <div
               key={`${partner.label}-${idx}`}
@@ -40,7 +35,7 @@ export default function TrustMarquee() {
               </span>
             </div>
           ))}
-        </motion.div>
+        </div>
 
         <div className="absolute inset-y-0 left-0 w-20 bg-gradient-to-r from-white to-transparent z-10" />
         <div className="absolute inset-y-0 right-0 w-20 bg-gradient-to-l from-white to-transparent z-10" />
