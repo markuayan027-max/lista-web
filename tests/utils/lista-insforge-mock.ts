@@ -44,8 +44,33 @@ export function qaTraineeEnrollmentRow(email = "trainee@example.com") {
   };
 }
 
+function traineeProfileApiBody(email: string) {
+  const row = qaTraineeEnrollmentRow(email);
+  return {
+    success: true,
+    data: row,
+    activeEnrollment: row,
+    history: [row],
+    canQuickApply: false,
+  };
+}
+
 /** Mock lista-insforge-data reads/writes so protected pages render without live backend. */
 export async function mockListaInsforgeTables(page: Page) {
+  await page.route("**/api/trainees/profile**", async (route) => {
+    if (route.request().method() !== "GET") {
+      await route.continue();
+      return;
+    }
+    const url = new URL(route.request().url());
+    const email = (url.searchParams.get("email") ?? "trainee@example.com").trim().toLowerCase();
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify(traineeProfileApiBody(email)),
+    });
+  });
+
   await page.route(RECORDS, async (route) => {
     const url = route.request().url();
     const method = route.request().method();

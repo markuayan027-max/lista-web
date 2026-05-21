@@ -146,7 +146,7 @@ export async function mockAuthState(
         window.localStorage.removeItem("TEST_MODE");
       }
       if (prefillRegistration) {
-        window.localStorage.setItem(`reg_${userId}`, "true");
+        window.localStorage.setItem(`reg_${userId}`, "complete");
       } else {
         window.localStorage.removeItem(`reg_${userId}`);
       }

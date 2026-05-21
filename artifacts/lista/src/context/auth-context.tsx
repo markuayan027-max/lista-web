@@ -78,7 +78,10 @@ async function applySessionPayload(
   const mapped = await mapInsForgeUser(rawUser);
   setUser(mapped);
   if (mapped) {
-    void syncTraineeSideEffects(mapped, setIsRegistered).catch(() => setIsRegistered(false));
+    setIsRegistered(isTraineeRegistrationComplete(mapped));
+    void syncTraineeSideEffects(mapped, setIsRegistered).catch(() =>
+      setIsRegistered(isTraineeRegistrationComplete(mapped)),
+    );
   }
 }
 
@@ -112,8 +115,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const mapped = await mapInsForgeUser(rawUser);
             setUser(mapped);
             if (mapped) {
+              setIsRegistered(isTraineeRegistrationComplete(mapped));
               void syncTraineeSideEffects(mapped, setIsRegistered).catch(() =>
-                setIsRegistered(false),
+                setIsRegistered(isTraineeRegistrationComplete(mapped)),
               );
             }
           }
