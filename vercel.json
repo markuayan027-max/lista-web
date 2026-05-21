@@ -1,6 +1,6 @@
 {
   "name": "lista-frontend",
-  "installCommand": "pnpm install",
+  "installCommand": "pnpm install --frozen-lockfile --prod=false",
   "buildCommand": "pnpm --filter @workspace/api-server run build && pnpm --filter @workspace/lista run build",
   "outputDirectory": "artifacts/lista/dist/public",
   "framework": null,

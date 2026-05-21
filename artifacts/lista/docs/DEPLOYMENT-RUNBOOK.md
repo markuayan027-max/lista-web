@@ -28,15 +28,23 @@ If either fails, **courses / enrollments in the UI will stay empty** even when t
 
 ## Vercel env (lista-frontend → Settings → Environment Variables)
 
-Required for **Production** (same names for Preview if you test previews):
+**Import template:** copy/replace values in `artifacts/lista/docs/vercel-production.import.env`, then **Import .env** in the Vercel modal (Sensitive ON, **Production and Preview**). Redeploy after save.
 
 | Variable | Purpose |
 |----------|---------|
 | `DATABASE_URL` | Postgres for courses, enrollments, staff roles |
 | `INSFORGE_URL` | Auth / JWT validation (must match your InsForge tenant) |
 | `VITE_INSFORGE_URL` | Frontend InsForge client (build-time) |
+| `VITE_INSFORGE_ANON_KEY` | InsForge anon key (Dashboard → API keys) |
+
+| `GROQ_API_KEY` | Homepage chat on **Vercel** (`/api/chat/homepage`) — **required** for `lista.dpdns.org` |
+| `GROQ_MODEL` | Optional; default `llama-3.3-70b-versatile` |
 
 Optional: `LOG_LEVEL`, `LISTA_APP_URL` / `VITE_APP_URL` for activation links.
+
+**Chat “works everywhere”:** set `GROQ_API_KEY` on **Vercel Production** (same-origin API) **and** on **Cloudflare `lista-web`** (only if you use `VITE_LISTA_API_BASE_URL` or a Worker API host). Do **not** use `VITE_GROQ_API_KEY` on Vercel — it can leak into the browser bundle; use `GROQ_API_KEY` only.
+
+**Never set `NODE_ENV` in Vercel Environment Variables** — it makes `pnpm install` skip devDependencies and the build fails (`Cannot find package 'esbuild'`). Vercel sets runtime `NODE_ENV` automatically.
 
 ## When Ready but live data is broken
 

@@ -113,10 +113,14 @@ globalThis.__dirname = __bannerPath.dirname(globalThis.__filename);
     },
   };
 
-  await esbuild({
-    ...shared,
-    entryPoints: [path.resolve(artifactDir, "src/index.ts")],
-  });
+  const isVercelBuild = process.env.VERCEL === "1";
+
+  if (!isVercelBuild) {
+    await esbuild({
+      ...shared,
+      entryPoints: [path.resolve(artifactDir, "src/index.ts")],
+    });
+  }
 
   await esbuild({
     ...shared,
