@@ -1,5 +1,8 @@
+-- LISTA InsForge seed — table is lms_courses_legacy (not public.courses)
+-- Safe to re-run: skips existing slugs / duplicate announcement titles
+
 -- Seed Courses (local cover images in /public for reliable loading)
-INSERT INTO public.courses (slug, name, nc_level, sector, description, short_description, duration, twsp_scholarship, is_assessment_only, cover_image_url) VALUES
+INSERT INTO public.lms_courses_legacy (slug, name, nc_level, sector, description, short_description, duration, twsp_scholarship, is_assessment_only, cover_image_url) VALUES
 ('agricultural-crops-production-nc-i', 'Agricultural Crops Production', 'NC I', 'Agriculture', 'Covers the basic skills required to support nursery work, horticultural and agronomic crop production, and irrigation maintenance.', 'Foundational training in crop cultivation and farm maintenance.', '302 hours', 'true', 'false', '/agriculture-training.png'),
 ('agricultural-crops-production-nc-ii', 'Agricultural Crops Production', 'NC II', 'Agriculture', 'Builds upon foundational agricultural skills, focusing on nursery management, systematic planting, crop maintenance, and post-harvest handling.', 'Intermediate crop production and post-harvest management.', '336 hours', 'true', 'false', '/news-scholarship.png'),
 ('animal-production-poultry-chicken-nc-ii', 'Animal Production (Poultry-Chicken)', 'NC II', 'Agriculture', 'Covers competencies required for raising poultry and producing chicken for meat or eggs.', 'Training in poultry and chicken production management.', '300 hours', 'true', 'false', '/course-healthcare.png'),
@@ -23,3 +26,10 @@ INSERT INTO public.announcements (title, body, target, created_at) VALUES
 ('National Women''s Celebration Month Capability Training', 'In March 2024, LISTA hosted a transformative three-day capability training program in support of National Women''s Celebration Month. Thirty women from Gingoog City participated in practical sessions covering urban gardening, composting, soil preparation, and seedling cultivation.', 'all', '2024-03-20T09:00:00Z'),
 ('Training of Trainers on Rabbitry Production', 'In June 2024, LISTA''s training farm in Lunotan became the venue for a five-day Training of Trainers on Rabbitry Production as an Enterprise - organized by ATI-RTC X. Twenty participants from Bukidnon, Misamis Oriental, and Misamis Occidental underwent intensive training.', 'all', '2024-06-03T12:00:00Z')
 ON CONFLICT DO NOTHING;
+
+-- Optional: only if you need to re-seed announcements (table has no unique on title)
+-- DELETE FROM public.announcements WHERE title IN (
+--   'TWSP Scholarship Slots Available!',
+--   'National Women''s Celebration Month Capability Training',
+--   'Training of Trainers on Rabbitry Production'
+-- );

@@ -560,7 +560,7 @@ export async function fetchCourses(): Promise<ListaFetchResult<Course[]>> {
 
   try {
     const { data, error } = await withTimeout(
-      (async () => lista.from("courses").select("*").order("name", { ascending: true }))(),
+      (async () => lista.from("lms_courses_legacy").select("*").order("name", { ascending: true }))(),
       FETCH_COURSES_MS,
       "InsForge courses",
     );
