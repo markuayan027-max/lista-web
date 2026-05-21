@@ -111,6 +111,9 @@ CREATE POLICY categories_staff_only ON public.categories
 DROP POLICY IF EXISTS course_batches_select_all ON public.course_batches;
 DROP POLICY IF EXISTS course_batches_select_authenticated ON public.course_batches;
 DROP POLICY IF EXISTS course_batches_write_staff ON public.course_batches;
+DROP POLICY IF EXISTS course_batches_insert_staff ON public.course_batches;
+DROP POLICY IF EXISTS course_batches_update_staff ON public.course_batches;
+DROP POLICY IF EXISTS course_batches_delete_staff ON public.course_batches;
 CREATE POLICY course_batches_select_authenticated ON public.course_batches
   FOR SELECT TO authenticated
   USING (true);
