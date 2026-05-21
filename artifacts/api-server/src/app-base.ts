@@ -15,7 +15,20 @@ export function mountAppRoutes(app: Application): void {
     skip: (_req: unknown) => process.env.NODE_ENV === "development",
   });
 
-  app.use(cors());
+  const corsOrigins = [
+    process.env.LISTA_APP_URL,
+    process.env.VITE_APP_URL,
+    "https://lista.dpdns.org",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+  ].filter((v): v is string => typeof v === "string" && v.length > 0);
+
+  app.use(
+    cors({
+      origin: corsOrigins.length > 0 ? corsOrigins : true,
+      credentials: true,
+    }),
+  );
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
   app.use("/api", limiter);

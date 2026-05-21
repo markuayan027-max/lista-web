@@ -1,6 +1,11 @@
 {
   "name": "lista-frontend",
   "installCommand": "pnpm install --frozen-lockfile --prod=false",
+  "build": {
+    "env": {
+      "VITE_LISTA_API_BASE_URL": "https://lista-web.campionsamuel-tech.workers.dev"
+    }
+  },
   "buildCommand": "pnpm --filter @workspace/api-server run build && pnpm --filter @workspace/lista run build",
   "outputDirectory": "artifacts/lista/dist/public",
   "framework": null,

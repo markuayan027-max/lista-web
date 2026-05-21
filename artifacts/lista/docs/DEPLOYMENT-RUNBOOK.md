@@ -61,9 +61,17 @@ Optional: `LOG_LEVEL`, `LISTA_APP_URL` / `VITE_APP_URL` for activation links.
 - **API:** `api/index.js` → `artifacts/api-server/dist/vercel-entry.mjs` (Express, same origin `/api/*`)
 - **Config:** root `vercel.json` — do not remove root `api/` from the repo (`.vercelignore` must not exclude it)
 
-## Optional: Cloudflare Worker `lista-web`
+## Production API: Cloudflare `lista-web` (connected to Vercel frontend)
 
-Only if you move API off Vercel (`VITE_LISTA_API_BASE_URL`). Default production path is **same-origin Vercel API**. Do not change **`astral-api`** for LISTA.
+**Default (current):** Vercel build sets `VITE_LISTA_API_BASE_URL=https://lista-web.campionsamuel-tech.workers.dev` in `vercel.json` → browser calls Worker for `/api/*`. Worker must have `DATABASE_URL`, `INSFORGE_URL`, `GROQ_API_KEY`.
+
+**Verify after deploy:** DevTools → Network → `/api/courses` host must be `*.workers.dev`, not `lista.dpdns.org`.
+
+**Meta prompt for agents:** `artifacts/lista/docs/META-PROMPT-connect-lista-frontend-lista-web.md`
+
+To use same-origin Vercel API again: remove `build.env.VITE_LISTA_API_BASE_URL` from `vercel.json` and redeploy (only after `/api/healthz` on Vercel returns 200).
+
+Do not change **`astral-api`** for LISTA.
 
 Build from repo root: `pnpm install --frozen-lockfile` then `pnpm --filter @workspace/api-server exec wrangler deploy`. Secrets: `DATABASE_URL`, `GROQ_API_KEY`, `INSFORGE_URL` on **lista-web** only.
 
