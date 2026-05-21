@@ -45,7 +45,7 @@
 
 ## Next (pre-launch)
 
-- Apply `008-multi-enrollment-lifecycle.sql` on InsForge **branch** then prod; deploy Worker + Vercel; run Phase B smoke IDs from `SMOKE-50-SCENARIOS.md`
+- **Phase B pushed** `adf535e` — Vercel deploy URL: https://github.com/markuayan027-max/lista-web/commit/adf535e10e9b2380c5f4642c46bc4e62f2c32567 (or `d95f43d` for lifecycle-only). Worker API smoke OK; redeploy Vercel from commit URL for UI.
 - Execute checklist T1–T10 with real InsForge credentials
 - Multi-account E2E spec (draft isolation A → B)
 - Print/PDF E2E spec (TESDA form regression)
