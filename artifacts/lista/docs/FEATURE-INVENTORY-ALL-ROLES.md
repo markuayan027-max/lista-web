@@ -2,7 +2,7 @@
 
 **Purpose:** Master list of routes and functionalities from **public homepage** through **Admin / Staff / Trainee dashboards**.
 
-**Smoke checklist (50 scenarios):** [SMOKE-50-SCENARIOS.md](./SMOKE-50-SCENARIOS.md) · **Ops:** [PRODUCTION-MAINTENANCE.md](./PRODUCTION-MAINTENANCE.md)
+**Smoke checklist (50 scenarios):** [SMOKE-50-SCENARIOS.md](./SMOKE-50-SCENARIOS.md) · **Ops:** [PRODUCTION-MAINTENANCE.md](./PRODUCTION-MAINTENANCE.md) · **Remaining work (easy→complex):** [REMAINING-TASKS.md](./REMAINING-TASKS.md)
 
 **Source:** `artifacts/lista/src/App.tsx`, nav configs, page implementations.  
 **Production base:** https://lista.dpdns.org  

@@ -136,15 +136,15 @@ export default function StaffEnrollmentsPage() {
     }
   };
 
-  const handleAction = async (id: string, action: 'confirmed' | 'rejected') => {
+  const handleAction = async (id: string, status: Enrollment["status"]) => {
     try {
-      await updateStatus.mutateAsync({ id, status: action });
+      await updateStatus.mutateAsync({ id, status });
       toast({
         title: "Enrollment Updated",
-        description: `Enrollment status changed to ${action}.`,
+        description: `Enrollment status changed to ${status}.`,
       });
       if (selectedEnrollment?.id === id) {
-        setSelectedEnrollment({ ...selectedEnrollment, status: action });
+        setSelectedEnrollment({ ...selectedEnrollment, status });
       }
     } catch (err) {
       toast({
@@ -381,6 +381,28 @@ export default function StaffEnrollmentsPage() {
                       onClick={() => handleAction(selectedEnrollment.id, 'confirmed')}
                     >
                       Approve Application
+                    </Button>
+                  </div>
+                )}
+
+                {enrollmentStatusIs(selectedEnrollment.status, "confirmed") && (
+                  <div className="pt-4 border-t border-card-border">
+                    <Button
+                      className="w-full bg-primary-indigo hover:bg-primary-indigo/90 text-primary-foreground"
+                      onClick={() => handleAction(selectedEnrollment.id, "enrolled")}
+                    >
+                      Mark enrolled
+                    </Button>
+                  </div>
+                )}
+
+                {enrollmentStatusIs(selectedEnrollment.status, "enrolled") && (
+                  <div className="pt-4 border-t border-card-border">
+                    <Button
+                      className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+                      onClick={() => handleAction(selectedEnrollment.id, "completed")}
+                    >
+                      Mark completed
                     </Button>
                   </div>
                 )}

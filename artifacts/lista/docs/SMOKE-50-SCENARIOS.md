@@ -9,6 +9,8 @@
 
 **Credentials:** Never commit passwords. Live runs use `LISTA_E2E_*` env vars. Log out between roles.
 
+**Remaining work (easy → complex):** [REMAINING-TASKS.md](./REMAINING-TASKS.md)
+
 | ID | Role | Phase | Preconditions | Steps | Expected | API proof |
 |----|------|-------|---------------|-------|----------|-----------|
 | PUB-01 | Guest | A | — | Open `/` | Hero, programs, footer load; HTTP 200 | — |

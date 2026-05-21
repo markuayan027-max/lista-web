@@ -43,14 +43,19 @@
 
 ---
 
-## Next (pre-launch)
+## Next (pre-launch) — ordered easy → complex
 
-- **Phase B pushed** `adf535e` — Vercel deploy URL: https://github.com/markuayan027-max/lista-web/commit/adf535e10e9b2380c5f4642c46bc4e62f2c32567 (or `d95f43d` for lifecycle-only). Worker API smoke OK; redeploy Vercel from commit URL for UI.
-- Execute checklist T1–T10 with real InsForge credentials
-- Multi-account E2E spec (draft isolation A → B)
-- Print/PDF E2E spec (TESDA form regression)
-- Optional: `admin/export.tsx` secondary blue accents
-- **Done (2026-05-20):** Public marketing responsive UX — navbar/footer, admissions/scholarships heroes, course-detail mobile enroll bar, about carousels/stats, assessment/news/legal pages. Meta-prompt: `artifacts/lista/docs/PUBLIC-HOMEPAGE-RESPONSIVE-UX-META-PROMPT.md`
+See **`artifacts/lista/docs/REMAINING-TASKS.md`** (master list).
+
+**Deploy now:** https://github.com/markuayan027-max/lista-web/commit/c319b82b1561401b3f4361b063bf58ad0f3afb96
+
+| Tier | Examples |
+|------|----------|
+| 1 Easy | API smoke recorded; Vercel deploy from commit URL |
+| 2 Medium | Staff enroll/complete buttons; Phase B live notes; responsive pass |
+| 3 Ops | Worker `wrangler deploy` (needs `CLOUDFLARE_API_TOKEN`) |
+| 4 Live E2E | PRE-PRODUCTION T4/T8/T9, Staff/Admin smoke, golden path |
+| 5 Complex | smoke-50-live, multi-account E2E, print/PDF spec, full 50-row live |
 
 ---
 
