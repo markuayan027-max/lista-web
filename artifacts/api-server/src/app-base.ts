@@ -1,11 +1,11 @@
 import "./load-env.js";
-import express, { type Express } from "express";
+import express, { type Application } from "express";
 import cors from "cors";
 import rateLimit from "express-rate-limit";
 import router from "./routes/index.js";
 
 /** Mount CORS, parsers, rate limit, and API routes (call after request logger on each runtime). */
-export function mountAppRoutes(app: Express): void {
+export function mountAppRoutes(app: Application): void {
   const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 100,

@@ -1,4 +1,4 @@
-import type { Express, RequestHandler } from "express";
+import type { Application, RequestHandler } from "express";
 import pinoHttp from "pino-http";
 import { logger } from "../lib/logger.js";
 
@@ -16,7 +16,7 @@ const httpLogger = pinoHttp as unknown as (options: {
 }) => RequestHandler;
 
 /** Node / Vercel: pino-http request logging. */
-export function attachNodeRequestLogger(app: Express): void {
+export function attachNodeRequestLogger(app: Application): void {
   app.use(
     httpLogger({
       logger,
