@@ -235,32 +235,18 @@ export default function HomePage() {
             {/* Right: Video Promotion */}
             <Reveal inView from="scale" duration={600} className="lg:col-span-7 order-1 lg:order-2 flex flex-col items-center">
               {/* Video Card */}
-              <div className="w-full relative aspect-video rounded-2xl overflow-hidden shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)] bg-slate-900 group">
-                <video 
-                  className="w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-1000"
-                  poster="/hero.png"
+              <div className="w-full relative aspect-video rounded-2xl overflow-hidden shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)] bg-slate-900">
+                <video
+                  className="w-full h-full object-cover"
                   autoPlay
                   muted
                   loop
                   playsInline
+                  preload="metadata"
+                  aria-label="LISTA Academy campus and training preview"
                 >
-                  <source src="https://assets.mixkit.co/videos/preview/mixkit-working-on-a-laptop-in-a-cafe-4530-large.mp4" type="video/mp4" />
+                  <source src="/lista-academy-hero.mp4" type="video/mp4" />
                 </video>
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-transparent to-transparent" />
-                
-                {/* Play Button Overlay */}
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                   <div className="w-20 h-20 bg-blue-600/90 rounded-full flex items-center justify-center shadow-2xl backdrop-blur-sm">
-                      <div className="w-0 h-0 border-t-[10px] border-t-transparent border-l-[18px] border-l-white border-b-[10px] border-b-transparent ml-1.5" />
-                   </div>
-                </div>
-
-                <div className="absolute bottom-6 left-8 right-8">
-                  <div className="flex items-center gap-3">
-                    <div className="w-3 h-3 rounded-full bg-blue-500 animate-pulse shadow-[0_0_12px_rgba(59,130,246,0.8)]" />
-                    <p className="text-white font-bold text-sm tracking-widest uppercase">Live Training Preview</p>
-                  </div>
-                </div>
               </div>
             </Reveal>
         </div>

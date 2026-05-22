@@ -16,6 +16,7 @@ export const SignupPage = page(() => import("@/pages/public/signup"));
 export const ForgotPasswordPage = page(() => import("@/pages/public/forgot-password"));
 export const AuthCallbackPage = page(() => import("@/pages/public/auth-callback"));
 export const AdmissionsPage = page(() => import("@/pages/public/admissions"));
+export const ContactPage = page(() => import("@/pages/public/contact"));
 export const NewsDetailPage = page(() => import("@/pages/public/news-detail"));
 export const PrivacyPage = page(() => import("@/pages/public/privacy"));
 export const TermsPage = page(() => import("@/pages/public/terms"));

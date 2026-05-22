@@ -8,7 +8,9 @@ function pickMeta(obj: unknown): Record<string, unknown> | undefined {
 
 /** InsForge session user → admin/staff/trainee (matches api-server auth middleware). */
 export function roleFromInsForgeUser(insUser: Record<string, unknown>): UserRole {
-  if (insUser.is_project_admin === true || insUser.isProjectAdmin === true) return "admin";
+  if (insUser.is_project_admin === true || insUser.isProjectAdmin === true) {
+    return "admin";
+  }
 
   const appMeta =
     pickMeta(insUser.app_metadata) ??
@@ -33,7 +35,7 @@ export function roleFromInsForgeUser(insUser: Record<string, unknown>): UserRole
   return "trainee";
 }
 
-/** Role: LISTA API public.users → InsForge session metadata → trainee. */
+/** Role: public.users (API) → InsForge session metadata → trainee. Mirrors api-server `resolveAuthRole`. */
 export async function resolveUserRole(
   email: string,
   insUser: Record<string, unknown>,
@@ -47,14 +49,13 @@ export async function resolveUserRole(
       if (res.ok) {
         const json = (await res.json()) as { data?: { role?: string } };
         const apiRole = json.data?.role;
-        if (apiRole === "admin" || apiRole === "staff") return apiRole;
-        if (apiRole === "trainee") return "trainee";
+        if (apiRole === "admin" || apiRole === "staff" || apiRole === "trainee") {
+          return apiRole;
+        }
       }
     } catch {
-      // api-server unreachable — fall through
+      // Worker unreachable — fall through to session metadata
     }
   }
-  const fromSession = roleFromInsForgeUser(insUser);
-  if (fromSession === "admin" || fromSession === "staff") return fromSession;
-  return "trainee";
+  return roleFromInsForgeUser(insUser);
 }

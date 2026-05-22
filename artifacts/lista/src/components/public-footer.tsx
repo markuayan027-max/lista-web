@@ -24,7 +24,8 @@ export default function PublicFooter() {
         { label: "Student Login", href: "/login" },
         { label: "Join the Academy", href: "/signup" },
         { label: "Course Schedule", href: "/courses" },
-        { label: "Requirements", href: "/about" },
+        { label: "Admissions", href: "/admissions" },
+        { label: "Contact", href: "/contact" },
         { label: "Privacy Policy", href: "/privacy" },
         { label: "Terms of Service", href: "/terms" },
       ]

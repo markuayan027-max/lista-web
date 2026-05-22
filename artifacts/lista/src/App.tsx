@@ -98,6 +98,7 @@ function Router() {
       <Route path="/"><PublicLayout><Pages.HomePage /></PublicLayout></Route>
       <Route path="/about"><PublicLayout><Pages.AboutPage /></PublicLayout></Route>
       <Route path="/admissions"><PublicLayout><Pages.AdmissionsPage /></PublicLayout></Route>
+      <Route path="/contact"><PublicLayout><Pages.ContactPage /></PublicLayout></Route>
       <Route path="/courses"><PublicLayout><Pages.CoursesPage /></PublicLayout></Route>
       <Route path="/courses/:slug"><PublicLayout><Pages.CourseDetailPage /></PublicLayout></Route>
       <Route path="/assessment"><PublicLayout><Pages.AssessmentPage /></PublicLayout></Route>
