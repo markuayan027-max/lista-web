@@ -21,7 +21,20 @@ export function mountAppRoutes(app: Application): void {
     "https://lista.dpdns.org",
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+    "http://localhost:4173",
+    "http://127.0.0.1:4173",
   ].filter((v): v is string => typeof v === "string" && v.length > 0);
+
+  const reflectCorsOrigin = (req: Request, res: Response): void => {
+    const origin = req.headers.origin;
+    if (typeof origin !== "string" || !origin) return;
+    const allowed =
+      corsOrigins.length > 0 ? corsOrigins.includes(origin) : true;
+    if (!allowed) return;
+    res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+    res.setHeader("Vary", "Origin");
+  };
 
   app.use(
     cors({
@@ -29,8 +42,21 @@ export function mountAppRoutes(app: Application): void {
       credentials: true,
     }),
   );
+  app.use((req, res, next) => {
+    reflectCorsOrigin(req, res);
+    next();
+  });
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
   app.use("/api", limiter);
   app.use("/api", router);
+
+  app.use(
+    (err: unknown, req: Request, res: Response, _next: NextFunction) => {
+      reflectCorsOrigin(req, res);
+      if (res.headersSent) return;
+      const message = err instanceof Error ? err.message : "Internal Server Error";
+      res.status(500).json({ success: false, error: message });
+    },
+  );
 }

@@ -1,6 +1,6 @@
 # LISTA Project — Workflow State
 
-**Last Updated:** 2026-05-21 (public content: no ₱500k pool; hide commencement/Romualdez news)
+**Last Updated:** 2026-05-22 (mobile live E2E fixes — local; redeploy pending)
 
 > Read this before starting. Update when you finish or hand off.
 
@@ -38,6 +38,7 @@
 - **Admin E2E meta** — live login ✅ all tabs; enrollments empty → **`GET /api/enrollments`** added (restart `pnpm dev` to verify A2).
 - **Phase 4 manual remainder:** email signup OTP (row 1), second-browser cloud profile (row 10).
 - **Production smoke (2026-05-21):** `lista.dpdns.org` → Cloudflare `lista-web` for courses/chat/enrollments; Vercel `/api/*` still 500 (legacy). Commits `17fb88d` (Worker URL build) + `a8f15ed` (staff/admin block `/trainee/register`, profile `apiUrl()`). **Redeploy Vercel** from latest `main` to pick up `a8f15ed`.
+- **Mobile live E2E (2026-05-22, uncommitted):** P0 `/trainee/register` logged-out → `/login?redirect=…` ✅ live. Worker CORS (`/api/courses`, `/api/users/me` 401) ✅ curl. **Admin login** on prod still lands `/trainee/register` (client role = trainee until `/api/users/me` on fresh token — fix in `auth-context.tsx` + `resolve-auth-role.ts`; **needs Vercel deploy**). Code also: mobile nav sheet sticky CTA + a11y titles, signup Google SVG `3.06 .56`, chat FAB offset on course detail, Worker CORS error middleware. `public.users`: admin/staff roles confirmed; trainee email may lack `public.users` row (insert blocked by `password_hash` NOT NULL).
 - **Feature inventory:** `artifacts/lista/docs/FEATURE-INVENTORY-ALL-ROLES.md` — full public + Admin/Staff/Trainee route/feature list for drafting 20 live test scenarios.
 - **50-scenario + lifecycle plan (2026-05-21):** `SMOKE-50-SCENARIOS.md`, `PRODUCTION-MAINTENANCE.md`, `.github/workflows/lista-ci.yml`, baseline `docs/deploy-baselines/2026-05-21-prod-baseline.md`, SQL `sql/008-multi-enrollment-lifecycle.sql`, API lifecycle routes, trainee Quick Apply + staff/admin NC/join/transfer UI.
 
@@ -75,3 +76,4 @@ See **`artifacts/lista/docs/REMAINING-TASKS.md`** (master list).
 | 2026-05-20 | API separation guard | Added `VITE_LISTA_API_BASE_URL` frontend API override + runbook hard boundary to keep LISTA off shared `astral-api` infra |
 | 2026-05-20 | Cloudflare `lista-web` | `artifacts/api-server/wrangler.toml` + `src/worker.ts` (Express + `httpServerHandler`); `pnpm cf:deploy`; runbook Workers Builds table (repo root + pnpm filter) |
 | 2026-05-21 | Prod connect + smoke | `VITE_LISTA_API_BASE_URL` in `vercel.json`; CORS on Worker; live Admin/Staff/Trainee login OK; trainee registration partial save during browser E2E; browser session cleared to `/login` |
+| 2026-05-22 | Mobile fix-all (local) | Live P0 redirect + Worker CORS OK; admin→`/trainee/register` on prod (role bug); patches uncommitted @ `95a9192` base |

@@ -42,19 +42,24 @@ export async function resolveUserRole(
   accessToken: string | null,
 ): Promise<UserRole> {
   if (accessToken) {
-    try {
-      const res = await fetch(apiUrl("/api/users/me"), {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-      if (res.ok) {
-        const json = (await res.json()) as { data?: { role?: string } };
-        const apiRole = json.data?.role;
-        if (apiRole === "admin" || apiRole === "staff" || apiRole === "trainee") {
-          return apiRole;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const res = await fetch(apiUrl("/api/users/me"), {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        if (res.ok) {
+          const json = (await res.json()) as { data?: { role?: string } };
+          const apiRole = json.data?.role;
+          if (apiRole === "admin" || apiRole === "staff" || apiRole === "trainee") {
+            return apiRole;
+          }
         }
+      } catch {
+        // Worker unreachable — fall through to session metadata
       }
-    } catch {
-      // Worker unreachable — fall through to session metadata
+      if (attempt === 0) {
+        await new Promise((r) => setTimeout(r, 350));
+      }
     }
   }
   return roleFromInsForgeUser(insUser);

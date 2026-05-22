@@ -26,11 +26,17 @@ import { clearTraineeSyncMarkers, syncTraineeSideEffects } from "../lib/auth-tra
 // Helpers
 // ---------------------------------------------------------------------------
 
-async function mapInsForgeUser(insUser: any): Promise<User | null> {
+async function mapInsForgeUser(
+  insUser: any,
+  preferredAccessToken?: string | null,
+): Promise<User | null> {
   if (!insUser) return null;
   const email: string = insUser.email || "";
 
-  const token = await ensureAccessToken();
+  const token =
+    (typeof preferredAccessToken === "string" && preferredAccessToken.length > 0
+      ? preferredAccessToken
+      : null) ?? (await ensureAccessToken());
   const resolvedRole = await resolveUserRole(
     email,
     insUser as Record<string, unknown>,
@@ -75,7 +81,10 @@ async function applySessionPayload(
   if (!rawUser) {
     throw new Error("Sign-in succeeded but your profile could not be loaded. Please try again.");
   }
-  const mapped = await mapInsForgeUser(rawUser);
+  const mapped = await mapInsForgeUser(
+    rawUser,
+    typeof session.accessToken === "string" ? session.accessToken : null,
+  );
   setUser(mapped);
   if (mapped) {
     setIsRegistered(isTraineeRegistrationComplete(mapped));
@@ -112,7 +121,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const verified = getStoredSession();
           const rawUser = verified?.user as Record<string, unknown> | undefined;
           if (rawUser) {
-            const mapped = await mapInsForgeUser(rawUser);
+            const mapped = await mapInsForgeUser(rawUser, token);
             setUser(mapped);
             if (mapped) {
               setIsRegistered(isTraineeRegistrationComplete(mapped));

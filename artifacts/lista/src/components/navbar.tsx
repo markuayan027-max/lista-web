@@ -3,7 +3,14 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
 import { useState, useEffect } from "react";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { useAuth } from "@/context/auth-context";
 import { getEnrollCta } from "@/lib/role-navigation";
 import SiteLogo from "@/components/site-logo";
@@ -96,8 +103,15 @@ export default function Navbar() {
                   <Menu className="h-6 w-6" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-[300px] sm:w-[400px]">
-                <div className="flex flex-col gap-8 mt-10">
+              <SheetContent
+                side="right"
+                className="flex h-[100dvh] max-h-[100dvh] w-[min(100vw,400px)] flex-col gap-0 overflow-hidden p-0 sm:max-w-[400px]"
+              >
+                <SheetHeader className="sr-only">
+                  <SheetTitle>Navigation menu</SheetTitle>
+                  <SheetDescription>Site links and enrollment actions</SheetDescription>
+                </SheetHeader>
+                <div className="flex flex-1 flex-col gap-6 overflow-y-auto overscroll-contain px-6 pb-4 pt-14">
                   {NAV_LINKS.map((link) => (
                     <Link
                       key={link.href}
@@ -112,12 +126,14 @@ export default function Navbar() {
                       {link.label}
                     </Link>
                   ))}
-                  <div className="flex flex-col gap-4 pt-6 border-t border-card-border">
+                </div>
+                <div className="shrink-0 border-t border-card-border bg-background px-6 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+                  <div className="flex flex-col gap-4">
                     <Link href="/login" className="text-lg font-bold text-muted-foreground">
                       Log in
                     </Link>
                     <Link href={enrollCta.href}>
-                      <Button className="w-full rounded-xl py-6 text-lg font-bold">
+                      <Button className="w-full rounded-xl py-6 text-lg font-bold min-h-[3.25rem]">
                         {enrollCta.label}
                       </Button>
                     </Link>

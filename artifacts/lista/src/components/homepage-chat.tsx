@@ -340,7 +340,7 @@ export default function HomepageChat({ programCount }: HomepageChatProps) {
         className={cn(
           "fixed z-50 h-14 w-14 rounded-full bg-blue-700 shadow-lg shadow-blue-900/20 hover:bg-blue-800",
           courseDetailStickyBar
-            ? "bottom-[5.5rem] right-4 lg:bottom-[max(1.25rem,env(safe-area-inset-bottom))] lg:right-6"
+            ? "bottom-[calc(5.25rem+env(safe-area-inset-bottom))] right-4 max-lg:bottom-[calc(5.25rem+env(safe-area-inset-bottom))] lg:bottom-[max(1.25rem,env(safe-area-inset-bottom))] lg:right-6"
             : "bottom-[max(1.25rem,env(safe-area-inset-bottom))] right-4 md:right-6",
           open && "ring-2 ring-blue-300 ring-offset-2",
         )}
