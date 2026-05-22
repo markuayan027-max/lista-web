@@ -11,7 +11,9 @@ export default function HeroAcademyVideo() {
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const userPausedRef = useRef(false);
+  const hasCompletedRef = useRef(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [hasEnded, setHasEnded] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
   const [loadError, setLoadError] = useState(false);
 
@@ -28,10 +30,9 @@ export default function HeroAcademyVideo() {
         }
         return;
       }
-      if (!userPausedRef.current) {
-        video.muted = true;
-        void video.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
-      }
+      if (hasCompletedRef.current || userPausedRef.current) return;
+      video.muted = true;
+      void video.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
     };
 
     const observer = new IntersectionObserver(
@@ -47,18 +48,33 @@ export default function HeroAcademyVideo() {
     return () => observer.disconnect();
   }, [loadError]);
 
+  const handleEnded = useCallback(() => {
+    hasCompletedRef.current = true;
+    userPausedRef.current = true;
+    setHasEnded(true);
+    setIsPlaying(false);
+  }, []);
+
   const togglePlay = useCallback(() => {
     const video = videoRef.current;
     if (!video) return;
+
     if (video.paused) {
+      if (hasCompletedRef.current || video.ended) {
+        hasCompletedRef.current = false;
+        setHasEnded(false);
+        video.currentTime = 0;
+      }
       userPausedRef.current = false;
+      video.muted = isMuted;
       void video.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
-    } else {
-      userPausedRef.current = true;
-      video.pause();
-      setIsPlaying(false);
+      return;
     }
-  }, []);
+
+    userPausedRef.current = true;
+    video.pause();
+    setIsPlaying(false);
+  }, [isMuted]);
 
   const toggleMute = useCallback(() => {
     const video = videoRef.current;
@@ -67,6 +83,8 @@ export default function HeroAcademyVideo() {
     video.muted = next;
     setIsMuted(next);
   }, []);
+
+  const showCenterControl = !isPlaying || hasEnded;
 
   if (loadError) {
     return (
@@ -84,14 +102,14 @@ export default function HeroAcademyVideo() {
       <video
         ref={videoRef}
         className="w-full h-full object-cover"
-        muted
-        loop
+        muted={isMuted}
         playsInline
         preload="metadata"
         poster={POSTER_SRC}
         aria-label="LISTA Academy campus and training preview"
         onPlay={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}
+        onEnded={handleEnded}
         onError={() => setLoadError(true)}
       >
         <source src={VIDEO_SRC} type="video/mp4" />
@@ -100,7 +118,9 @@ export default function HeroAcademyVideo() {
       <button
         type="button"
         onClick={togglePlay}
-        aria-label={isPlaying ? "Pause video" : "Play video"}
+        aria-label={
+          hasEnded ? "Replay video" : isPlaying ? "Pause video" : "Play video"
+        }
         className={cn(
           "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10",
           "flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-full",
@@ -108,10 +128,11 @@ export default function HeroAcademyVideo() {
           "border border-white/80 backdrop-blur-[2px]",
           "transition-all duration-300 ease-out",
           "hover:scale-105 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 focus-visible:ring-offset-2",
-          isPlaying && "opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100",
+          !showCenterControl &&
+            "opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100",
         )}
       >
-        {isPlaying ? (
+        {isPlaying && !hasEnded ? (
           <Pause className="h-6 w-6 sm:h-7 sm:w-7" strokeWidth={2} aria-hidden />
         ) : (
           <Play className="h-6 w-6 sm:h-7 sm:w-7 ml-0.5" strokeWidth={2} aria-hidden />
