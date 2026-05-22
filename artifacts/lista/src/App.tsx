@@ -33,13 +33,20 @@ function Protected({
 
   useEffect(() => {
     if (loading) return;
-    if (user) return;
+    if (!user) {
+      if (import.meta.env.DEV && localStorage.getItem("TEST_MODE") === "true") return;
+      const returnTo = encodeURIComponent(
+        `${window.location.pathname}${window.location.search}`,
+      );
+      setLocation(`/login?redirect=${returnTo}`);
+      return;
+    }
+    if (user.role === allowedRole) return;
     if (import.meta.env.DEV && localStorage.getItem("TEST_MODE") === "true") return;
-    const returnTo = encodeURIComponent(
-      `${window.location.pathname}${window.location.search}`,
-    );
-    setLocation(`/login?redirect=${returnTo}`);
-  }, [user, loading, setLocation]);
+    if (user.role === "admin") setLocation("/admin");
+    else if (user.role === "staff") setLocation("/staff");
+    else setLocation("/trainee");
+  }, [user, loading, allowedRole, setLocation]);
 
   if (loading) {
     return (

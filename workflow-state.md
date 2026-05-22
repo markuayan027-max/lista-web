@@ -48,7 +48,7 @@
 
 See **`artifacts/lista/docs/REMAINING-TASKS.md`** (master list).
 
-**Deploy now:** https://github.com/markuayan027-max/lista-web/commit/c319b82b1561401b3f4361b063bf58ad0f3afb96
+**Deploy now:** https://github.com/markuayan027-max/lista-web/commit/23394af
 
 | Tier | Examples |
 |------|----------|

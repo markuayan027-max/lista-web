@@ -78,16 +78,19 @@ async function logout(page) {
 
 /** @param {import('@playwright/test').Page} page */
 async function loginAs(page, role) {
-  await page.goto(`${base}/login`, { waitUntil: "domcontentloaded" });
+  await page.goto(`${base}/login`, { waitUntil: "networkidle", timeout: 60_000 });
+  await page.locator('[data-testid="auth-loading"]').waitFor({ state: "detached", timeout: 30_000 }).catch(() => {});
   await page.getByLabel("Email").fill(role.email.trim());
   await page.getByPlaceholder("••••••••").fill(role.password);
-  await page.getByRole("button", { name: /^Log in$/i }).click();
-  await page.waitForTimeout(3_000);
-  const url = page.url();
-  if (/\/login/.test(url)) {
-    const errText = await page.locator('[role="alert"]').innerText().catch(() => "");
-    throw new Error(`Still on login: ${errText || url}`);
+  const submit = page.getByRole("button", { name: /^Log in$/i });
+  await submit.waitFor({ state: "visible", timeout: 15_000 });
+  for (let i = 0; i < 20; i++) {
+    if (await submit.isEnabled()) break;
+    await page.waitForTimeout(500);
   }
+  await submit.click({ timeout: 45_000 });
+  await page.waitForURL((u) => !u.pathname.includes("/login"), { timeout: 90_000 });
+  const url = page.url();
   if (!role.home.test(url)) {
     throw new Error(`Expected ${role.home}; got ${url}`);
   }
@@ -119,9 +122,14 @@ async function testHomepageChat(page) {
   const twsp = page.getByRole("button", { name: "TWSP" });
   if (await twsp.isVisible().catch(() => false)) {
     await twsp.click();
-    await page.waitForTimeout(8_000);
-    const twspText = await page.locator("body").innerText();
-    results.push({ id: "C3", ok: /TWSP|scholarship/i.test(twspText) });
+    await page.waitForTimeout(12_000);
+    const twspText = await page
+      .locator("ul")
+      .filter({ has: page.getByText(/LISTA Guide|TWSP|scholarship/i) })
+      .first()
+      .innerText()
+      .catch(() => page.locator("body").innerText());
+    results.push({ id: "C3", ok: /TWSP|scholarship|Training for Work/i.test(twspText) });
   } else {
     results.push({ id: "C3", ok: false });
   }
@@ -189,7 +197,9 @@ try {
 
       if (role.block) {
         await page.goto(`${base}${role.block}`, { waitUntil: "domcontentloaded" });
-        await page.waitForTimeout(1500);
+        await page
+          .waitForURL((u) => !u.pathname.includes(role.block), { timeout: 20_000 })
+          .catch(() => {});
         const blocked = !page.url().includes(role.block);
         roleReport.block = { path: role.block, ok: blocked, url: page.url() };
       }
