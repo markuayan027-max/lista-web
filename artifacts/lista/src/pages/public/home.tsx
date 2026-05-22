@@ -34,6 +34,8 @@ import { CourseCarouselSkeleton } from "@/components/skeletons";
 import { ContentFadeIn } from "@/components/skeletons/primitives";
 import OptimizedImage from "@/components/optimized-image";
 import { PARTNER_LOGOS_HOME } from "@/lib/image-assets";
+import HeroAcademyVideo from "@/components/hero-academy-video";
+
 export default function HomePage() {
   const coursesQuery = useCourses();
   const { data: liveCourses = [], isLoading: coursesLoading } = coursesQuery;
@@ -232,22 +234,9 @@ export default function HomePage() {
               </div>
             </Reveal>
 
-            {/* Right: Video Promotion */}
-            <Reveal inView from="scale" duration={600} className="lg:col-span-7 order-1 lg:order-2 flex flex-col items-center">
-              {/* Video Card */}
-              <div className="w-full relative aspect-video rounded-2xl overflow-hidden shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)] bg-slate-900">
-                <video
-                  className="w-full h-full object-cover"
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  preload="metadata"
-                  aria-label="LISTA Academy campus and training preview"
-                >
-                  <source src="/lista-academy-hero.mp4" type="video/mp4" />
-                </video>
-              </div>
+            {/* Right: Academy video — autoplay muted; visitor can play/pause and unmute */}
+            <Reveal inView from="scale" duration={600} className="lg:col-span-7 order-1 lg:order-2 flex flex-col items-center w-full">
+              <HeroAcademyVideo />
             </Reveal>
         </div>
 
