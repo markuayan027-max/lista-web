@@ -6,6 +6,7 @@ import OptimizedImage from "@/components/optimized-image";
 import { BookOpen, ArrowRight, CheckCircle2, Lock } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { NcLevelBadge } from "@/components/nc-level-badge";
 
 interface Course {
   slug: string;
@@ -87,8 +88,8 @@ export default function CourseCard({ course, hideLockOverlay = false }: CourseCa
             </div>
 
             <CardContent className="p-6 flex-grow flex flex-col">
-              <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">
-                {course.ncLevel}
+              <div className="mb-3">
+                <NcLevelBadge level={course.ncLevel} />
               </div>
               
               <h3 className="text-lg font-bold text-slate-900 mb-3 line-clamp-2 min-h-[3.5rem]">

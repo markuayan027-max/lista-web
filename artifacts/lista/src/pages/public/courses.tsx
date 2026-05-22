@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import { resolveCourseCoverImage } from "@/lib/course-images";
 import OptimizedImage from "@/components/optimized-image";
 import { getPublicEnrollHref } from "@/lib/enroll-entry";
+import { NcLevelBadge } from "@/components/nc-level-badge";
 
 type ListingCourse = HeroCourseItem & { source: Course };
 
@@ -85,9 +86,9 @@ function CourseListing({ course }: { course: ListingCourse }) {
         </div>
 
         <div className="flex flex-1 flex-col p-5 min-h-0">
-          <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground mb-1.5">
-            Course · NC {course.ncLevel}
-          </p>
+          <div className="mb-2">
+            <NcLevelBadge level={course.ncLevel} />
+          </div>
           <h3 className="font-bold text-foreground text-[15px] leading-snug mb-3 line-clamp-2 min-h-[2.75rem] group-hover:text-primary-indigo transition-colors">
             {course.name}
           </h3>

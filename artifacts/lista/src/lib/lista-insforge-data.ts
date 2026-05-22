@@ -15,6 +15,7 @@ import {
   type UserRole,
 } from "@/lib/institutional-data";
 import { resolveCourseCoverImage, resolveCourseGalleryImages } from "@/lib/course-images";
+import { formatNcLevel } from "@/lib/format-nc-level";
 import { apiUrl } from "@/lib/api-url";
 
 export type ListaAnnouncement = {
@@ -179,9 +180,9 @@ export function rowToCourse(row: Record<string, unknown>): Course {
     id: str(row.id),
     slug: str(row.slug),
     title: str(row.name),
-    ncLevel: str(row.nc_level),
+    ncLevel: formatNcLevel(str(row.nc_level)),
     category: str(row.sector),
-    level: str(row.nc_level),
+    level: formatNcLevel(str(row.nc_level)),
     twsp,
     tags,
     durationHours: hoursMatch ? parseInt(hoursMatch[1], 10) : 0,

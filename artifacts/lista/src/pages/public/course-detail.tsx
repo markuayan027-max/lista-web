@@ -15,6 +15,8 @@ import useEmblaCarousel from 'embla-carousel-react';
 import { useState, useEffect, useCallback } from "react";
 import NotFound from "@/pages/not-found";
 import { getPublicEnrollHref } from "@/lib/enroll-entry";
+import { NcLevelBadge } from "@/components/nc-level-badge";
+import { formatNcLevel } from "@/lib/format-nc-level";
 import type { Course } from "@/lib/institutional-data";
 
 function CourseEnrollPanel({ course }: { course: Course }) {
@@ -40,7 +42,7 @@ function CourseEnrollPanel({ course }: { course: Course }) {
             </div>
             <div className="flex justify-between items-center text-sm gap-4">
               <span className="text-muted-foreground">Skill level</span>
-              <span className="font-bold">{course.ncLevel || course.level}</span>
+              <span className="font-bold">{formatNcLevel(course.ncLevel || course.level)}</span>
             </div>
             <div className="flex justify-between items-center text-sm gap-4">
               <span className="text-muted-foreground">Certificate</span>
@@ -102,8 +104,9 @@ export default function CourseDetailPage() {
                 ))}
               </div>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-balance">
-                {course.title} {course.ncLevel}
+                {course.title}
               </h1>
+              <NcLevelBadge level={course.ncLevel} className="text-sm sm:text-base" />
               <p className="text-xl text-muted-foreground leading-relaxed max-w-2xl">
                 {course.shortDescription}
               </p>

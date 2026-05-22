@@ -5,6 +5,7 @@ import OptimizedImage from "@/components/optimized-image";
 import { resolveCourseCoverImage } from "@/lib/course-images";
 import type { Course } from "@/lib/institutional-data";
 import { cn } from "@/lib/utils";
+import { formatNcLevel } from "@/lib/format-nc-level";
 import { useState } from "react";
 
 type ApplicationCourseCardProps = {
@@ -106,7 +107,7 @@ export function ApplicationCourseCard({
             <BookOpen className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
             <motion.div>
               <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Level</p>
-              <p className="font-semibold text-foreground">{course.ncLevel}</p>
+              <p className="font-semibold text-foreground">{formatNcLevel(course.ncLevel)}</p>
             </motion.div>
           </motion.div>
         </div>
