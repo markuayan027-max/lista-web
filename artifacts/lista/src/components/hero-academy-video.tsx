@@ -4,27 +4,57 @@ import { cn } from "@/lib/utils";
 
 const VIDEO_SRC = "/lista-academy-hero.mp4";
 const POSTER_SRC = "/hero.png";
+/** Pause when less than this fraction of the player is visible (user scrolled to another section). */
+const VISIBILITY_THRESHOLD = 0.2;
 
 export default function HeroAcademyVideo() {
+  const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const userPausedRef = useRef(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
   const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
+    const root = containerRef.current;
     const video = videoRef.current;
-    if (!video || loadError) return;
-    video.muted = true;
-    setIsMuted(true);
-    void video.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
+    if (!root || !video || loadError) return;
+
+    const syncPlayback = (visible: boolean) => {
+      if (!visible) {
+        if (!video.paused) {
+          video.pause();
+          setIsPlaying(false);
+        }
+        return;
+      }
+      if (!userPausedRef.current) {
+        video.muted = true;
+        void video.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
+      }
+    };
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        const visible =
+          entry.isIntersecting && entry.intersectionRatio >= VISIBILITY_THRESHOLD;
+        syncPlayback(visible);
+      },
+      { threshold: [0, VISIBILITY_THRESHOLD, 0.5, 1] },
+    );
+
+    observer.observe(root);
+    return () => observer.disconnect();
   }, [loadError]);
 
   const togglePlay = useCallback(() => {
     const video = videoRef.current;
     if (!video) return;
     if (video.paused) {
+      userPausedRef.current = false;
       void video.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
     } else {
+      userPausedRef.current = true;
       video.pause();
       setIsPlaying(false);
     }
@@ -47,15 +77,17 @@ export default function HeroAcademyVideo() {
   }
 
   return (
-    <div className="group w-full relative aspect-video rounded-2xl overflow-hidden shadow-[0_32px_64px_-16px_rgba(0,0,0,0.12)] bg-slate-900">
+    <div
+      ref={containerRef}
+      className="group w-full relative aspect-video rounded-2xl overflow-hidden shadow-[0_32px_64px_-16px_rgba(0,0,0,0.12)] bg-slate-900"
+    >
       <video
         ref={videoRef}
         className="w-full h-full object-cover"
-        autoPlay
         muted
         loop
         playsInline
-        preload="auto"
+        preload="metadata"
         poster={POSTER_SRC}
         aria-label="LISTA Academy campus and training preview"
         onPlay={() => setIsPlaying(true)}
