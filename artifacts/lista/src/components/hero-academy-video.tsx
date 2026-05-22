@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { Pause, Play, RotateCcw, Volume2, VolumeX } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Pause, Play, Volume2, VolumeX } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const VIDEO_SRC = "/lista-academy-hero.mp4";
@@ -30,14 +30,6 @@ export default function HeroAcademyVideo() {
     }
   }, []);
 
-  const stopAndRestart = useCallback(() => {
-    const video = videoRef.current;
-    if (!video) return;
-    video.pause();
-    video.currentTime = 0;
-    setIsPlaying(false);
-  }, []);
-
   const toggleMute = useCallback(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -55,7 +47,7 @@ export default function HeroAcademyVideo() {
   }
 
   return (
-    <div className="w-full relative aspect-video rounded-2xl overflow-hidden shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)] bg-slate-900">
+    <div className="group w-full relative aspect-video rounded-2xl overflow-hidden shadow-[0_32px_64px_-16px_rgba(0,0,0,0.12)] bg-slate-900">
       <video
         ref={videoRef}
         className="w-full h-full object-cover"
@@ -73,64 +65,45 @@ export default function HeroAcademyVideo() {
         <source src={VIDEO_SRC} type="video/mp4" />
       </video>
 
-      <div
-        className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-slate-900/70 to-transparent pointer-events-none"
-        aria-hidden
-      />
-
-      <div
-        className="absolute bottom-3 right-3 flex items-center gap-2"
-        role="toolbar"
-        aria-label="Video controls"
+      <button
+        type="button"
+        onClick={togglePlay}
+        aria-label={isPlaying ? "Pause video" : "Play video"}
+        className={cn(
+          "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10",
+          "flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-full",
+          "bg-white/95 text-slate-900 shadow-[0_8px_30px_rgba(15,23,42,0.18)]",
+          "border border-white/80 backdrop-blur-[2px]",
+          "transition-all duration-300 ease-out",
+          "hover:scale-105 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 focus-visible:ring-offset-2",
+          isPlaying && "opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100",
+        )}
       >
-        <VideoControlButton
-          onClick={togglePlay}
-          label={isPlaying ? "Pause video" : "Play video"}
-          pressed={isPlaying}
-        >
-          {isPlaying ? <Pause className="h-5 w-5" aria-hidden /> : <Play className="h-5 w-5 ml-0.5" aria-hidden />}
-        </VideoControlButton>
-        <VideoControlButton onClick={stopAndRestart} label="Stop and restart video">
-          <RotateCcw className="h-5 w-5" aria-hidden />
-        </VideoControlButton>
-        <VideoControlButton
-          onClick={toggleMute}
-          label={isMuted ? "Turn sound on" : "Mute video"}
-          pressed={!isMuted}
-        >
-          {isMuted ? <VolumeX className="h-5 w-5" aria-hidden /> : <Volume2 className="h-5 w-5" aria-hidden />}
-        </VideoControlButton>
-      </div>
-    </div>
-  );
-}
+        {isPlaying ? (
+          <Pause className="h-6 w-6 sm:h-7 sm:w-7" strokeWidth={2} aria-hidden />
+        ) : (
+          <Play className="h-6 w-6 sm:h-7 sm:w-7 ml-0.5" strokeWidth={2} aria-hidden />
+        )}
+      </button>
 
-function VideoControlButton({
-  onClick,
-  label,
-  children,
-  pressed,
-}: {
-  onClick: () => void;
-  label: string;
-  children: ReactNode;
-  pressed?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={label}
-      aria-pressed={pressed}
-      className={cn(
-        "h-11 w-11 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full",
-        "bg-slate-900/80 text-white border border-white/25 backdrop-blur-sm",
-        "hover:bg-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900",
-        "transition-colors touch-target",
-        pressed && "bg-blue-600/90 border-blue-400/40",
-      )}
-    >
-      {children}
-    </button>
+      <button
+        type="button"
+        onClick={toggleMute}
+        aria-label={isMuted ? "Turn sound on" : "Mute video"}
+        className={cn(
+          "absolute bottom-3 right-3 z-10 h-9 w-9 flex items-center justify-center rounded-full",
+          "bg-slate-900/35 text-white/90 backdrop-blur-md",
+          "border border-white/15",
+          "opacity-70 group-hover:opacity-100 transition-opacity duration-300",
+          "hover:bg-slate-900/55 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40",
+        )}
+      >
+        {isMuted ? (
+          <VolumeX className="h-4 w-4" strokeWidth={2} aria-hidden />
+        ) : (
+          <Volume2 className="h-4 w-4" strokeWidth={2} aria-hidden />
+        )}
+      </button>
+    </div>
   );
 }

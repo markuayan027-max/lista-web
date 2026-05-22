@@ -99,13 +99,15 @@ export default function CourseCard({ course, hideLockOverlay = false }: CourseCa
               </p>
             </CardContent>
 
-            <CardFooter className="px-6 py-5 border-t border-slate-100 mt-auto flex items-center justify-between">
-              <div className="flex items-center gap-1.5 text-slate-500">
-                {course.twspScholarship === "true" && (
-                  <>
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                    <span className="text-xs font-semibold text-slate-700">TWSP Approved</span>
-                  </>
+            <CardFooter className="px-6 py-5 border-t border-slate-100 mt-auto min-h-[3.25rem] flex items-center justify-between gap-3">
+              <div className="flex flex-1 items-center justify-center min-h-[2rem]">
+                {course.twspScholarship === "true" ? (
+                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200/80 px-3 py-1 rounded-full">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" aria-hidden />
+                    Free Scholarship
+                  </span>
+                ) : (
+                  <span className="text-xs text-slate-400 font-medium">Self-funded</span>
                 )}
               </div>
               {!course.isFrozen && (

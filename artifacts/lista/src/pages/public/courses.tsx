@@ -32,10 +32,10 @@ function CourseListing({ course }: { course: ListingCourse }) {
   );
 
   return (
-    <Link href={`/courses/${course.slug}`}>
+    <Link href={`/courses/${course.slug}`} className="block h-full">
       <div
         className={cn(
-          "group relative bg-white border border-border rounded-xl overflow-hidden transition-all duration-200 h-full cursor-pointer hover:border-slate-300 hover:shadow-md hover:-translate-y-0.5",
+          "group relative flex flex-col bg-white border border-border rounded-xl overflow-hidden transition-all duration-200 h-full cursor-pointer hover:border-slate-300 hover:shadow-md hover:-translate-y-0.5",
         )}
       >
         {course.isFrozen && (
@@ -84,21 +84,21 @@ function CourseListing({ course }: { course: ListingCourse }) {
           </div>
         </div>
 
-        <div className="p-5">
+        <div className="flex flex-1 flex-col p-5 min-h-0">
           <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground mb-1.5">
             Course · NC {course.ncLevel}
           </p>
-          <h3 className="font-bold text-foreground text-[15px] leading-snug mb-3 group-hover:text-primary-indigo transition-colors">
+          <h3 className="font-bold text-foreground text-[15px] leading-snug mb-3 line-clamp-2 min-h-[2.75rem] group-hover:text-primary-indigo transition-colors">
             {course.name}
           </h3>
 
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="mt-auto pt-2 min-h-[2.5rem] flex items-center justify-center border-t border-slate-100">
             {pricing.isScholarship ? (
-              <span className="text-sm font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded">
+              <span className="inline-flex items-center justify-center w-full max-w-[11rem] text-xs font-semibold tracking-wide text-emerald-800 bg-emerald-50/90 border border-emerald-200/80 px-3 py-1.5 rounded-full">
                 Free Scholarship
               </span>
             ) : pricing.price ? (
-              <div className="flex items-baseline gap-2">
+              <div className="flex w-full items-baseline justify-center gap-2">
                 <span className="text-lg font-bold text-foreground">₱{pricing.price.toLocaleString()}</span>
                 {pricing.originalPrice && (
                   <span className="text-sm text-muted-foreground line-through">
@@ -107,7 +107,7 @@ function CourseListing({ course }: { course: ListingCourse }) {
                 )}
               </div>
             ) : (
-              <span className="text-sm text-muted-foreground font-medium">Inquire for pricing</span>
+              <span className="text-sm text-muted-foreground font-medium text-center">Inquire for pricing</span>
             )}
           </div>
         </div>
