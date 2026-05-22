@@ -61,6 +61,9 @@ const STEPS = [
 
 export default function TraineeRegistrationPage() {
   const { user, completeRegistration, markRegistrationPartial } = useAuth();
+  if (user && skipsTraineeApplication(user)) {
+    return <Redirect to={getRoleHomePath(user.role)} />;
+  }
   const { data: courses = [] } = useCourses();
   const { data: cloudProfile } = useTraineeProfile(user?.email);
   const [, setLocation] = useLocation();
