@@ -156,7 +156,9 @@ export default function AssessmentPage() {
                   objectFit="contain"
                 />
               </div>
-              <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-6">Find Your Path</h1>
+              <h1 className="font-display text-[clamp(2rem,6vw,3rem)] font-semibold tracking-tight mb-6 text-balance">
+                Find Your Path
+              </h1>
               <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-xl mx-auto">
                 Not sure which course is right for you? Answer 5 quick questions and we'll recommend the best programs based on your goals and interests.
               </p>

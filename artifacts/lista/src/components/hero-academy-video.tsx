@@ -133,7 +133,7 @@ export default function HeroAcademyVideo() {
   return (
     <div
       ref={containerRef}
-      className="group w-full relative aspect-video rounded-2xl overflow-hidden shadow-[0_32px_64px_-16px_rgba(0,0,0,0.12)] bg-slate-900"
+      className="group w-full relative aspect-video rounded-2xl overflow-hidden border border-border shadow-[0_32px_64px_-16px_rgba(0,0,0,0.12)] bg-slate-900 section-grid-bg"
     >
       <video
         ref={videoRef}
@@ -160,10 +160,10 @@ export default function HeroAcademyVideo() {
               "flex flex-col items-center gap-2 rounded-2xl px-6 py-4",
               "bg-white/95 text-slate-900 shadow-[0_8px_30px_rgba(15,23,42,0.2)]",
               "border border-white/80 transition-transform hover:scale-[1.02]",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400/50",
             )}
           >
-            <span className="flex h-14 w-14 items-center justify-center rounded-full bg-blue-600 text-white">
+            <span className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-900 text-white">
               <RotateCcw className="h-6 w-6" strokeWidth={2} aria-hidden />
             </span>
             <span className="text-sm font-bold tracking-wide">Replay</span>
@@ -180,7 +180,7 @@ export default function HeroAcademyVideo() {
             "bg-white/95 text-slate-900 shadow-[0_8px_30px_rgba(15,23,42,0.18)]",
             "border border-white/80 backdrop-blur-[2px]",
             "transition-all duration-300 ease-out",
-            "hover:scale-105 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50",
+            "hover:scale-105 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400/50",
             isPlaying && "opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100",
           )}
         >

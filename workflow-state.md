@@ -38,7 +38,7 @@
 - **Admin E2E meta** — live login ✅ all tabs; enrollments empty → **`GET /api/enrollments`** added (restart `pnpm dev` to verify A2).
 - **Phase 4 manual remainder:** email signup OTP (row 1), second-browser cloud profile (row 10).
 - **Production smoke (2026-05-21):** `lista.dpdns.org` → Cloudflare `lista-web` for courses/chat/enrollments; Vercel `/api/*` still 500 (legacy). Commits `17fb88d` (Worker URL build) + `a8f15ed` (staff/admin block `/trainee/register`, profile `apiUrl()`). **Redeploy Vercel** from latest `main` to pick up `a8f15ed`.
-- **Mobile live E2E (2026-05-22, uncommitted):** P0 `/trainee/register` logged-out → `/login?redirect=…` ✅ live. Worker CORS (`/api/courses`, `/api/users/me` 401) ✅ curl. **Admin login** on prod still lands `/trainee/register` (client role = trainee until `/api/users/me` on fresh token — fix in `auth-context.tsx` + `resolve-auth-role.ts`; **needs Vercel deploy**). Code also: mobile nav sheet sticky CTA + a11y titles, signup Google SVG `3.06 .56`, chat FAB offset on course detail, Worker CORS error middleware. `public.users`: admin/staff roles confirmed; trainee email may lack `public.users` row (insert blocked by `password_hash` NOT NULL).
+- **Mobile live E2E (2026-05-22):** Commits `23394af` (mobile nav, role token, chat FAB, CORS) + follow-up auth redirect. Playwright `tri-role-mobile-live.mjs` @ 390×844 on prod: P0 redirect ✅; LISTA Guide C1/C2/C9 ✅; Admin all 8 tabs ✅; Staff 5 tabs + block `/trainee/register` ✅; Trainee 7 routes ✅. **Admin block** `/trainee/register` failed once (URL stuck) — fixed via `Protected` `setLocation` in `App.tsx` (pending deploy). C3 TWSP flaky (timing).
 - **Feature inventory:** `artifacts/lista/docs/FEATURE-INVENTORY-ALL-ROLES.md` — full public + Admin/Staff/Trainee route/feature list for drafting 20 live test scenarios.
 - **50-scenario + lifecycle plan (2026-05-21):** `SMOKE-50-SCENARIOS.md`, `PRODUCTION-MAINTENANCE.md`, `.github/workflows/lista-ci.yml`, baseline `docs/deploy-baselines/2026-05-21-prod-baseline.md`, SQL `sql/008-multi-enrollment-lifecycle.sql`, API lifecycle routes, trainee Quick Apply + staff/admin NC/join/transfer UI.
 
@@ -48,7 +48,16 @@
 
 See **`artifacts/lista/docs/REMAINING-TASKS.md`** (master list).
 
-**Deploy now:** https://github.com/markuayan027-max/lista-web/commit/23394af
+**Deploy now:** https://github.com/markuayan027-max/lista-web/commit/5b20a84
+
+### 2026-05-22 — Public mobile polish (uncommitted)
+- **Nav:** Mobile drawer → 4 links; desktop keeps 7.
+- **LISTA Guide:** FAB hidden while panel open; panel z-[60]; compose row safe-area padding.
+- **Typography:** Geist + Geist Mono; terminal-inspired homepage sections (`SectionEyebrow`, `DisplayHeading`, neutral CTAs).
+- **Course cards:** `compact` variant on home carousel + `/courses` 2-col mobile grid (`~165×325px`, even heights); shared `CourseCard` on courses page.
+- **Public heroes:** Centered copy/CTAs on phone (`public-hero-copy` / `public-hero-actions`); left-aligned from `lg` — home, courses, about, contact, admissions, scholarships, course detail, assessment.
+- **Tri-role E2E:** Still pending `LISTA_E2E_*` env + user OK to test accounts.
+- **Worker CORS:** `app-base.ts` ready; needs `wrangler deploy` for production.
 
 | Tier | Examples |
 |------|----------|

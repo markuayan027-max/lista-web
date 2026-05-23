@@ -40,8 +40,8 @@ export default function ScholarshipsPage() {
         <div className="absolute inset-0 z-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(#2563eb 0.5px, transparent 0.5px)', backgroundSize: '24px 24px' }} />
 
         <div className="container mx-auto px-4 md:px-6 relative z-10 flex-1 flex flex-col justify-center">
-          <div className="max-w-4xl mb-12 lg:mb-20">
-            <div className="inline-flex items-center gap-3 px-4 py-2 rounded-xl bg-blue-50 border border-blue-100 mb-6 lg:mb-8 backdrop-blur-sm shadow-sm">
+          <div className="max-w-4xl mb-12 lg:mb-20 mx-auto lg:mx-0 text-center lg:text-left">
+            <div className="inline-flex items-center gap-3 px-4 py-2 rounded-xl bg-blue-50 border border-blue-100 mb-6 lg:mb-8 backdrop-blur-sm shadow-sm mx-auto lg:mx-0">
               <div className="relative">
                 <div className="w-2 h-2 rounded-full bg-blue-600" />
                 <div className="absolute inset-0 w-2 h-2 rounded-full bg-blue-600 animate-ping opacity-75" />
@@ -53,7 +53,7 @@ export default function ScholarshipsPage() {
               Empowering your <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-blue-400">Educational Journey.</span>
             </h1>
-            <p className="text-lg md:text-xl lg:text-2xl text-slate-600 leading-relaxed max-w-2xl font-medium">
+            <p className="text-lg md:text-xl lg:text-2xl text-slate-600 leading-relaxed max-w-2xl font-medium mx-auto lg:mx-0">
               Breaking financial barriers through merit-based and need-based support. Discover the pathway to your professional success at LISTA.
             </p>
           </div>

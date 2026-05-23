@@ -26,6 +26,8 @@
   --color-primary-indigo: hsl(var(--primary-indigo));
   --color-primary-electric: hsl(var(--primary-electric));
   --color-accent-gold: hsl(var(--accent-gold));
+  --color-brand: hsl(var(--brand));
+  --color-brand-foreground: hsl(var(--brand-foreground));
 
   --color-secondary: hsl(var(--secondary));
   --color-secondary-foreground: hsl(var(--secondary-foreground));
@@ -116,9 +118,14 @@
   --sidebar-accent-foreground: 222.2 47.4% 11.2%;
   --sidebar-ring: 222.2 84% 4.9%;
   
-  --app-font-sans: 'Inter', system-ui, sans-serif;
+  --app-font-sans: 'Geist', system-ui, sans-serif;
+  --app-font-display: 'Geist', system-ui, sans-serif;
   --app-font-serif: 'Georgia', serif;
-  --app-font-mono: 'Menlo', monospace;
+  --app-font-mono: 'Geist Mono', ui-monospace, monospace;
+
+  /* Brand accent — links, focus, one CTA per section */
+  --brand: 217 91% 50%;
+  --brand-foreground: 0 0% 100%;
   
   --radius: 0.6rem; /* Slightly softer for premium feel */
 }
@@ -137,12 +144,87 @@
   }
 }
 @layer utilities {
+  .font-display {
+    font-family: var(--app-font-display);
+    letter-spacing: -0.03em;
+    font-feature-settings: "ss01" on, "cv01" on;
+  }
+
+  .font-mono-label {
+    font-family: var(--app-font-mono);
+  }
+
+  .section-eyebrow {
+    @apply inline-flex items-center gap-2 border border-border bg-background px-3 py-1 text-[0.8125rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground;
+    font-family: var(--app-font-mono);
+  }
+
+  .display-heading {
+    @apply font-medium tracking-[-0.03em] text-foreground text-balance;
+    font-family: var(--app-font-display);
+  }
+
+  .display-heading--hero {
+    font-size: clamp(2.25rem, 6.5vw, 4.75rem);
+    line-height: 0.95;
+  }
+
+  .display-heading--section {
+    font-size: clamp(1.875rem, 4.5vw, 3.25rem);
+    line-height: 1.1;
+  }
+
+  .text-emphasis {
+    @apply font-semibold text-foreground;
+  }
+
+  .body-editorial {
+    @apply text-base leading-relaxed text-muted-foreground md:text-lg md:leading-[1.55];
+  }
+
+  .text-brand {
+    color: hsl(var(--brand));
+  }
+
+  .bg-brand {
+    background-color: hsl(var(--brand));
+  }
+
+  .section-grid-bg {
+    background-color: hsl(var(--background));
+    background-image: radial-gradient(
+      hsl(215 16% 46% / 0.12) 0.5px,
+      transparent 0.5px
+    );
+    background-size: 24px 24px;
+  }
+
+  .public-hero-copy {
+    @apply text-center md:text-left items-center md:items-start w-full;
+  }
+
+  .public-hero-actions {
+    @apply flex flex-col sm:flex-row gap-4 w-full sm:w-auto justify-center md:justify-start;
+  }
+
+  /* Public marketing pages: use horizontal space on wide viewports */
+  .public-site .container {
+    width: 100%;
+    max-width: min(100% - 1.5rem, 92rem);
+    margin-inline: auto;
+    padding-inline: clamp(1rem, 4vw, 2.5rem);
+  }
+
+  @media (min-width: 1536px) {
+    .public-site .container {
+      max-width: min(100% - 3rem, 100rem);
+    }
+  }
+
   .mesh-bg {
     background-color: hsla(210, 20%, 98%, 1);
-    background-image: 
-      radial-gradient(at 0% 0%, hsla(217, 91%, 60%, 0.05) 0px, transparent 50%),
-      radial-gradient(at 50% 0%, hsla(222, 47%, 11%, 0.02) 0px, transparent 50%),
-      radial-gradient(at 100% 0%, hsla(217, 91%, 60%, 0.05) 0px, transparent 50%);
+    background-image:
+      radial-gradient(at 50% 0%, hsla(222, 47%, 11%, 0.03) 0px, transparent 50%);
   }
 
   .glass-panel {

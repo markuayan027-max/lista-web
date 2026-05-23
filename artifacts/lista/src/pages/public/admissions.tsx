@@ -122,9 +122,9 @@ export default function AdmissionsPage() {
         </div>
         
         <div className="container mx-auto px-4 md:px-6 relative z-10">
-          <div className="max-w-4xl">
+          <div className="max-w-4xl mx-auto md:mx-0 text-center md:text-left">
             <Reveal from="left" duration={600}>
-              <div className="flex items-center gap-3 mb-6">
+              <div className="flex items-center justify-center md:justify-start gap-3 mb-6">
                 <div className="relative flex items-center justify-center">
                   <div className="w-2.5 h-2.5 rounded-full bg-blue-600 ring-4 ring-blue-100" />
                   <div className="absolute w-8 h-[1px] bg-gradient-to-r from-blue-600/30 to-transparent left-full ml-2" />
@@ -143,7 +143,7 @@ export default function AdmissionsPage() {
               <span className="text-blue-600 font-semibold text-lg italic mt-2 block">Dali ug sayon nga proseso para sa imong kaugmaon.</span>
             </Reveal>
             
-            <Reveal delay={300} duration={800} className="flex flex-col sm:flex-row gap-4">
+            <Reveal delay={300} duration={800} className="public-hero-actions">
               {/* 2026-05-13: single application entrypoint */}
               <Link href={getPublicEnrollHref()}>
                 <PrimaryButton size="lg" className="h-16 px-10 text-lg rounded-none bg-blue-600 hover:bg-blue-700 transition-colors duration-500 group">

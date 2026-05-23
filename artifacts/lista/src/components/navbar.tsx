@@ -5,6 +5,7 @@ import { Menu } from "lucide-react";
 import { useState, useEffect } from "react";
 import {
   Sheet,
+  SheetClose,
   SheetContent,
   SheetDescription,
   SheetHeader,
@@ -23,6 +24,14 @@ const NAV_LINKS = [
   { href: "/admissions", label: "Admissions" },
   { href: "/contact", label: "Contact" },
   { href: "/assessment", label: "Assessment" },
+];
+
+/** Mobile drawer: fewer links — About/Scholarships/Assessment stay in site footer. */
+const MOBILE_NAV_LINKS = [
+  { href: "/", label: "Home" },
+  { href: "/courses", label: "Courses" },
+  { href: "/admissions", label: "Admissions" },
+  { href: "/contact", label: "Contact" },
 ];
 
 export default function Navbar() {
@@ -48,7 +57,7 @@ export default function Navbar() {
           : "bg-white border-transparent py-5"
       )}
     >
-      <div className="container mx-auto px-4 md:px-6">
+      <div className="container mx-auto">
         <div className="flex items-center justify-between">
           <Link 
             href="/" 
@@ -89,7 +98,7 @@ export default function Navbar() {
               Log in
             </Link>
             <Link href={enrollCta.href}>
-              <Button className="rounded-full px-8 h-11 font-black bg-primary-indigo hover:bg-slate-900 text-white border-none shadow-lg shadow-primary-indigo/20 transition-all active:scale-95 whitespace-nowrap">
+              <Button className="rounded-full px-8 h-11 font-semibold bg-primary text-primary-foreground hover:bg-primary/90 border border-primary-border shadow-md shadow-slate-900/10 transition-all active:scale-95 whitespace-nowrap">
                 {enrollCta.label}
               </Button>
             </Link>
@@ -112,31 +121,36 @@ export default function Navbar() {
                   <SheetDescription>Site links and enrollment actions</SheetDescription>
                 </SheetHeader>
                 <div className="flex flex-1 flex-col gap-6 overflow-y-auto overscroll-contain px-6 pb-4 pt-14">
-                  {NAV_LINKS.map((link) => (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      className={cn(
-                        "text-xl font-bold transition-colors hover:text-blue-700",
-                        location === link.href
-                          ? "text-blue-700"
-                          : "text-slate-600"
-                      )}
-                    >
-                      {link.label}
-                    </Link>
+                  {MOBILE_NAV_LINKS.map((link) => (
+                    <SheetClose key={link.href} asChild>
+                      <Link
+                        href={link.href}
+                        className={cn(
+                          "text-xl font-semibold transition-colors hover:text-foreground",
+                          location === link.href
+                            ? "text-foreground"
+                            : "text-muted-foreground"
+                        )}
+                      >
+                        {link.label}
+                      </Link>
+                    </SheetClose>
                   ))}
                 </div>
                 <div className="shrink-0 border-t border-card-border bg-background px-6 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
                   <div className="flex flex-col gap-4">
-                    <Link href="/login" className="text-lg font-bold text-muted-foreground">
-                      Log in
-                    </Link>
-                    <Link href={enrollCta.href}>
-                      <Button className="w-full rounded-xl py-6 text-lg font-bold min-h-[3.25rem]">
-                        {enrollCta.label}
-                      </Button>
-                    </Link>
+                    <SheetClose asChild>
+                      <Link href="/login" className="text-lg font-bold text-muted-foreground">
+                        Log in
+                      </Link>
+                    </SheetClose>
+                    <SheetClose asChild>
+                      <Link href={enrollCta.href}>
+                        <Button className="w-full rounded-xl py-6 text-lg font-semibold min-h-[3.25rem] bg-primary text-primary-foreground hover:bg-primary/90">
+                          {enrollCta.label}
+                        </Button>
+                      </Link>
+                    </SheetClose>
                   </div>
                 </div>
               </SheetContent>

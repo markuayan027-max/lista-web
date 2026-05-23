@@ -28,3 +28,5 @@ export {
   AnalyticsSkeleton,
 } from "./dashboard-skeleton";
 export { AnnouncementListSkeleton } from "./announcement-list-skeleton";
+export { NewsCardSkeleton, TestimonialCardSkeleton } from "./home-section-skeleton";
+export { COURSE_CAROUSEL_SLIDE_CLASS } from "./course-grid-skeleton";

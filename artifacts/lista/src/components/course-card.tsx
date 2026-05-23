@@ -22,9 +22,16 @@ interface Course {
 interface CourseCardProps {
   course: Course;
   hideLockOverlay?: boolean;
+  /** Tighter layout for horizontal carousels (home). */
+  variant?: "default" | "compact";
 }
 
-export default function CourseCard({ course, hideLockOverlay = false }: CourseCardProps) {
+export default function CourseCard({
+  course,
+  hideLockOverlay = false,
+  variant = "default",
+}: CourseCardProps) {
+  const compact = variant === "compact";
   const [imageError, setImageError] = useState(false);
   const coverPath = resolveCourseCoverImage(
     course.slug,
@@ -39,7 +46,8 @@ export default function CourseCard({ course, hideLockOverlay = false }: CourseCa
       <Link href={canNavigate ? `/courses/${course.slug}` : "#"} className={cn("block h-full", !canNavigate && "cursor-not-allowed")}>
         <div className="h-full">
           <Card className={cn(
-            "group overflow-hidden bg-white border border-slate-200 transition-all h-full flex flex-col rounded-xl relative",
+            "group overflow-hidden bg-white border border-slate-200 transition-all h-full flex flex-col rounded-xl relative max-h-full",
+            compact && "shadow-sm",
             (course.isFrozen && !hideLockOverlay)
               ? "opacity-80 grayscale-[0.5] border-slate-100 shadow-none" 
               : "hover:border-slate-400 shadow-sm hover:shadow-md cursor-pointer"
@@ -64,7 +72,12 @@ export default function CourseCard({ course, hideLockOverlay = false }: CourseCa
               </div>
             )}
             
-            <div className="relative w-full aspect-[16/10] bg-slate-100 flex items-center justify-center border-b border-slate-200 overflow-hidden shrink-0">
+            <div
+              className={cn(
+                "relative w-full bg-slate-100 flex items-center justify-center border-b border-slate-200 overflow-hidden shrink-0",
+                compact ? "aspect-[3/2]" : "aspect-[16/10]",
+              )}
+            >
               {!imageError ? (
                 <OptimizedImage
                   src={coverPath}
@@ -87,20 +100,42 @@ export default function CourseCard({ course, hideLockOverlay = false }: CourseCa
               </div>
             </div>
 
-            <CardContent className="p-6 flex-grow flex flex-col">
-              <div className="mb-3">
-                <NcLevelBadge level={course.ncLevel} />
-              </div>
-              
-              <h3 className="text-lg font-bold text-slate-900 mb-3 line-clamp-2 min-h-[3.5rem]">
+            <CardContent
+              className={cn(
+                "flex flex-grow flex-col min-h-0",
+                compact ? "gap-2 p-4" : "gap-3 p-6",
+              )}
+            >
+              <NcLevelBadge level={course.ncLevel} />
+              <h3
+                className={cn(
+                  "font-semibold text-slate-900 line-clamp-2 [overflow-wrap:anywhere]",
+                  compact ? "text-[0.9375rem] leading-snug" : "text-lg leading-snug",
+                )}
+              >
                 {course.name}
               </h3>
-              <p className="text-sm text-slate-600 line-clamp-3 mb-4 leading-relaxed min-h-[4.5rem]">
-                {course.shortDescription}
-              </p>
+              {course.shortDescription ? (
+                <p
+                  className={cn(
+                    "text-muted-foreground line-clamp-2 leading-relaxed",
+                    compact ? "text-xs" : "text-sm line-clamp-3",
+                  )}
+                  title={course.shortDescription}
+                >
+                  {course.shortDescription}
+                </p>
+              ) : (
+                <p className="text-xs text-slate-400 italic">Program details coming soon.</p>
+              )}
             </CardContent>
 
-            <CardFooter className="px-6 py-5 border-t border-slate-100 mt-auto min-h-[3.25rem] flex items-center justify-between gap-3">
+            <CardFooter
+              className={cn(
+                "border-t border-slate-100 mt-auto shrink-0 flex items-center justify-between gap-2",
+                compact ? "px-4 py-3 min-h-[2.75rem]" : "px-6 py-4 min-h-[3.25rem] gap-3",
+              )}
+            >
               <div className="flex flex-1 items-center justify-center min-h-[2rem]">
                 {course.twspScholarship === "true" ? (
                   <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200/80 px-3 py-1 rounded-full">
@@ -112,8 +147,14 @@ export default function CourseCard({ course, hideLockOverlay = false }: CourseCa
                 )}
               </div>
               {!course.isFrozen && (
-                <span className="text-sm font-semibold text-slate-900 flex items-center gap-1 group-hover:gap-2 transition-all">
-                  View Details <ArrowRight className="w-4 h-4" />
+                <span
+                  className={cn(
+                    "font-semibold text-slate-900 flex items-center gap-1 group-hover:gap-1.5 transition-all shrink-0",
+                    compact ? "text-xs" : "text-sm",
+                  )}
+                >
+                  {compact ? "Details" : "View Details"}{" "}
+                  <ArrowRight className={compact ? "w-3.5 h-3.5" : "w-4 h-4"} />
                 </span>
               )}
               {course.isFrozen && (

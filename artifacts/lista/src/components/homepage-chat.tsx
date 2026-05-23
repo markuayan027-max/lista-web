@@ -1,14 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
-import {
-  MessageCircle,
-  MessagesSquare,
-  Send,
-  X,
-  Loader2,
-  Sparkles,
-  RotateCcw,
-} from "lucide-react";
+import { Send, X, Loader2, RotateCcw } from "lucide-react";
+import ListaGuideAvatar from "@/components/lista-guide-avatar";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -153,7 +146,7 @@ export default function HomepageChat({ programCount }: HomepageChatProps) {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-[2px] md:bg-slate-900/25"
+              className="fixed inset-0 z-[55] hidden bg-slate-900/25 backdrop-blur-[2px] md:block"
               onClick={() => setOpen(false)}
             />
 
@@ -161,30 +154,31 @@ export default function HomepageChat({ programCount }: HomepageChatProps) {
               role="dialog"
               aria-label="LISTA homepage assistant"
               aria-modal="true"
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 24 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
               transition={{ type: "spring", stiffness: 420, damping: 36 }}
               className={cn(
-                "fixed z-50 flex flex-col overflow-hidden bg-white shadow-2xl shadow-slate-900/15",
-                "inset-x-0 bottom-0 max-h-[min(88dvh,640px)] rounded-t-2xl border border-slate-200",
+                "fixed z-[60] flex flex-col overflow-hidden bg-white",
+                "inset-0 h-[100dvh] max-h-[100dvh] w-full rounded-none border-0 shadow-none",
                 "pb-[env(safe-area-inset-bottom)]",
-                "md:inset-x-auto md:bottom-24 md:right-6 md:left-auto",
-                "md:h-[min(32rem,70dvh)] md:max-h-[70dvh] md:w-[min(100vw-2rem,26rem)] md:rounded-2xl",
+                "md:inset-x-auto md:inset-y-0 md:right-0 md:left-auto md:top-0 md:bottom-0",
+                "md:h-[100dvh] md:max-h-[100dvh] md:w-[min(100vw,26rem)]",
+                "md:rounded-none md:rounded-l-2xl md:border-0 md:border-l md:border-slate-200",
+                "md:shadow-[-8px_0_32px_rgba(15,23,42,0.12)]",
               )}
             >
-              <header className="flex shrink-0 items-center gap-3 border-b border-slate-100 bg-gradient-to-r from-blue-800 to-blue-700 px-4 py-3.5 text-white">
-                <div
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/15 ring-1 ring-white/20"
-                  aria-hidden
-                >
-                  <MessagesSquare className="h-5 w-5" strokeWidth={1.75} />
-                </div>
+              <header className="flex shrink-0 items-center gap-3 border-b border-slate-200 bg-white px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] text-slate-900 md:border-slate-700/50 md:bg-slate-900 md:py-3.5 md:text-white">
+                <ListaGuideAvatar
+                  size="md"
+                  alt="LISTA Guide assistant"
+                  className="ring-slate-200 md:ring-white/25"
+                />
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-bold leading-tight tracking-tight">
                     LISTA Guide
                   </p>
-                  <p className="text-xs text-blue-100">
+                  <p className="text-xs text-slate-500 md:text-slate-300">
                     English · Tagalog · Bisaya
                   </p>
                 </div>
@@ -193,7 +187,7 @@ export default function HomepageChat({ programCount }: HomepageChatProps) {
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="h-9 w-9 text-white hover:bg-white/15 hover:text-white"
+                    className="h-9 w-9 text-slate-600 hover:bg-slate-100 hover:text-slate-900 md:text-white md:hover:bg-white/15 md:hover:text-white"
                     onClick={resetChat}
                     aria-label="Start new conversation"
                   >
@@ -203,7 +197,7 @@ export default function HomepageChat({ programCount }: HomepageChatProps) {
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="h-9 w-9 text-white hover:bg-white/15 hover:text-white"
+                    className="h-9 w-9 text-slate-600 hover:bg-slate-100 hover:text-slate-900 md:text-white md:hover:bg-white/15 md:hover:text-white"
                     onClick={() => setOpen(false)}
                     aria-label="Close chat"
                   >
@@ -212,29 +206,29 @@ export default function HomepageChat({ programCount }: HomepageChatProps) {
                 </div>
               </header>
 
-              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-4">
-                <ul className="space-y-4">
+              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-3 sm:px-4">
+                <ul className="space-y-3">
                   {messages.map((m, i) => {
                     const isUser = m.role === "user";
                     return (
                       <li
                         key={`${m.role}-${i}`}
-                        className={cn("flex gap-2", isUser ? "flex-row-reverse" : "flex-row")}
+                        className={cn(
+                          "flex gap-2.5",
+                          isUser ? "flex-row-reverse" : "flex-row justify-start",
+                        )}
                       >
-                        <motion.div
-                          aria-hidden
-                          className={cn(
-                            "mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold",
-                            isUser
-                              ? "bg-blue-700 text-white"
-                              : "bg-slate-200 text-slate-600",
-                          )}
-                        >
-                          {isUser ? "You" : "LG"}
-                        </motion.div>
+                        {isUser ? (
+                          <div
+                            aria-hidden
+                            className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-900 text-[10px] font-bold text-white"
+                          >
+                            You
+                          </div>
+                        ) : null}
                         <div
                           className={cn(
-                            "max-w-[min(100%,18rem)] rounded-2xl px-3.5 py-2.5 shadow-sm",
+                            "max-w-[min(100%,calc(100vw-2rem))] rounded-2xl px-3.5 py-2.5 shadow-sm md:max-w-[20rem]",
                             isUser
                               ? "rounded-tr-md bg-blue-700 text-white"
                               : "rounded-tl-md border border-slate-100 bg-slate-50 text-slate-800",
@@ -249,13 +243,7 @@ export default function HomepageChat({ programCount }: HomepageChatProps) {
                     );
                   })}
                   {loading && (
-                    <li className="flex gap-2">
-                      <div
-                        className="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-200 text-[10px] font-bold text-slate-600"
-                        aria-hidden
-                      >
-                        LG
-                      </div>
+                    <li className="flex justify-start">
                       <div className="inline-flex items-center gap-2 rounded-2xl rounded-tl-md border border-slate-100 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-500">
                         <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
                         Thinking…
@@ -267,7 +255,7 @@ export default function HomepageChat({ programCount }: HomepageChatProps) {
               </div>
 
               {!threadFull && messages.length <= 2 && !loading && (
-                <div className="flex shrink-0 gap-2 overflow-x-auto px-3 pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                <div className="flex shrink-0 gap-2 overflow-x-auto px-4 pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                   {QUICK_PROMPTS.map((q) => (
                     <button
                       key={q.label}
@@ -302,7 +290,7 @@ export default function HomepageChat({ programCount }: HomepageChatProps) {
 
               <motion.div
                 layout
-                className="flex shrink-0 gap-2 border-t border-slate-100 bg-white p-3 pt-2"
+                className="flex shrink-0 gap-2 border-t border-slate-100 bg-white px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
               >
                 <textarea
                   ref={inputRef}
@@ -334,20 +322,25 @@ export default function HomepageChat({ programCount }: HomepageChatProps) {
         )}
       </AnimatePresence>
 
+      {/* Hide FAB while panel is open — use header/overlay close; keeps Send fully tappable */}
       <Button
         type="button"
         onClick={() => setOpen((v) => !v)}
         className={cn(
-          "fixed z-50 h-14 w-14 rounded-full bg-blue-700 shadow-lg shadow-blue-900/20 hover:bg-blue-800",
+          "fixed z-[50] h-14 w-14 overflow-hidden rounded-full border-2 border-white bg-slate-100 p-0 shadow-lg shadow-slate-900/20 hover:bg-slate-50",
           courseDetailStickyBar
             ? "bottom-[calc(5.25rem+env(safe-area-inset-bottom))] right-4 max-lg:bottom-[calc(5.25rem+env(safe-area-inset-bottom))] lg:bottom-[max(1.25rem,env(safe-area-inset-bottom))] lg:right-6"
             : "bottom-[max(1.25rem,env(safe-area-inset-bottom))] right-4 md:right-6",
-          open && "ring-2 ring-blue-300 ring-offset-2",
+          open && "hidden",
         )}
         aria-expanded={open}
         aria-label={open ? "Close LISTA Guide" : "Open LISTA Guide"}
       >
-        {open ? <X className="h-6 w-6" /> : <MessageCircle className="h-6 w-6" />}
+        {open ? (
+          <X className="h-6 w-6 text-slate-900" />
+        ) : (
+          <ListaGuideAvatar size="lg" className="h-full w-full" />
+        )}
       </Button>
     </>
   );

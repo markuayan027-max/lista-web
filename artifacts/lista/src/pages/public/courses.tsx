@@ -1,123 +1,27 @@
 import { useState, useMemo } from "react";
-import { Search, CheckCircle, ArrowRight, Award, Users, Image as ImageIcon, RefreshCw, AlertCircle } from "lucide-react";
+import { Search, CheckCircle, ArrowRight, Award, Users, RefreshCw, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQuerySkeleton } from "@/hooks/use-query-skeleton";
 import { CoursesPageSkeleton } from "@/components/skeletons";
+import { COURSE_LISTING_GRID_CLASS } from "@/components/skeletons/course-grid-skeleton";
 import { Input } from "@/components/ui/input";
 import { Link } from "wouter";
 import PrimaryButton from "@/components/primary-button";
+import CourseCard from "@/components/course-card";
 import { useCourses } from "@/hooks/use-lista-data";
+import { useIsMobile } from "@/hooks/use-mobile";
 import type { Course } from "@/lib/institutional-data";
-import {
-  getCourseListingPricing,
-  mapCourseToHeroItem,
-  type HeroCourseItem,
-} from "@/lib/public-data-utils";
+import { mapCourseToHeroItem, type HeroCourseItem } from "@/lib/public-data-utils";
 import { Reveal, RevealStagger, RevealStaggerItem } from "@/components/lista-reveal";
 import { cn } from "@/lib/utils";
-import { resolveCourseCoverImage } from "@/lib/course-images";
-import OptimizedImage from "@/components/optimized-image";
 import { getPublicEnrollHref } from "@/lib/enroll-entry";
-import { NcLevelBadge } from "@/components/nc-level-badge";
 
 type ListingCourse = HeroCourseItem & { source: Course };
 
-function CourseListing({ course }: { course: ListingCourse }) {
-  const pricing = getCourseListingPricing(course.source);
-  const [imgError, setImgError] = useState(false);
-  const [imgLoaded, setImgLoaded] = useState(false);
-  const coverPath = resolveCourseCoverImage(
-    course.slug,
-    course.sector,
-    course.coverImageUrl,
-  );
-
-  return (
-    <Link href={`/courses/${course.slug}`} className="block h-full">
-      <div
-        className={cn(
-          "group relative flex flex-col bg-white border border-border rounded-xl overflow-hidden transition-all duration-200 h-full cursor-pointer hover:border-slate-300 hover:shadow-md hover:-translate-y-0.5",
-        )}
-      >
-        {course.isFrozen && (
-          <div className="absolute top-2.5 left-2.5 z-20 flex items-center gap-1.5 px-2.5 py-1 bg-white/90 backdrop-blur-sm border border-red-100 rounded-full shadow-sm">
-            <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-            <span className="text-[10px] font-black text-red-600 uppercase tracking-widest">
-              Currently Unavailable
-            </span>
-          </div>
-        )}
-
-        <div className="aspect-[16/10] bg-muted overflow-hidden relative">
-          {!imgError ? (
-            <>
-              {!imgLoaded && (
-                <div className="absolute inset-0 flex items-center justify-center bg-muted animate-pulse">
-                  <ImageIcon className="w-8 h-8 text-slate-300" />
-                </div>
-              )}
-              <OptimizedImage
-                src={coverPath}
-                alt={course.name}
-                onLoad={() => setImgLoaded(true)}
-                onError={() => setImgError(true)}
-                className="absolute inset-0 h-full w-full"
-                imgClassName="h-full w-full object-cover transition-all duration-500 group-hover:scale-105"
-              />
-            </>
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200">
-              <Award className="w-10 h-10 text-slate-300" strokeWidth={1} />
-            </div>
-          )}
-
-          <div className="absolute top-2.5 right-2.5 flex flex-col gap-1.5 items-end">
-            {pricing.bestseller && (
-              <span className="px-2 py-0.5 bg-primary-indigo text-white text-[10px] font-bold uppercase tracking-wider rounded">
-                Featured
-              </span>
-            )}
-            {pricing.isScholarship && (
-              <span className="px-2 py-0.5 bg-emerald-600 text-white text-[10px] font-bold uppercase tracking-wider rounded">
-                TWSP
-              </span>
-            )}
-          </div>
-        </div>
-
-        <div className="flex flex-1 flex-col p-5 min-h-0">
-          <div className="mb-2">
-            <NcLevelBadge level={course.ncLevel} />
-          </div>
-          <h3 className="font-bold text-foreground text-[15px] leading-snug mb-3 line-clamp-2 min-h-[2.75rem] group-hover:text-primary-indigo transition-colors">
-            {course.name}
-          </h3>
-
-          <div className="mt-auto pt-2 min-h-[2.5rem] flex items-center justify-center border-t border-slate-100">
-            {pricing.isScholarship ? (
-              <span className="inline-flex items-center justify-center w-full max-w-[11rem] text-xs font-semibold tracking-wide text-emerald-800 bg-emerald-50/90 border border-emerald-200/80 px-3 py-1.5 rounded-full">
-                Free Scholarship
-              </span>
-            ) : pricing.price ? (
-              <div className="flex w-full items-baseline justify-center gap-2">
-                <span className="text-lg font-bold text-foreground">₱{pricing.price.toLocaleString()}</span>
-                {pricing.originalPrice && (
-                  <span className="text-sm text-muted-foreground line-through">
-                    ₱{pricing.originalPrice.toLocaleString()}
-                  </span>
-                )}
-              </div>
-            ) : (
-              <span className="text-sm text-muted-foreground font-medium text-center">Inquire for pricing</span>
-            )}
-          </div>
-        </div>
-      </div>
-    </Link>
-  );
-}
+const listingGridClass = cn("grid", COURSE_LISTING_GRID_CLASS);
 
 export default function CoursesPage() {
+  const isMobile = useIsMobile();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
 
@@ -198,9 +102,11 @@ export default function CoursesPage() {
   return (
     <div className="w-full bg-white min-h-[calc(100vh-80px)]">
       <section className="border-b border-border pt-14 pb-10">
-        <div className="container mx-auto px-6 md:px-8">
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-foreground mb-4">Programs</h1>
-          <p className="text-slate-500 text-base max-w-xl mb-8">
+        <div className="container mx-auto px-4 md:px-8 text-center md:text-left">
+          <h1 className="font-display text-[clamp(2rem,6vw,3rem)] font-semibold tracking-tight text-foreground mb-4 text-balance">
+            Programs
+          </h1>
+          <p className="text-slate-500 text-base max-w-xl mb-8 mx-auto md:mx-0">
             TESDA-accredited technical-vocational courses. On-site, hands-on, TWSP scholarship-eligible.
           </p>
 
@@ -281,14 +187,14 @@ export default function CoursesPage() {
                     </div>
                   </div>
 
-                  <RevealStagger
-                    inView
-                    staggerMs={60}
-                    className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"
-                  >
+                  <RevealStagger inView staggerMs={60} className={listingGridClass}>
                     {sectorCourses.map((course, i) => (
                       <RevealStaggerItem key={course.id} index={i}>
-                        <CourseListing course={course} />
+                        <CourseCard
+                          course={course}
+                          hideLockOverlay
+                          variant={isMobile ? "compact" : "default"}
+                        />
                       </RevealStaggerItem>
                     ))}
                   </RevealStagger>
@@ -300,11 +206,15 @@ export default function CoursesPage() {
               key={`${selectedCategory}-${searchQuery}`}
               inView={false}
               staggerMs={40}
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"
+              className={listingGridClass}
             >
               {filteredCourses.map((course, i) => (
                 <RevealStaggerItem key={course.id} index={i}>
-                  <CourseListing course={course} />
+                  <CourseCard
+                    course={course}
+                    hideLockOverlay
+                    variant={isMobile ? "compact" : "default"}
+                  />
                 </RevealStaggerItem>
               ))}
             </RevealStagger>

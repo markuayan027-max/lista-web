@@ -9,9 +9,11 @@ export default function ContactPage() {
     <div className="w-full bg-white pb-24">
       <section className="bg-slate-50 py-20 border-b border-card-border">
         <div className="container mx-auto px-4 md:px-6">
-          <div className="max-w-3xl">
-            <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight mb-6">Contact LISTA</h1>
-            <p className="text-xl text-muted-foreground leading-relaxed">
+          <div className="max-w-3xl mx-auto md:mx-0 text-center md:text-left">
+            <h1 className="font-display text-[clamp(2rem,7vw,3.75rem)] font-semibold tracking-tight mb-6 text-balance">
+              Contact LISTA
+            </h1>
+            <p className="text-lg md:text-xl text-muted-foreground leading-relaxed">
               Reach {schoolInfo.shortName} for admissions, scholarships, and training inquiries. Our team responds
               during office hours listed below.
             </p>

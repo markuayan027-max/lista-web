@@ -30,16 +30,23 @@ import {
 } from "@/lib/public-data-utils";
 import { withBase } from "@/lib/with-base";
 import { cn } from "@/lib/utils";
-import { CourseCarouselSkeleton } from "@/components/skeletons";
+import {
+  CourseCarouselSkeleton,
+  COURSE_CAROUSEL_SLIDE_CLASS,
+  NewsCardSkeleton,
+  TestimonialCardSkeleton,
+} from "@/components/skeletons";
 import { ContentFadeIn } from "@/components/skeletons/primitives";
 import OptimizedImage from "@/components/optimized-image";
 import { PARTNER_LOGOS_HOME } from "@/lib/image-assets";
 import HeroAcademyVideo from "@/components/hero-academy-video";
+import DisplayHeading from "@/components/display-heading";
+import SectionEyebrow from "@/components/section-eyebrow";
 
 export default function HomePage() {
   const coursesQuery = useCourses();
   const { data: liveCourses = [], isLoading: coursesLoading } = coursesQuery;
-  const { data: liveTestimonials = [] } = useTestimonials();
+  const { data: liveTestimonials = [], isLoading: testimonialsLoading } = useTestimonials();
   const { data: announcements = [], isLoading: announcementsLoading } = useAnnouncements();
   const programCount = liveCourses.length;
   const livePosts = useMemo(() => buildPublicNewsFeed(announcements), [announcements]);
@@ -89,7 +96,7 @@ export default function HomePage() {
 
       {/* ── Hero ── */}
       <section className="bg-background border-b border-border overflow-hidden">
-        <div className="container mx-auto px-4 md:px-6">
+        <div className="container mx-auto">
 
           {/* Top rule + tagline */}
           <div className="pt-6 pb-4">
@@ -101,24 +108,24 @@ export default function HomePage() {
           </div>
 
           {/* Main headline */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-12 py-6 md:py-10 items-center">
-            <Reveal from="left" duration={800} className="flex flex-col justify-center">
-              <h1 className="text-[clamp(2.5rem,5vw,4.5rem)] font-bold tracking-[-0.03em] text-foreground leading-[1.08] mb-6">
-                Skills that build<br />
-                <span className="text-blue-700">real careers.</span>
-              </h1>
-              <p className="text-lg text-muted-foreground leading-relaxed mb-8 max-w-lg">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-10 lg:gap-12 py-6 md:py-10 items-center">
+            <Reveal from="left" duration={800} className="flex flex-col justify-center public-hero-copy">
+              <DisplayHeading as="h1" size="hero" className="mb-6">
+                Skills that build
+                <br />
+                real careers.
+              </DisplayHeading>
+              <p className="text-base sm:text-lg text-muted-foreground leading-relaxed mb-8 w-full max-w-none md:max-w-xl">
                 LISTA trains thousands of Filipinos in professional and technical skills — from digital literacy to vocational mastery — certified by TESDA.
               </p>
-              <div className="flex flex-col sm:flex-row gap-4">
-                {/* 2026-05-13: single application entrypoint */}
+              <div className="public-hero-actions">
                 <Link href={getPublicEnrollHref()}>
-                  <PrimaryButton className="h-12 px-8 bg-blue-700 hover:bg-blue-800 text-white text-base font-semibold transition-colors shadow-lg shadow-blue-700/20">
+                  <PrimaryButton variant="brand" className="h-12 px-8 text-base">
                     Get Started <ArrowRight className="ml-1.5 h-4 w-4" />
                   </PrimaryButton>
                 </Link>
                 <Link href="/courses">
-                  <PrimaryButton variant="ghost" className="h-12 px-8 border border-slate-300 text-slate-700 hover:bg-slate-50 text-base font-semibold transition-colors">
+                  <PrimaryButton variant="outline" className="h-12 px-8 text-base">
                     View Programs
                   </PrimaryButton>
                 </Link>
@@ -129,7 +136,7 @@ export default function HomePage() {
               from="right"
               delay={200}
               duration={800}
-              className="relative w-full max-w-lg mx-auto lg:max-w-none lg:pl-6"
+              className="relative w-full md:pl-4 lg:pl-6"
             >
               <div className="relative aspect-[4/3] lg:aspect-[16/10] rounded-2xl overflow-hidden shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)] bg-slate-100">
                 <OptimizedImage
@@ -140,7 +147,7 @@ export default function HomePage() {
                   width={1536}
                   height={1024}
                 />
-                <div className="absolute inset-0 bg-blue-900/10 mix-blend-multiply pointer-events-none" />
+                <div className="absolute inset-0 bg-slate-900/5 mix-blend-multiply pointer-events-none" />
                 
                 {/* Floating Badge */}
                 <div className="absolute top-6 right-6 md:top-8 md:right-8 bg-white/90 backdrop-blur-md px-4 py-3 rounded-xl shadow-sm border border-white/60 flex items-center gap-3 transition-transform hover:-translate-y-1">
@@ -160,14 +167,14 @@ export default function HomePage() {
 
       {/* ── Trust / Accreditation Bar ── */}
       <section className="py-16 border-b border-slate-100 bg-white">
-        <div className="container mx-auto px-4 md:px-6">
+        <div className="container mx-auto">
           <div className="flex flex-col items-center mb-12">
             <div className="flex flex-col items-center gap-2 mb-4">
               <div className="flex gap-1.5 mb-2">
-                <div className="w-8 h-1 bg-blue-600 rounded-full" />
-                <div className="w-3 h-1 bg-blue-200 rounded-full" />
+                <div className="w-8 h-1 bg-slate-900 rounded-full" />
+                <div className="w-3 h-1 bg-slate-300 rounded-full" />
               </div>
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em]">Quality Assurance</span>
+              <span className="text-[0.8125rem] font-semibold text-slate-400 uppercase tracking-[0.14em]">Quality Assurance</span>
             </div>
             <h3 className="text-xl font-bold text-slate-900">Accredited by National Institutions</h3>
           </div>
@@ -214,21 +221,22 @@ export default function HomePage() {
       </section>
 
       {/* ── Professional Skills Upgrade (Video + Popups) ── */}
-      <section className="py-20 bg-white border-t border-b border-slate-100 overflow-hidden relative">
-        <div className="container mx-auto px-6 md:px-10 relative z-10">
+      <section className="py-20 bg-white border-t border-b border-slate-100 overflow-hidden relative section-grid-bg">
+        <div className="container mx-auto relative z-10">
           <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 items-start gap-8 lg:gap-12">
             
             {/* Left: Content & Heading */}
-            <Reveal inView from="left" delay={200} duration={600} className="lg:col-span-5 order-2 lg:order-1 pt-4">
+            <Reveal inView from="left" delay={200} duration={600} className="lg:col-span-5 order-2 lg:order-1 pt-4 public-hero-copy">
               <div className="space-y-6">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-[10px] font-black uppercase tracking-[0.2em] border border-blue-100">
-                  Real Skills
-                </div>
-                <h2 className="text-4xl md:text-5xl lg:text-6xl font-black tracking-tight text-slate-900 leading-[1.1]">
-                  Get Skills for a <br />
-                  <span className="text-blue-700">Better Life.</span>
-                </h2>
-                <p className="text-xl text-slate-600 leading-relaxed max-w-lg">
+                <SectionEyebrow index="01" className="mx-auto lg:mx-0">
+                  Real skills
+                </SectionEyebrow>
+                <DisplayHeading as="h2" size="section">
+                  Get Skills for a
+                  <br />
+                  <span className="text-emphasis">Better Life.</span>
+                </DisplayHeading>
+                <p className="text-lg md:text-xl text-muted-foreground leading-relaxed max-w-lg mx-auto lg:mx-0">
                   We help you learn the skills that companies want. Whether you finished Grade 6, High School, or College, we have a program that will help you find a job or get promoted.
                 </p>
               </div>
@@ -254,9 +262,9 @@ export default function HomePage() {
                 key={index}
                 type="button"
                 onClick={() => setActiveBenefit(item)}
-                className="flex shrink-0 snap-start items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-white border border-slate-100 hover:border-blue-200 hover:shadow-md hover:-translate-y-0.5 transition-all whitespace-nowrap group"
+                className="flex shrink-0 snap-start items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-white border border-slate-100 hover:border-slate-300 hover:shadow-md hover:-translate-y-0.5 transition-all whitespace-nowrap group"
               >
-                <div className="w-7 h-7 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                <div className="w-7 h-7 rounded-xl bg-slate-100 flex items-center justify-center text-slate-700 group-hover:bg-slate-900 group-hover:text-white transition-colors">
                   <item.icon className="w-4 h-4" />
                 </div>
                 <span className="font-bold text-slate-700 text-[11px] uppercase tracking-wider">{item.title.replace('For ', '')}</span>
@@ -270,7 +278,7 @@ export default function HomePage() {
           {/* 2. CTA & Stats Group */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-4 sm:gap-6 py-1 shrink-0 w-full lg:w-auto">
             <Link href="/courses" className="w-full sm:w-auto">
-              <PrimaryButton size="sm" className="w-full sm:w-auto h-11 px-6 sm:px-8 text-[11px] font-black uppercase tracking-widest bg-blue-700 hover:bg-blue-800 text-white shadow-lg shadow-blue-700/20 group whitespace-nowrap rounded-2xl">
+              <PrimaryButton variant="brand" size="sm" className="w-full sm:w-auto h-11 px-6 sm:px-8 text-[11px] font-semibold uppercase tracking-widest group whitespace-nowrap rounded-2xl">
                 Explore All Programs
                 <ArrowRight className="ml-2 h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
               </PrimaryButton>
@@ -291,7 +299,7 @@ export default function HomePage() {
                 ))}
               </div>
               <div className="text-left leading-tight">
-                <div className="text-[11px] font-black text-slate-900">
+                <div className="text-[0.8125rem] font-semibold text-slate-900">
                   {programCount > 0 ? String(programCount) : "—"}
                 </div>
                 <div className="text-[9px] font-bold text-slate-400 uppercase tracking-tight">
@@ -317,7 +325,7 @@ export default function HomePage() {
               >
                 <div className="p-8">
                   <div className="flex items-center justify-between mb-6">
-                    <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600">
+                    <div className="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-700">
                       <activeBenefit.icon className="w-8 h-8" />
                     </div>
                     <button 
@@ -327,12 +335,13 @@ export default function HomePage() {
                       <X className="w-5 h-5" />
                     </button>
                   </div>
-                  <h3 className="text-2xl font-black text-slate-900 mb-3">{activeBenefit.title}</h3>
+                  <h3 className="text-2xl font-semibold text-slate-900 mb-3">{activeBenefit.title}</h3>
                   <p className="text-slate-600 leading-relaxed text-lg mb-8">
                     {activeBenefit.details}
                   </p>
-                  <PrimaryButton 
-                    className="w-full h-12 bg-blue-700 text-white"
+                  <PrimaryButton
+                    variant="default"
+                    className="w-full h-12"
                     onClick={() => setActiveBenefit(null)}
                   >
                     Got it, thanks!
@@ -348,15 +357,16 @@ export default function HomePage() {
 
       {/* ── All Programs (Free & Paid) ── */}
       <section className="py-24 bg-slate-50 border-t border-slate-100">
-        <div className="container mx-auto px-4 md:px-6">
+        <div className="container mx-auto">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-14">
-            <div className="max-w-2xl">
-              <div className="inline-flex items-center gap-3 px-3 py-1.5 rounded-full bg-blue-50/50 border border-blue-100/50 mb-6">
-                <div className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse" />
-                <span className="text-[10px] font-bold text-blue-700 uppercase tracking-[0.2em]">Curriculum</span>
-              </div>
-              <h2 className="text-3xl md:text-4xl font-black tracking-tight text-slate-900 mb-3">Our Programs</h2>
-              <p className="text-lg text-slate-600">
+            <div className="max-w-2xl text-center md:text-left mx-auto md:mx-0">
+              <SectionEyebrow index="02" className="mb-6 mx-auto md:mx-0">
+                Curriculum
+              </SectionEyebrow>
+              <DisplayHeading as="h2" size="section" className="mb-3">
+                Our Programs
+              </DisplayHeading>
+              <p className="text-lg text-muted-foreground">
                 Explore our comprehensive range of free (scholarship) and paid programs, designed and taught by industry professionals to get you job-ready fast.
               </p>
             </div>
@@ -369,8 +379,9 @@ export default function HomePage() {
 
           <div className="relative">
             {/* 2026-05-14: Only show "Swipe to see more" on small screens where cards actually overflow */}
-            <div className="flex items-center gap-2 text-sm text-slate-400 font-medium mb-4 md:hidden">
-              <ArrowRight className="w-4 h-4" /> Swipe to see more
+            <div className="flex items-center gap-2 text-xs text-muted-foreground font-medium mb-3 md:hidden">
+              <ArrowRight className="w-3.5 h-3.5 shrink-0" aria-hidden />
+              Swipe for more programs
             </div>
             {coursesLoading ? (
               <CourseCarouselSkeleton count={4} />
@@ -379,15 +390,15 @@ export default function HomePage() {
                 <RevealStagger
                   inView
                   staggerMs={100}
-                  className="flex overflow-x-auto snap-x snap-mandatory gap-6 pb-8 md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 md:overflow-visible md:pb-0 hide-scrollbar"
+                  className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-6 sm:gap-5 md:grid md:grid-cols-2 md:gap-6 lg:grid-cols-3 xl:grid-cols-4 md:overflow-visible md:pb-0 hide-scrollbar -mx-1 px-1"
                 >
                   {displayCourses.map((course, i) => (
                     <RevealStaggerItem
                       key={course.id}
                       index={i}
-                      className="snap-start shrink-0 w-[85vw] md:w-auto"
+                      className={COURSE_CAROUSEL_SLIDE_CLASS}
                     >
-                      <CourseCard course={course} hideLockOverlay={true} />
+                      <CourseCard course={course} hideLockOverlay variant="compact" />
                     </RevealStaggerItem>
                   ))}
                 </RevealStagger>
@@ -399,22 +410,14 @@ export default function HomePage() {
 
       {/* ── Career Pathfinder / Assessment CTA ── */}
       <section className="py-24 bg-slate-50">
-        <div className="container mx-auto px-4 md:px-6">
-          <div className="relative overflow-hidden rounded-2xl border border-blue-100 bg-white shadow-sm flex flex-col md:flex-row items-center justify-between gap-10 p-10 md:p-14">
-            {/* Left accent bar */}
-            <div className="max-w-2xl space-y-5 pl-4">
-              <div className="flex items-center gap-4 mb-6">
-                <div className="flex items-end gap-1.5 h-4">
-                  <div className="w-1 h-2 bg-blue-200 rounded-full" />
-                  <div className="w-1 h-4 bg-blue-600 rounded-full" />
-                  <div className="w-1 h-3 bg-blue-400 rounded-full" />
-                </div>
-                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.3em]">Career Pathfinder</span>
-              </div>
-              <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900">
+        <div className="container mx-auto">
+          <div className="relative overflow-hidden rounded-2xl border border-border bg-white shadow-sm flex flex-col md:flex-row items-center justify-between gap-10 p-10 md:p-14">
+            <div className="max-w-2xl space-y-5 text-center md:text-left mx-auto md:mx-0">
+              <SectionEyebrow className="mx-auto md:mx-0">Career pathfinder</SectionEyebrow>
+              <DisplayHeading as="h2" size="section">
                 Not sure where to start?
-              </h2>
-              <p className="text-lg text-slate-600 leading-relaxed">
+              </DisplayHeading>
+              <p className="text-lg text-muted-foreground leading-relaxed">
                 Take our 5-minute skills assessment. We'll analyze your interests, background,
                 and goals to recommend the perfect learning path for your future.
               </p>
@@ -430,7 +433,7 @@ export default function HomePage() {
 
             <div className="shrink-0">
               <Link href="/assessment">
-                <PrimaryButton size="lg" className="h-13 px-8 text-base font-bold bg-blue-700 hover:bg-blue-800 text-white border-none shadow-md group">
+                <PrimaryButton variant="brand" size="lg" className="h-13 px-8 text-base group">
                   <ClipboardList className="mr-2 h-5 w-5" />
                   Take the assessment
                   <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
@@ -443,17 +446,16 @@ export default function HomePage() {
 
       {/* ── Admission & Scholarship ── */}
       <section className="py-24 bg-white">
-        <div className="container mx-auto px-4 md:px-6">
+        <div className="container mx-auto">
           <div className="flex flex-col lg:flex-row gap-16 items-start">
-            <div className="lg:w-1/3 lg:sticky lg:top-24">
-              <div className="relative pl-6 mb-8">
-                <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-600 via-blue-400 to-transparent rounded-full" />
-                <span className="text-[10px] font-bold text-blue-600 uppercase tracking-[0.3em]">Process</span>
-              </div>
-              <h2 className="text-4xl md:text-5xl font-black tracking-tight text-slate-900 leading-[1.15] mb-5">
+            <div className="lg:w-1/3 lg:sticky lg:top-24 text-center lg:text-left">
+              <SectionEyebrow index="03" className="mb-8 mx-auto lg:mx-0">
+                Process
+              </SectionEyebrow>
+              <DisplayHeading as="h2" size="section" className="mb-5">
                 Your Pathway to Admission.
-              </h2>
-              <p className="text-lg text-slate-600 leading-relaxed mb-8">
+              </DisplayHeading>
+              <p className="text-lg text-muted-foreground leading-relaxed mb-8">
                 We provide a structured enrollment process and robust financial support to help
                 you focus on what matters most—your education.
               </p>
@@ -471,7 +473,7 @@ export default function HomePage() {
               {/* Financial Aid */}
               <div className="bg-white border border-slate-200 rounded-xl p-8 md:p-10">
                 <div className="flex items-center gap-3 mb-5">
-                  <HeartHandshake className="w-6 h-6 text-blue-600" strokeWidth={1.5} />
+                  <HeartHandshake className="w-6 h-6 text-slate-700" strokeWidth={1.5} />
                   <span className="text-xs font-bold tracking-widest text-slate-500 uppercase">Financial Assistance</span>
                 </div>
                 <h3 className="text-2xl font-bold mb-3 text-slate-900">Scholarships & Grants</h3>
@@ -479,8 +481,8 @@ export default function HomePage() {
                   Financial constraints should never hinder your potential. Explore our comprehensive
                   merit and need-based scholarship programs designed to fully support your training.
                 </p>
-                <div className="flex items-start gap-3 mb-7 p-5 bg-blue-50 border border-blue-100 rounded-xl">
-                  <Landmark className="w-6 h-6 text-blue-600 shrink-0 mt-0.5" strokeWidth={1.5} />
+                <div className="flex items-start gap-3 mb-7 p-5 bg-slate-50 border border-border rounded-xl">
+                  <Landmark className="w-6 h-6 text-slate-700 shrink-0 mt-0.5" strokeWidth={1.5} />
                   <div>
                     <div className="font-semibold text-slate-800">TESDA scholarship pathways</div>
                     <p className="text-sm text-slate-500 mt-1 leading-relaxed">
@@ -536,35 +538,36 @@ export default function HomePage() {
 
       {/* ── Testimonials ── */}
       <section className="py-24 bg-white">
-        <div className="container mx-auto px-4 md:px-6">
-          <div className="mb-14">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-6 h-6 rounded-full border-2 border-blue-600/20 flex items-center justify-center">
-                <div className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-ping" />
-              </div>
-              <span className="text-[10px] font-bold text-blue-600 uppercase tracking-[0.3em]">Social Proof</span>
-            </div>
-            <h2 className="text-3xl md:text-4xl font-black tracking-tight text-slate-900 mb-3">
+        <div className="container mx-auto">
+          <div className="mb-14 text-center md:text-left">
+            <SectionEyebrow className="mb-6 mx-auto md:mx-0">Social proof</SectionEyebrow>
+            <DisplayHeading as="h2" size="section" className="mb-3">
               Real Skills. Real Success.
-            </h2>
-            <p className="text-lg text-slate-600 max-w-2xl">
+            </DisplayHeading>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto md:mx-0">
               Discover how our graduates transformed their passion into professional excellence
               through our accredited training programs.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
+            {testimonialsLoading && testimonials.length === 0
+              ? Array.from({ length: 3 }).map((_, i) => (
+                  <TestimonialCardSkeleton key={`testimonial-skel-${i}`} />
+                ))
+              : null}
             {testimonials.map((testimonial, i) => (
               <Reveal
                 key={testimonial.id}
                 inView
                 delay={i * 100}
                 duration={400}
-                className="bg-slate-50 p-8 rounded-xl border border-slate-200 flex flex-col hover:border-blue-200 hover:shadow-sm transition-all"
+                className="bg-muted/40 p-6 md:p-8 rounded-xl border border-border flex flex-col min-h-[220px] hover:border-slate-300 hover:shadow-sm transition-all"
               >
-                {/* Quote mark */}
-                <div className="text-4xl font-serif text-blue-200 leading-none mb-4 select-none">"</div>
-                <p className="text-slate-700 leading-relaxed flex-1 text-[15px]">
+                <div className="text-3xl font-serif text-slate-300 leading-none mb-3 select-none" aria-hidden>
+                  "
+                </div>
+                <p className="text-slate-700 leading-relaxed flex-1 text-sm md:text-[15px] line-clamp-4">
                   {testimonial.quote}
                 </p>
                 <div className="mt-7 pt-6 border-t border-slate-200 flex items-center gap-4">
@@ -588,44 +591,28 @@ export default function HomePage() {
 
       {/* ── Latest News ── */}
       <section className="py-24 bg-slate-50">
-        <div className="container mx-auto px-4 md:px-6">
+        <div className="container mx-auto">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-14">
-            <div className="max-w-2xl">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="grid grid-cols-2 gap-1.5">
-                  <div className="w-1.5 h-1.5 rounded-sm bg-blue-600" />
-                  <div className="w-1.5 h-1.5 rounded-sm bg-blue-200" />
-                  <div className="w-1.5 h-1.5 rounded-sm bg-blue-200" />
-                  <div className="w-1.5 h-1.5 rounded-sm bg-blue-400" />
-                </div>
-                <span className="text-[10px] font-bold text-blue-600 uppercase tracking-[0.3em]">Insight</span>
-              </div>
-              <h2 className="text-3xl md:text-4xl font-black tracking-tight text-slate-900 mb-3">Latest Updates</h2>
-              <p className="text-lg text-slate-600">
+            <div className="max-w-2xl text-center md:text-left mx-auto md:mx-0">
+              <SectionEyebrow className="mb-6 mx-auto md:mx-0">Insight</SectionEyebrow>
+              <DisplayHeading as="h2" size="section" className="mb-3">
+                Latest Updates
+              </DisplayHeading>
+              <p className="text-lg text-muted-foreground">
                 Stay informed with the latest news, announcements, and success stories from our academy.
               </p>
             </div>
             <Link href="/about">
-              <PrimaryButton variant="ghost" className="font-semibold text-blue-700 hover:text-blue-800 hover:bg-blue-50 shrink-0">
+              <PrimaryButton variant="ghost" className="font-semibold text-brand hover:bg-muted shrink-0">
                 Read all stories <ArrowRight className="ml-2 h-4 w-4" />
               </PrimaryButton>
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
             {announcementsLoading && livePosts.length === 0
               ? Array.from({ length: 3 }).map((_, i) => (
-                  <div
-                    key={`news-skel-${i}`}
-                    className="flex flex-col bg-white rounded-xl border border-slate-200 overflow-hidden animate-pulse"
-                  >
-                    <div className="aspect-[16/10] bg-slate-200" />
-                    <div className="p-6 space-y-3">
-                      <div className="h-4 w-24 bg-slate-200 rounded" />
-                      <div className="h-6 w-full bg-slate-200 rounded" />
-                      <div className="h-4 w-full bg-slate-100 rounded" />
-                    </div>
-                  </div>
+                  <NewsCardSkeleton key={`news-skel-${i}`} />
                 ))
               : null}
             {livePosts.slice(0, 6).map((post, i) => (
@@ -633,28 +620,30 @@ export default function HomePage() {
                 key={post.id}
                 inView
                 delay={i * 80}
-                className="group flex flex-col bg-white rounded-xl border border-slate-200 overflow-hidden hover:border-blue-200 hover:shadow-md transition-all duration-300"
+                className="group flex flex-col h-full min-h-[320px] bg-card rounded-xl border border-border overflow-hidden hover:border-slate-300 hover:shadow-md transition-all duration-300"
               >
-                <div className="aspect-[16/10] overflow-hidden bg-slate-100">
+                <div className="aspect-[3/2] shrink-0 overflow-hidden bg-slate-100">
                   <OptimizedImage
                     src={post.imageUrl}
                     alt={post.title}
                     imgClassName="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                 </div>
-                <div className="p-6 flex-1 flex flex-col">
-                  <div className="flex items-center gap-3 mb-4">
-                    <span className="px-2.5 py-1 rounded-md bg-blue-50 text-blue-700 text-xs font-bold uppercase tracking-wider border border-blue-100">
+                <div className="flex flex-1 flex-col p-4 md:p-5 min-h-0">
+                  <div className="flex items-center gap-2 mb-3 flex-wrap">
+                    <span className="section-eyebrow text-[10px] px-2 py-0.5">
                       {post.category}
                     </span>
-                    <span className="text-xs text-slate-400 font-medium">
+                    <span className="text-[11px] text-muted-foreground font-medium">
                       {new Date(post.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                     </span>
                   </div>
-                  <h3 className="text-lg font-bold mb-2 leading-snug group-hover:text-blue-700 transition-colors text-slate-900 line-clamp-2">
+                  <h3 className="text-base font-semibold mb-2 leading-snug group-hover:text-foreground transition-colors text-foreground line-clamp-2">
                     {post.title}
                   </h3>
-                  <p className="text-slate-500 mb-5 line-clamp-2 text-sm leading-relaxed">{post.excerpt}</p>
+                  <p className="text-muted-foreground mb-4 line-clamp-2 text-sm leading-relaxed">
+                    {post.excerpt}
+                  </p>
                   <div className="mt-auto pt-5 border-t border-slate-100 flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
                       <div className="w-7 h-7 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-xs font-bold text-slate-600 uppercase">
@@ -664,11 +653,11 @@ export default function HomePage() {
                     </div>
                     {post.sourceUrl ? (
                       <a href={post.sourceUrl} target="_blank" rel="noopener noreferrer"
-                        className="text-blue-700 font-semibold text-sm inline-flex items-center gap-1 hover:underline">
+                        className="text-brand font-semibold text-sm inline-flex items-center gap-1 hover:underline">
                         Read more <ExternalLink className="h-3 w-3" />
                       </a>
                     ) : (
-                      <Link href={`/news/${post.id}`} className="text-blue-700 font-semibold text-sm hover:underline">
+                      <Link href={`/news/${post.id}`} className="text-brand font-semibold text-sm hover:underline">
                         Read more
                       </Link>
                     )}
@@ -681,20 +670,20 @@ export default function HomePage() {
       </section>
 
       {/* ── Final CTA ── */}
-      <section className="py-24 bg-blue-700 text-white text-center">
-        <div className="container mx-auto px-4 md:px-6">
+      <section className="py-24 bg-brand text-brand-foreground text-center">
+        <div className="container mx-auto">
           <Reveal inView duration={500} className="max-w-3xl mx-auto space-y-7">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 text-white/90 text-xs font-bold uppercase tracking-widest border border-white/20">
               <GraduationCap className="h-3.5 w-3.5" />
               Applications Now Open
             </div>
             <h2 className="text-4xl md:text-5xl font-bold tracking-tight">Ready to transform your career?</h2>
-            <p className="text-xl text-blue-100">
+            <p className="text-xl text-white/80">
               Join the next cohort and start your journey today.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-2">
               <Link href={getPublicEnrollHref()}>
-                <PrimaryButton size="lg" className="bg-white text-blue-700 hover:bg-blue-50 h-13 px-10 text-base font-bold shadow-lg border-none group">
+                <PrimaryButton size="lg" className="bg-white text-slate-900 hover:bg-slate-100 h-13 px-10 text-base font-semibold shadow-lg border-none group">
                   Sign in to enroll
                   <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </PrimaryButton>

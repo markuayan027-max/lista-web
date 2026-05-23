@@ -96,8 +96,8 @@ export default function CourseDetailPage() {
           </div>
           
           <div className="flex flex-col lg:flex-row gap-12 lg:items-center">
-            <div className="flex-1 space-y-6">
-              <div className="flex flex-wrap gap-2">
+            <div className="flex-1 space-y-6 text-center lg:text-left">
+              <div className="flex flex-wrap gap-2 justify-center lg:justify-start">
                 <Badge className="bg-primary/10 text-primary hover:bg-primary/20">{course.category}</Badge>
                 {course.tags.map(tag => (
                   <Badge key={tag} variant="outline" className="bg-white">{tag}</Badge>
@@ -111,7 +111,7 @@ export default function CourseDetailPage() {
                 {course.shortDescription}
               </p>
               
-              <div className="flex flex-wrap items-center gap-6 pt-4 text-sm font-medium">
+              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-6 pt-4 text-sm font-medium">
                  <div className="flex items-center gap-2">
                     <Clock className="w-5 h-5 text-muted-foreground" />
                     <span>{course.durationHours} Nominal Hours</span>

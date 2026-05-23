@@ -26,11 +26,11 @@ export default function AboutPage() {
       {/* Header */}
       <section className="bg-slate-50 py-20 border-b border-card-border">
         <div className="container mx-auto px-4 md:px-6">
-          <div className="max-w-3xl">
-            <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight mb-6">
+          <div className="max-w-3xl mx-auto md:mx-0 text-center md:text-left">
+            <h1 className="font-display text-[clamp(2rem,7vw,3.75rem)] font-semibold tracking-tight mb-6 text-balance">
               Welcome to LISTA
             </h1>
-            <p className="text-xl text-muted-foreground leading-relaxed">
+            <p className="text-lg md:text-xl text-muted-foreground leading-relaxed">
               We provide high-quality technical skills training to help you succeed in your career and build a brighter future.
             </p>
           </div>

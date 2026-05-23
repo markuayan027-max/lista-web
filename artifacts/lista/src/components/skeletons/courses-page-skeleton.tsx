@@ -26,7 +26,7 @@ export function CoursesPageSkeleton({ message = "Loading programs…" }: { messa
       </div>
       <section className="py-12">
         <div className="container mx-auto px-6 md:px-8">
-          <CourseGridSkeleton count={8} />
+          <CourseGridSkeleton count={8} compact />
         </div>
       </section>
     </div>
