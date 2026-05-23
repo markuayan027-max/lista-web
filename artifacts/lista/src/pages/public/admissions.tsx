@@ -1,4 +1,5 @@
-import { Reveal, RevealStagger, RevealStaggerItem } from "@/components/lista-reveal";
+import { Reveal } from "@/components/lista-reveal";
+import ScrollParallax from "@/components/scroll-parallax";
 import { 
   FileText, 
   Search, 
@@ -162,11 +163,11 @@ export default function AdmissionsPage() {
       </section>
 
       {/* Process Section - Clean & Geometric */}
-      <section className="py-32 bg-white">
+      <section className="overflow-visible py-32 bg-white">
         <div className="container mx-auto px-4 md:px-6">
-          <div className="flex flex-col lg:flex-row lg:items-start gap-20">
-            <div className="lg:w-1/3 lg:self-start">
-              <div className="lg:sticky lg:top-24 space-y-8">
+          <div className="flex flex-col gap-20 lg:flex-row lg:items-start">
+            <div className="lg:sticky lg:top-28 lg:z-[3] shrink-0 lg:w-1/3 lg:self-start">
+              <div className="space-y-8">
                 <h2 className="text-4xl md:text-5xl font-bold tracking-tight leading-tight">
                   Enrollment <br />
                   <span className="text-blue-600">Process</span>
@@ -188,13 +189,21 @@ export default function AdmissionsPage() {
               </div>
             </div>
 
-            <div className="lg:w-2/3">
-              <RevealStagger inView={false} staggerMs={100} className="space-y-4">
+            <div className="relative lg:w-2/3">
+              <ScrollParallax
+                speed={0.012}
+                aria-hidden
+                className="pointer-events-none absolute -top-8 right-0 z-[1] hidden h-48 w-48 rounded-full bg-blue-100/40 blur-3xl lg:block"
+              />
+              <div className="relative z-[3] space-y-4">
                 {steps.map((step, idx) => (
-                  <RevealStaggerItem
+                  <Reveal
                     key={idx}
-                    index={idx}
-                    className="group relative bg-slate-50/50 border border-slate-100 p-10 rounded-[2rem] hover:bg-white hover:shadow-2xl hover:shadow-slate-200/50 hover:border-blue-100 transition-all duration-700"
+                    inView
+                    from="bottom"
+                    duration={1000}
+                    delay={idx * 100}
+                    className="lista-reveal--slow group relative rounded-[2rem] border border-slate-100 bg-slate-50/50 p-10 transition-all duration-700 hover:border-blue-100 hover:bg-white hover:shadow-2xl hover:shadow-slate-200/50"
                   >
                     <div className="absolute top-10 right-10 text-6xl font-black text-slate-100 group-hover:text-blue-50 transition-colors pointer-events-none">
                       {idx + 1}
@@ -217,9 +226,9 @@ export default function AdmissionsPage() {
                         </p>
                       </div>
                     </div>
-                  </RevealStaggerItem>
+                  </Reveal>
                 ))}
-              </RevealStagger>
+              </div>
             </div>
           </div>
         </div>

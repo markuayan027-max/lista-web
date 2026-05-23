@@ -26,7 +26,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
   return (
     <div className="public-site min-h-screen bg-white flex flex-col">
       <Navbar />
-      <main className="flex-1 min-w-0 overflow-x-clip">
+      <main className="flex-1 min-w-0">
         {children}
       </main>
       <PublicFooter />
