@@ -432,9 +432,39 @@
     backface-visibility: hidden;
   }
 
+  /* Course card — glass cursor wave + selection hover (pointer devices only) */
+  .course-card-shell {
+    @apply relative isolate;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .course-card-shell[data-active="true"] {
+      @apply -translate-y-1 border-slate-300/90 shadow-[0_20px_40px_-24px_rgba(15,23,42,0.18)] ring-2 ring-slate-900/[0.06];
+    }
+
+    .course-card-glass-wave {
+      background: radial-gradient(
+        220px circle at var(--card-glow-x, 50%) var(--card-glow-y, 50%),
+        rgba(255, 255, 255, 0.62) 0%,
+        rgba(255, 255, 255, 0.22) 38%,
+        transparent 68%
+      );
+    }
+
+    .course-card-cursor-blob {
+      @apply pointer-events-none absolute z-20 h-14 w-14 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/60 bg-white/25 shadow-[0_8px_24px_-8px_rgba(15,23,42,0.12)] backdrop-blur-md;
+      transition: opacity 0.35s ease, transform 0.15s ease;
+    }
+  }
+
   @media (max-width: 767px) {
     [data-parallax] {
       transform: none !important;
+    }
+
+    .course-card-cursor-blob,
+    .course-card-glass-wave {
+      display: none !important;
     }
   }
 
