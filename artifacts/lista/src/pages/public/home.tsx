@@ -42,6 +42,7 @@ import { PARTNER_LOGOS_HOME } from "@/lib/image-assets";
 import HeroAcademyVideo from "@/components/hero-academy-video";
 import DisplayHeading from "@/components/display-heading";
 import SectionEyebrow from "@/components/section-eyebrow";
+import ScrollParallax from "@/components/scroll-parallax";
 
 export default function HomePage() {
   const coursesQuery = useCourses();
@@ -139,24 +140,32 @@ export default function HomePage() {
               className="relative w-full md:pl-4 lg:pl-6"
             >
               <div className="relative aspect-[4/3] lg:aspect-[16/10] rounded-2xl overflow-hidden shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)] bg-slate-100">
-                <OptimizedImage
-                  src="/hero.png"
-                  alt="LISTA Students and Facilities"
-                  priority
-                  imgClassName="w-full h-full object-cover"
-                  width={1536}
-                  height={1024}
-                />
+                <ScrollParallax
+                  speed={0.05}
+                  className="absolute inset-x-0 top-[-5%] h-[110%] w-full"
+                >
+                  <OptimizedImage
+                    src="/hero.png"
+                    alt="LISTA Students and Facilities"
+                    priority
+                    imgClassName="w-full h-full object-cover"
+                    width={1536}
+                    height={1024}
+                  />
+                </ScrollParallax>
                 <div className="absolute inset-0 bg-slate-900/5 mix-blend-multiply pointer-events-none" />
-                
-                {/* Floating Badge */}
-                <div className="absolute top-6 right-6 md:top-8 md:right-8 bg-white/90 backdrop-blur-md px-4 py-3 rounded-xl shadow-sm border border-white/60 flex items-center gap-3 transition-transform hover:-translate-y-1">
-                   <ShieldCheck className="w-5 h-5 text-slate-700" strokeWidth={1.5} />
-                   <div>
+                <ScrollParallax
+                  speed={0.02}
+                  className="absolute top-6 right-6 md:top-8 md:right-8 z-[4]"
+                >
+                  <div className="bg-white/90 backdrop-blur-md px-4 py-3 rounded-xl shadow-sm border border-white/60 flex items-center gap-3 transition-transform hover:-translate-y-1">
+                    <ShieldCheck className="w-5 h-5 text-slate-700" strokeWidth={1.5} />
+                    <div>
                       <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest leading-none mb-1">TESDA Accredited</p>
                       <p className="text-xs font-bold text-slate-900 leading-none">Recognized Nationwide</p>
-                   </div>
-                </div>
+                    </div>
+                  </div>
+                </ScrollParallax>
               </div>
             </Reveal>
           </div>
@@ -222,6 +231,16 @@ export default function HomePage() {
 
       {/* ── Professional Skills Upgrade (Video + Popups) ── */}
       <section className="py-20 bg-white border-t border-b border-slate-100 overflow-hidden relative section-grid-bg">
+        <ScrollParallax
+          speed={0.015}
+          aria-hidden
+          className="pointer-events-none absolute -top-24 -right-24 z-[1] h-72 w-72 rounded-full bg-slate-200/40 blur-3xl"
+        />
+        <ScrollParallax
+          speed={0.01}
+          aria-hidden
+          className="pointer-events-none absolute -bottom-16 -left-16 z-[1] h-56 w-56 rounded-full bg-slate-300/30 blur-3xl"
+        />
         <div className="container mx-auto relative z-10">
           <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 items-start gap-8 lg:gap-12">
             
@@ -356,8 +375,13 @@ export default function HomePage() {
 
 
       {/* ── All Programs (Free & Paid) ── */}
-      <section className="py-24 bg-slate-50 border-t border-slate-100">
-        <div className="container mx-auto">
+      <section className="relative overflow-hidden py-24 bg-slate-50 border-t border-slate-100">
+        <ScrollParallax
+          speed={0.01}
+          aria-hidden
+          className="pointer-events-none absolute top-12 left-1/4 z-[1] h-64 w-64 rounded-full bg-slate-200/35 blur-3xl"
+        />
+        <div className="container relative z-[3] mx-auto">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-14">
             <div className="max-w-2xl text-center md:text-left mx-auto md:mx-0">
               <SectionEyebrow index="02" className="mb-6 mx-auto md:mx-0">
@@ -412,7 +436,12 @@ export default function HomePage() {
       <section className="py-24 bg-slate-50">
         <div className="container mx-auto">
           <div className="relative overflow-hidden rounded-2xl border border-border bg-white shadow-sm flex flex-col md:flex-row items-center justify-between gap-10 p-10 md:p-14">
-            <div className="max-w-2xl space-y-5 text-center md:text-left mx-auto md:mx-0">
+            <ScrollParallax
+              speed={0.01}
+              aria-hidden
+              className="pointer-events-none absolute -top-12 right-8 z-[1] h-40 w-40 rounded-full bg-slate-100 blur-2xl"
+            />
+            <div className="relative z-[3] max-w-2xl space-y-5 text-center md:text-left mx-auto md:mx-0">
               <SectionEyebrow className="mx-auto md:mx-0">Career pathfinder</SectionEyebrow>
               <DisplayHeading as="h2" size="section">
                 Not sure where to start?
@@ -431,7 +460,7 @@ export default function HomePage() {
               </ul>
             </div>
 
-            <div className="shrink-0">
+            <div className="relative z-[4] shrink-0">
               <Link href="/assessment">
                 <PrimaryButton variant="brand" size="lg" className="h-13 px-8 text-base group">
                   <ClipboardList className="mr-2 h-5 w-5" />
@@ -670,9 +699,19 @@ export default function HomePage() {
       </section>
 
       {/* ── Final CTA ── */}
-      <section className="py-24 bg-brand text-brand-foreground text-center">
-        <div className="container mx-auto">
-          <Reveal inView duration={500} className="max-w-3xl mx-auto space-y-7">
+      <section className="relative overflow-hidden py-24 bg-brand text-brand-foreground text-center">
+        <ScrollParallax
+          speed={0.01}
+          aria-hidden
+          className="pointer-events-none absolute top-1/4 -left-20 z-[1] h-80 w-80 rounded-full bg-white/10 blur-3xl"
+        />
+        <ScrollParallax
+          speed={0.015}
+          aria-hidden
+          className="pointer-events-none absolute right-0 bottom-0 z-[1] h-96 w-96 rounded-full bg-white/5 blur-3xl"
+        />
+        <div className="container relative z-[3] mx-auto">
+          <Reveal inView duration={500} className="relative z-[3] mx-auto max-w-3xl space-y-7">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 text-white/90 text-xs font-bold uppercase tracking-widest border border-white/20">
               <GraduationCap className="h-3.5 w-3.5" />
               Applications Now Open

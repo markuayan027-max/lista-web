@@ -16,18 +16,8 @@ import { useAuth } from "@/context/auth-context";
 import { getEnrollCta } from "@/lib/role-navigation";
 import SiteLogo from "@/components/site-logo";
 
-const NAV_LINKS = [
-  { href: "/", label: "Home" },
-  { href: "/about", label: "About" },
-  { href: "/courses", label: "Courses" },
-  { href: "/scholarships", label: "Scholarships" },
-  { href: "/admissions", label: "Admissions" },
-  { href: "/contact", label: "Contact" },
-  { href: "/assessment", label: "Assessment" },
-];
-
-/** Mobile drawer: fewer links — About/Scholarships/Assessment stay in site footer. */
-const MOBILE_NAV_LINKS = [
+/** Primary nav — keep to 4 links; About/Scholarships/Assessment live in footer. */
+const PRIMARY_NAV_LINKS = [
   { href: "/", label: "Home" },
   { href: "/courses", label: "Courses" },
   { href: "/admissions", label: "Admissions" },
@@ -77,7 +67,7 @@ export default function Navbar() {
 
           {/* Desktop Nav */}
           <div className="hidden lg:flex items-center gap-6 xl:gap-8">
-            {NAV_LINKS.map((link) => (
+            {PRIMARY_NAV_LINKS.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
@@ -108,7 +98,7 @@ export default function Navbar() {
           <div className="lg:hidden">
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-10 w-10">
+                <Button variant="ghost" size="icon" className="h-10 w-10" aria-label="Open navigation menu">
                   <Menu className="h-6 w-6" />
                 </Button>
               </SheetTrigger>
@@ -121,7 +111,7 @@ export default function Navbar() {
                   <SheetDescription>Site links and enrollment actions</SheetDescription>
                 </SheetHeader>
                 <div className="flex flex-1 flex-col gap-6 overflow-y-auto overscroll-contain px-6 pb-4 pt-14">
-                  {MOBILE_NAV_LINKS.map((link) => (
+                  {PRIMARY_NAV_LINKS.map((link) => (
                     <SheetClose key={link.href} asChild>
                       <Link
                         href={link.href}

@@ -50,7 +50,7 @@ export default function CourseCard({
             compact && "shadow-sm",
             (course.isFrozen && !hideLockOverlay)
               ? "opacity-80 grayscale-[0.5] border-slate-100 shadow-none" 
-              : "hover:border-slate-400 shadow-sm hover:shadow-md cursor-pointer"
+              : "hover:-translate-y-[3px] hover:border-slate-400 shadow-sm hover:shadow-md cursor-pointer"
           )}>
             
             {/* Frozen Overlay */}

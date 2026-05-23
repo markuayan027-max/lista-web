@@ -408,6 +408,33 @@
     will-change: transform;
   }
 
+  .scroll-parallax-layer {
+    backface-visibility: hidden;
+  }
+
+  @media (max-width: 767px) {
+    [data-parallax] {
+      transform: none !important;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .lista-reveal,
+    .lista-stagger__item {
+      opacity: 1 !important;
+      animation: none !important;
+      transform: none !important;
+    }
+
+    [data-parallax] {
+      transform: none !important;
+    }
+
+    .lista-trust-marquee {
+      animation: none !important;
+    }
+  }
+
   @keyframes lista-trust-marquee {
     from {
       transform: translateX(0);
