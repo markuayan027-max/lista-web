@@ -242,12 +242,12 @@ export default function HomePage() {
           className="pointer-events-none absolute -bottom-16 -left-16 z-[1] h-56 w-56 rounded-full bg-slate-300/30 blur-3xl"
         />
         <div className="container mx-auto relative z-10">
-          <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 items-start gap-8 lg:gap-12">
+          <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 items-start gap-8 md:gap-12">
             
             {/* Left: Content & Heading */}
-            <Reveal inView from="left" delay={200} duration={600} className="lg:col-span-5 order-2 lg:order-1 pt-4 public-hero-copy">
+            <Reveal inView from="left" delay={200} duration={600} className="md:col-span-5 order-2 md:order-1 pt-4 public-hero-copy text-center md:text-left">
               <div className="space-y-6">
-                <SectionEyebrow index="01" className="mx-auto lg:mx-0">
+                <SectionEyebrow index="01" className="mx-auto md:mx-0">
                   Real skills
                 </SectionEyebrow>
                 <DisplayHeading as="h2" size="section">
@@ -255,14 +255,14 @@ export default function HomePage() {
                   <br />
                   <span className="text-emphasis">Better Life.</span>
                 </DisplayHeading>
-                <p className="text-lg md:text-xl text-muted-foreground leading-relaxed max-w-lg mx-auto lg:mx-0">
+                <p className="text-lg md:text-xl text-muted-foreground leading-relaxed max-w-lg mx-auto md:mx-0">
                   We help you learn the skills that companies want. Whether you finished Grade 6, High School, or College, we have a program that will help you find a job or get promoted.
                 </p>
               </div>
             </Reveal>
 
             {/* Right: Academy video — autoplay muted; visitor can play/pause and unmute */}
-            <Reveal inView from="scale" duration={600} className="lg:col-span-7 order-1 lg:order-2 flex flex-col items-center w-full">
+            <Reveal inView from="scale" duration={600} className="md:col-span-7 order-1 md:order-2 flex flex-col items-center w-full">
               <HeroAcademyVideo />
             </Reveal>
         </div>
@@ -272,10 +272,14 @@ export default function HomePage() {
           inView
           delay={400}
           duration={600}
-          className="mt-12 w-full flex flex-col lg:flex-row lg:flex-nowrap items-stretch lg:items-center justify-center lg:justify-between gap-4 p-3 sm:p-4 bg-slate-50/80 rounded-3xl border border-slate-100 backdrop-blur-sm shadow-xl shadow-slate-200/20"
+          className="mt-12 w-full flex flex-col md:flex-row md:flex-nowrap items-stretch md:items-center justify-center md:justify-between gap-4 p-3 sm:p-4 bg-slate-50/80 rounded-3xl border border-slate-100 backdrop-blur-sm shadow-xl shadow-slate-200/20"
         >
           {/* 1. Category Quick Links — scroll on narrow screens, hidden scrollbar */}
-          <div className="min-w-0 w-full lg:flex-1 flex items-center gap-2 overflow-x-auto hide-scrollbar py-1 -mx-1 px-1 snap-x snap-mandatory">
+          <div className="min-w-0 w-full md:flex-1 flex flex-col gap-1">
+            <p className="hidden text-center text-[10px] font-semibold uppercase tracking-wider text-slate-400 sm:block md:hidden">
+              Swipe for categories
+            </p>
+            <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar py-1 -mx-1 px-1 snap-x snap-mandatory">
             {benefits.map((item, index) => (
               <button
                 key={index}
@@ -286,16 +290,17 @@ export default function HomePage() {
                 <div className="w-7 h-7 rounded-xl bg-slate-100 flex items-center justify-center text-slate-700 group-hover:bg-slate-900 group-hover:text-white transition-colors">
                   <item.icon className="w-4 h-4" />
                 </div>
-                <span className="font-bold text-slate-700 text-[11px] uppercase tracking-wider">{item.title.replace('For ', '')}</span>
+                <span className="font-bold text-slate-700 text-[10px] sm:text-[11px] uppercase tracking-wider">{item.title.replace('For ', '')}</span>
               </button>
             ))}
+            </div>
           </div>
 
           {/* Vertical Divider (Desktop Only) */}
-          <div className="hidden lg:block h-10 w-px bg-slate-200 shrink-0" />
+          <div className="hidden md:block h-10 w-px bg-slate-200 shrink-0" />
 
           {/* 2. CTA & Stats Group */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-4 sm:gap-6 py-1 shrink-0 w-full lg:w-auto">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-4 sm:gap-6 py-1 shrink-0 w-full md:w-auto pb-[max(0px,env(safe-area-inset-bottom))]">
             <Link href="/courses" className="w-full sm:w-auto">
               <PrimaryButton variant="brand" size="sm" className="w-full sm:w-auto h-11 px-6 sm:px-8 text-[11px] font-semibold uppercase tracking-widest group whitespace-nowrap rounded-2xl">
                 Explore All Programs
