@@ -58,3 +58,34 @@ Breakpoints (Tailwind): **phone** `< md` (768px) · **tablet+** `md+`
 - Registration: responsive headings, sticky mobile footer, safe-area padding
 - Public course detail: LISTA Guide FAB raised above mobile enroll bar
 - Audit doc + layout consistency across public / trainee / admin
+
+## 2026-05-24 audit matrix (public)
+
+Viewports: **320×568** · **390×844** · **768×1024** · **1024×768** · **1280×800**
+
+| Route | 320 | 390 | 768 | 1024 | 1280 | Issues found |
+|-------|-----|-----|-----|------|------|----------------|
+| `/` | P | P | P | P | P | Real Skills uses `md` grid + action bar (2026-05-24) |
+| `/courses` | P | P | P | P | P | Filter chips scroll; 2-col cards OK |
+| `/courses/:slug` | P | P | P | P | P | `pb-28` clears mobile enroll bar; FAB z-50 |
+| `/admissions` | P | P | P | P | P | Sticky sidebar `lg+` only |
+| `/scholarships` | P | P | P | P | P | Hero padding OK |
+| `/about` | P | P | P | P | P | — |
+| `/contact` | P | P | P | P | P | — |
+| `/assessment` | P | P | P | P | P | — |
+| `/login`, `/signup` | P | P | P | P | P | Forms |
+
+P = pass (no horizontal scroll, CTAs reachable) · F = fail · P* = pass with minor polish
+
+### Fix queue (2026-05-24)
+
+All items addressed in commits below.
+
+## 2026-05-24 fixes
+
+- **SplashCursor** on `PublicLayout` (lazy, desktop pointer only, `prefers-reduced-motion` off); per-card glass cursor blob removed
+- **Home Real Skills:** `md:grid-cols-12`, action bar `md:flex-row`, category swipe hint on `sm`, pill text scale on narrow phones
+- **Courses:** filter chips `flex-wrap` below `md`, scroll affordance hidden when wrapped
+- **Public shell:** `overflow-x-clip` on `.public-site` (not `main` — admissions sticky preserved)
+- **Course cards:** CSS `:hover` lift/ring only; compact mode ellipsis unchanged
+- **Course detail / chat:** existing `pb-28` + raised FAB on `/courses/*` verified in matrix

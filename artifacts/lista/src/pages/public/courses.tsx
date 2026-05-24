@@ -122,7 +122,7 @@ export default function CoursesPage() {
             </div>
 
             <div className="relative flex-1 min-w-0">
-              <div className="flex gap-2 overflow-x-auto pb-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] pr-12">
+              <div className="flex flex-wrap gap-2 pb-1 md:flex-nowrap md:overflow-x-auto md:pr-12 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 {categories.map((cat) => (
                   <button
                     key={cat}
@@ -138,7 +138,7 @@ export default function CoursesPage() {
                   </button>
                 ))}
               </div>
-              <div className="absolute right-0 top-0 bottom-1 w-16 bg-gradient-to-l from-white via-white/90 to-transparent pointer-events-none flex items-center justify-end pr-1">
+              <div className="pointer-events-none absolute right-0 top-0 bottom-1 hidden w-16 items-center justify-end bg-gradient-to-l from-white via-white/90 to-transparent pr-1 md:flex">
                 <div className="flex items-center gap-1.5 opacity-60 bg-white/50 backdrop-blur-sm px-1.5 py-0.5 rounded-full border border-border shadow-sm animate-pulse">
                   <ArrowRight className="w-3.5 h-3.5 text-slate-500" />
                 </div>
