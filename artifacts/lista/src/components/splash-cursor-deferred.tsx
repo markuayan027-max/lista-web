@@ -35,11 +35,8 @@ export default function SplashCursorDeferred() {
       setMount(false);
       return;
     }
-    if (typeof requestIdleCallback === "function") {
-      const id = requestIdleCallback(() => setMount(true), { timeout: 3000 });
-      return () => cancelIdleCallback(id);
-    }
-    const t = window.setTimeout(() => setMount(true), 1500);
+    // Mount soon after gate passes — idle deferral made the effect easy to miss.
+    const t = window.setTimeout(() => setMount(true), 100);
     return () => window.clearTimeout(t);
   }, [enabled]);
 
@@ -51,8 +48,8 @@ export default function SplashCursorDeferred() {
         RAINBOW_MODE={false}
         COLOR="#2563eb"
         TRANSPARENT
-        DYE_RESOLUTION={640}
-        SPLAT_FORCE={3000}
+        DYE_RESOLUTION={720}
+        SPLAT_FORCE={5500}
       />
     </Suspense>
   );
