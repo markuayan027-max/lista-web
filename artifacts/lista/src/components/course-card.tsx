@@ -4,10 +4,9 @@ import { Badge } from "@/components/ui/badge";
 import { resolveCourseCoverImage } from "@/lib/course-images";
 import OptimizedImage from "@/components/optimized-image";
 import { BookOpen, ArrowRight, CheckCircle2, Lock } from "lucide-react";
-import { useState, type CSSProperties } from "react";
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { NcLevelBadge } from "@/components/nc-level-badge";
-import { useCardPointerGlow } from "@/hooks/use-card-pointer-glow";
 
 interface Course {
   slug: string;
@@ -41,66 +40,20 @@ export default function CourseCard({
   );
 
   const canNavigate = !course.isFrozen || hideLockOverlay;
-  const interactive = canNavigate && !(course.isFrozen && !hideLockOverlay);
-  const { ref, active, pos, onMove, onLeave, canHover } = useCardPointerGlow(interactive);
-
-  const glowStyle = {
-    "--card-glow-x": `${pos.x}px`,
-    "--card-glow-y": `${pos.y}px`,
-  } as CSSProperties;
 
   return (
     <div className="h-full">
       <Link href={canNavigate ? `/courses/${course.slug}` : "#"} className={cn("block h-full", !canNavigate && "cursor-not-allowed")}>
         <div className="h-full">
           <Card
-            ref={ref}
-            data-active={active ? "true" : "false"}
-            onMouseMove={onMove}
-            onMouseLeave={onLeave}
-            style={canHover && active ? glowStyle : undefined}
             className={cn(
               "course-card-shell group relative flex h-full max-h-full flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-none transition-[transform,box-shadow,border-color,ring] duration-300 ease-out",
               compact && "rounded-xl",
               (course.isFrozen && !hideLockOverlay)
                 ? "cursor-not-allowed border-slate-100 opacity-80 grayscale-[0.5]"
-                : cn(
-                    "cursor-pointer",
-                    canHover ? "hover:border-slate-300/90" : "active:scale-[0.99]",
-                  ),
+                : "cursor-pointer hover:border-slate-300/90 active:scale-[0.99]",
             )}
           >
-            {canHover && (
-              <>
-                <div
-                  aria-hidden
-                  className={cn(
-                    "course-card-glass-wave pointer-events-none absolute inset-0 z-[6] rounded-[inherit] opacity-0 transition-opacity duration-500",
-                    active && "opacity-100",
-                  )}
-                />
-                <div
-                  aria-hidden
-                  className={cn(
-                    "pointer-events-none absolute inset-0 z-[5] rounded-[inherit] opacity-0 ring-2 ring-inset ring-white/75 transition-opacity duration-300",
-                    active && "opacity-100",
-                  )}
-                />
-                <div
-                  aria-hidden
-                  className="course-card-cursor-blob"
-                  style={{
-                    left: pos.x,
-                    top: pos.y,
-                    opacity: active ? 1 : 0,
-                    transform: active
-                      ? "translate(-50%, -50%) scale(1)"
-                      : "translate(-50%, -50%) scale(0.85)",
-                  }}
-                />
-              </>
-            )}
-
             {course.isFrozen && !hideLockOverlay && (
               <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/40 p-6 text-center backdrop-blur-[2px]">
                 <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-900 text-white shadow-lg">

@@ -3,6 +3,7 @@ import { Redirect } from "wouter";
 import Navbar from "@/components/navbar";
 import PublicFooter from "@/components/public-footer";
 import HomepageChatDeferred from "@/components/homepage-chat-deferred";
+import SplashCursorDeferred from "@/components/splash-cursor-deferred";
 import { useCourses } from "@/hooks/use-lista-data";
 import { useAuth } from "@/context/auth-context";
 import { getRoleHomePath } from "@/lib/role-navigation";
@@ -24,7 +25,8 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
   }
 
   return (
-    <div className="public-site min-h-screen bg-white flex flex-col">
+    <div className="public-site relative min-h-screen flex flex-col overflow-x-clip bg-white">
+      <SplashCursorDeferred />
       <Navbar />
       <main className="flex-1 min-w-0">
         {children}
