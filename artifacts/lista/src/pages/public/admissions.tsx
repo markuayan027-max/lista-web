@@ -8,10 +8,6 @@ import {
   UserCheck, 
   ArrowRight, 
   CheckCircle2, 
-  ShieldCheck, 
-  GraduationCap, 
-  Stethoscope, 
-  Image as ImageIcon, 
   Mail,
   Phone,
   Clock,
@@ -65,51 +61,19 @@ const steps = [
   }
 ];
 
-const requirements = [
-  {
-    icon: ShieldCheck,
-    title: "Identification",
-    bisayaTitle: "Pag-ila (Identification)",
-    description: "Standard government verification",
-    items: [
-      { en: "PSA Birth Certificate (Original)", bis: "PSA Birth Certificate (Original)" },
-      { en: "Valid Government ID", bis: "Valid ID sa Gobyerno" },
-      { en: "Barangay Clearance", bis: "Barangay Clearance" }
-    ]
-  },
-  {
-    icon: GraduationCap,
-    title: "Academic History",
-    bisayaTitle: "Kasaysayan sa Pag-eskwela",
-    description: "Educational foundation records",
-    items: [
-      { en: "High School Diploma", bis: "High School Diploma" },
-      { en: "Form 137 / Report Card", bis: "Form 137 o Report Card" },
-      { en: "Transcript of Records", bis: "Transcript of Records" }
-    ]
-  },
-  {
-    icon: Stethoscope,
-    title: "Health & Conduct",
-    bisayaTitle: "Panglawas ug Panggawi",
-    description: "Readiness for technical training",
-    items: [
-      { en: "Medical Certificate (Fit to Train)", bis: "Medical Certificate (Andam mo-train)" },
-      { en: "Good Moral Character Certificate", bis: "Good Moral Character Certificate" }
-    ]
-  },
-  {
-    icon: ImageIcon,
-    title: "Visual Records",
-    bisayaTitle: "Mga Hulagway (ID Photos)",
-    description: "Official institutional identification",
-    items: [
-      { en: "4pcs 1x1 ID Photos", bis: "4 ka buok 1x1 nga hulagway" },
-      { en: "4pcs 2x2 ID Photos", bis: "4 ka buok 2x2 nga hulagway" },
-      { en: "Standard white background", bis: "Puti ang background" }
-    ]
-  }
-];
+/** Single checklist — trainees see one list of everything to bring (no split categories). */
+const enrollmentDocuments = [
+  "PSA Birth Certificate (original)",
+  "Valid government-issued ID (photocopy)",
+  "Barangay Clearance",
+  "High School Diploma (photocopy)",
+  "Form 137 / Report Card (photocopy)",
+  "Transcript of Records (photocopy, if available)",
+  "Medical Certificate — fit to train",
+  "Good Moral Character Certificate",
+  "4 pieces 1×1 ID photos (white background)",
+  "4 pieces 2×2 ID photos (white background)",
+] as const;
 
 export default function AdmissionsPage() {
   return (
@@ -234,75 +198,82 @@ export default function AdmissionsPage() {
         </div>
       </section>
 
-      {/* Requirements - Minimalist Grid */}
-      <section className="py-32 bg-slate-50/50 border-y border-slate-100">
-        <div className="container mx-auto px-4 md:px-6">
-          <div className="text-center max-w-3xl mx-auto mb-20 space-y-6">
-            <h2 className="text-4xl md:text-5xl font-bold tracking-tight text-slate-900">Enrollment Requirements</h2>
-            <div className="space-y-2">
-              <p className="text-blue-600 font-bold tracking-wide uppercase text-sm">Mga Kinahanglanon sa Pag-enrol</p>
-              <p className="text-xl text-slate-500 font-medium">Bring these documents when you enroll.</p>
+      {/* Requirements — one checklist, clear order */}
+      <section className="py-16 sm:py-24 lg:py-32 bg-slate-50/50 border-y border-slate-100">
+        <div className="container mx-auto">
+          <div className="max-w-2xl mx-auto min-w-0 space-y-8 sm:space-y-10">
+            <div className="text-center sm:text-left space-y-3">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-slate-900 text-balance">
+                What to bring when you enroll
+              </h2>
+              <p className="text-base sm:text-lg text-slate-600 leading-relaxed">
+                <span className="font-semibold text-slate-800">Mga kinahanglanon sa pag-enrol:</span>{" "}
+                dad-a ang tanan sa lista sa ubos. Ayaw lang ang usa.
+              </p>
             </div>
-            
-            {/* Prominent Bisaya Instruction */}
-            <Reveal inView from="scale" duration={600} className="flex flex-col gap-4 max-w-2xl mx-auto">
-              <div className="bg-blue-50 border border-blue-100 px-8 py-4 rounded-2xl">
-                <p className="text-blue-800 font-bold text-lg">
-                  ⚠️ Palihog ibutang ang tanang dokumento sa usa ka <span className="underline decoration-blue-300 decoration-2 underline-offset-4">"long brown envelope"</span>.
-                </p>
-              </div>
 
-              <div className="bg-emerald-50 border border-emerald-100 px-8 py-5 rounded-2xl shadow-sm">
-                <p className="text-emerald-900 font-bold text-lg leading-tight">
-                  Important: Applicants must bring these documents and <span className="text-emerald-600">create an account (filling up the online form)</span> BEFORE proceeding to the main building.
-                </p>
-                <p className="text-emerald-700 font-medium text-sm mt-2 italic">
-                  Pahibalo: Kinahanglan dad-on ang mga dokumento ug maghimo og account (pag-fill up sa form) BAG-O moadto sa main building.
+            <Reveal inView from="scale" duration={600} className="rounded-2xl border-2 border-amber-200 bg-amber-50 p-5 sm:p-6 space-y-4">
+              <p className="text-sm font-bold uppercase tracking-wider text-amber-900">Before you come to campus</p>
+              <ol className="list-decimal list-inside space-y-2 text-slate-800 text-base sm:text-lg font-medium leading-relaxed marker:font-bold marker:text-amber-800">
+                <li>
+                  <Link href={getPublicEnrollHref()} className="text-blue-700 underline underline-offset-2 hover:text-blue-900">
+                    Sign in and complete the online application
+                  </Link>{" "}
+                  (create your LISTA account first).
+                </li>
+                <li>
+                  Prepare every document in the checklist below inside one{" "}
+                  <strong className="text-amber-950">long brown envelope</strong>.
+                </li>
+                <li>Bring the envelope and your account ready when you visit the main building.</li>
+              </ol>
+              <p className="text-sm text-amber-900/90 border-t border-amber-200/80 pt-3 leading-relaxed">
+                <strong>Pahibalo:</strong> Maghimo og account ug kompletoha ang online form una. Ibutang ang tanan nga dokumento sa usa ka long brown envelope. Unya lang moadto sa main building.
+              </p>
+            </Reveal>
+
+            <Reveal inView delay={100} duration={600} className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-8 shadow-sm">
+              <p className="text-lg font-bold text-slate-900 mb-1">Document checklist</p>
+              <p className="text-sm text-slate-500 mb-6">Bring all {enrollmentDocuments.length} items. Photocopies are fine unless noted.</p>
+              <ul className="space-y-3" aria-label="Enrollment document checklist">
+                {enrollmentDocuments.map((doc, idx) => (
+                  <li key={doc} className="flex gap-3 items-start text-base sm:text-[1.05rem] text-slate-800">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white tabular-nums">
+                      {idx + 1}
+                    </span>
+                    <span className="pt-0.5 font-medium leading-snug">{doc}</span>
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-6 flex items-start gap-2 rounded-xl bg-slate-50 border border-slate-100 px-4 py-3 text-sm text-slate-600">
+                <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600 mt-0.5" aria-hidden />
+                <p>
+                  Scholarship applicants (TWSP, etc.) may need extra papers — staff will confirm when you apply.
                 </p>
               </div>
             </Reveal>
-          </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {requirements.map((req, idx) => (
-              <Reveal
-                key={idx}
-                inView
-                delay={idx * 100}
-                className="bg-white border border-slate-200/60 p-10 rounded-[3rem] shadow-sm hover:shadow-xl transition-all duration-700"
-              >
-                <div className="w-14 h-14 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 mb-8">
-                  <req.icon className="w-7 h-7" />
-                </div>
-                <h4 className="text-2xl font-bold mb-1">{req.title}</h4>
-                <p className="text-blue-600 font-bold text-xs mb-2 uppercase tracking-tight">{req.bisayaTitle}</p>
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-6">{req.description}</p>
-                <ul className="space-y-4">
-                  {req.items.map((item, i) => (
-                    <li key={i} className="text-sm text-slate-600 flex flex-col items-start gap-1">
-                      <div className="flex items-center gap-3">
-                        <div className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0" />
-                        <span className="font-semibold">{item.en}</span>
-                      </div>
-                      <span className="text-[11px] text-slate-400 ml-4.5 italic">({item.bis})</span>
-                    </li>
-                  ))}
-                </ul>
-              </Reveal>
-            ))}
+            <div className="text-center sm:text-left">
+              <Link href={getPublicEnrollHref()}>
+                <PrimaryButton className="w-full sm:w-auto h-12 sm:h-14 px-8 rounded-full font-bold">
+                  Start online application
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </PrimaryButton>
+              </Link>
+            </div>
           </div>
         </div>
       </section>
 
       {/* FAQ & Support - Light & Approachable */}
-      <section className="py-32 bg-white">
-        <div className="container mx-auto px-4 md:px-6">
-          <div className="max-w-6xl mx-auto">
-            <div className="grid lg:grid-cols-2 gap-20 items-start">
-              <div className="space-y-12">
-                <div className="space-y-4">
-                  <h2 className="text-4xl font-bold tracking-tight">Admissions Inquiry</h2>
-                  <p className="text-lg text-slate-500">Frequently asked questions regarding our institutional standards and enrollment procedures.</p>
+      <section className="py-16 sm:py-24 lg:py-32 bg-white">
+        <div className="container mx-auto">
+          <div className="max-w-6xl mx-auto min-w-0">
+            <div className="grid lg:grid-cols-2 gap-10 lg:gap-20 items-start">
+              <div className="space-y-8 sm:space-y-12 min-w-0">
+                <div className="space-y-3 sm:space-y-4">
+                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-balance">Admissions Inquiry</h2>
+                  <p className="text-base sm:text-lg text-slate-500">Frequently asked questions regarding our institutional standards and enrollment procedures.</p>
                 </div>
                 
                 <div className="space-y-4">
@@ -326,7 +297,7 @@ export default function AdmissionsPage() {
                       ba: "Oo, aduna kita'y espesyal nga schedule para sa mga nagtrabaho na."
                     }
                   ].map((faq, i) => (
-                    <div key={i} className="group p-8 bg-slate-50 border border-slate-100 rounded-[2rem] hover:bg-white hover:shadow-lg transition-all duration-500">
+                    <div key={i} className="group p-5 sm:p-8 bg-slate-50 border border-slate-100 rounded-2xl sm:rounded-[2rem] hover:bg-white hover:shadow-lg transition-all duration-500">
                       <h4 className="text-lg font-bold mb-1 flex items-center justify-between">
                         {faq.q}
                         <HelpCircle className="w-5 h-5 text-blue-200 group-hover:text-blue-600 transition-colors" />
@@ -339,54 +310,64 @@ export default function AdmissionsPage() {
                 </div>
               </div>
 
-              <div className="relative">
-                <div className="bg-white border-2 border-blue-600 rounded-[4rem] p-12 md:p-16 shadow-2xl shadow-blue-100/50 relative z-10">
-                  <h3 className="text-3xl font-bold mb-8">Connect with us.</h3>
-                  <p className="text-slate-500 text-lg mb-12">Our dedicated admissions department is available for virtual and in-person consultations.</p>
+              <div className="relative min-w-0 w-full">
+                <div className="bg-white border-2 border-blue-600 rounded-2xl sm:rounded-3xl lg:rounded-[4rem] p-5 sm:p-8 md:p-12 lg:p-16 shadow-xl sm:shadow-2xl shadow-blue-100/50 relative z-10 overflow-hidden">
+                  <h3 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-8 text-balance">Connect with us.</h3>
+                  <p className="text-slate-500 text-base sm:text-lg mb-8 sm:mb-12 leading-relaxed">Our dedicated admissions department is available for virtual and in-person consultations.</p>
                   
-                  <div className="space-y-10">
-                    <div className="flex gap-6 items-start">
-                      <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+                  <div className="space-y-6 sm:space-y-10">
+                    <div className="flex gap-4 sm:gap-6 items-start min-w-0">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 shrink-0 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
                         <Phone className="w-5 h-5" />
                       </div>
-                      <div>
+                      <div className="min-w-0 flex-1">
                         <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Direct Line</p>
-                        <p className="text-2xl font-bold tracking-tight">0905 109 5284</p>
+                        <a
+                          href="tel:+639051095284"
+                          className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight text-slate-900 hover:text-blue-600 transition-colors"
+                        >
+                          0905 109 5284
+                        </a>
                       </div>
                     </div>
                     
-                    <div className="flex gap-6 items-start">
-                      <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+                    <div className="flex gap-4 sm:gap-6 items-start min-w-0">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 shrink-0 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
                         <Mail className="w-5 h-5" />
                       </div>
-                      <div>
+                      <div className="min-w-0 flex-1">
                         <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Electronic Mail</p>
-                        <p className="text-2xl font-bold tracking-tight">admin@lorenzinternational.org</p>
+                        <a
+                          href="mailto:admin@lorenzinternational.org"
+                          className="block text-base sm:text-lg md:text-xl font-bold tracking-tight text-slate-900 break-all [overflow-wrap:anywhere] hover:text-blue-600 transition-colors"
+                        >
+                          admin@lorenzinternational.org
+                        </a>
                       </div>
                     </div>
                     
-                    <div className="flex gap-6 items-start">
-                      <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+                    <div className="flex gap-4 sm:gap-6 items-start min-w-0">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 shrink-0 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
                         <Clock className="w-5 h-5" />
                       </div>
-                      <div>
+                      <div className="min-w-0 flex-1">
                         <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Business Hours</p>
-                        <p className="text-2xl font-bold tracking-tight">Mon — Fri, 8AM - 5PM</p>
+                        <p className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight text-balance">Mon — Fri, 8AM - 5PM</p>
                       </div>
                     </div>
                   </div>
 
-                  <div className="mt-12 pt-10 border-t border-slate-100">
-                    <PrimaryButton className="w-full h-16 rounded-full text-lg font-bold group">
+                  <div className="mt-8 sm:mt-12 pt-8 sm:pt-10 border-t border-slate-100">
+                    <PrimaryButton className="w-full h-12 sm:h-14 md:h-16 rounded-full text-base sm:text-lg font-bold group">
                       Schedule a Visit
                       <ChevronRight className="ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
                     </PrimaryButton>
                   </div>
                 </div>
                 
-                {/* Decorative Elements */}
-                <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-blue-600 rounded-full blur-[80px] opacity-10"></div>
-                <div className="absolute top-1/2 -left-10 w-32 h-32 bg-emerald-400 rounded-full blur-[60px] opacity-10"></div>
+                {/* Decorative Elements — desktop only (avoid mobile overflow) */}
+                <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-blue-600 rounded-full blur-[80px] opacity-10 hidden md:block pointer-events-none" aria-hidden />
+                <div className="absolute top-1/2 -left-10 w-32 h-32 bg-emerald-400 rounded-full blur-[60px] opacity-10 hidden md:block pointer-events-none" aria-hidden />
               </div>
             </div>
           </div>

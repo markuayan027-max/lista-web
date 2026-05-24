@@ -1068,7 +1068,7 @@ function SplashCursor({
         pointerEvents: 'none',
         width: '100%',
         height: '100%',
-        mixBlendMode: 'multiply'
+        mixBlendMode: 'screen'
       }}
     >
       <canvas

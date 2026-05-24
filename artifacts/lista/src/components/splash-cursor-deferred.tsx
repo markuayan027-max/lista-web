@@ -6,18 +6,22 @@ function useSplashCursorEnabled(): boolean {
   const [enabled, setEnabled] = useState(false);
 
   useEffect(() => {
-    const hoverMq = window.matchMedia("(hover: hover) and (pointer: fine)");
+    const finePointerMq = window.matchMedia("(pointer: fine)");
+    const anyFinePointerMq = window.matchMedia("(any-pointer: fine)");
     const motionMq = window.matchMedia("(prefers-reduced-motion: reduce)");
 
     const sync = () => {
-      setEnabled(hoverMq.matches && !motionMq.matches);
+      const finePointer = finePointerMq.matches || anyFinePointerMq.matches;
+      setEnabled(finePointer && !motionMq.matches);
     };
 
     sync();
-    hoverMq.addEventListener("change", sync);
+    finePointerMq.addEventListener("change", sync);
+    anyFinePointerMq.addEventListener("change", sync);
     motionMq.addEventListener("change", sync);
     return () => {
-      hoverMq.removeEventListener("change", sync);
+      finePointerMq.removeEventListener("change", sync);
+      anyFinePointerMq.removeEventListener("change", sync);
       motionMq.removeEventListener("change", sync);
     };
   }, []);
