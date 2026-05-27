@@ -1,8 +1,39 @@
 import "./load-env.js";
-import express, { type Application } from "express";
+import express, {
+  type Application,
+  type NextFunction,
+  type Request,
+  type Response,
+} from "express";
 import cors from "cors";
 import rateLimit from "express-rate-limit";
 import router from "./routes/index.js";
+
+const STATIC_CORS_ORIGINS = [
+  "https://lista.dpdns.org",
+  "https://www.lista.dpdns.org",
+  "https://lista-frontend.vercel.app",
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+  "http://localhost:4173",
+  "http://127.0.0.1:4173",
+] as const;
+
+/** Vercel preview URLs: lista-frontend-*.vercel.app */
+function isListaVercelPreviewOrigin(origin: string): boolean {
+  return /^https:\/\/lista-frontend[a-z0-9-]*\.vercel\.app$/i.test(origin);
+}
+
+function buildAllowedOrigins(): Set<string> {
+  const fromEnv = [process.env.LISTA_APP_URL, process.env.VITE_APP_URL].filter(
+    (v): v is string => typeof v === "string" && v.length > 0,
+  );
+  return new Set([...STATIC_CORS_ORIGINS, ...fromEnv]);
+}
+
+function isAllowedCorsOrigin(origin: string, allowed: Set<string>): boolean {
+  return allowed.has(origin) || isListaVercelPreviewOrigin(origin);
+}
 
 /** Mount CORS, parsers, rate limit, and API routes (call after request logger on each runtime). */
 export function mountAppRoutes(app: Application): void {
@@ -15,22 +46,12 @@ export function mountAppRoutes(app: Application): void {
     skip: (_req: unknown) => process.env.NODE_ENV === "development",
   });
 
-  const corsOrigins = [
-    process.env.LISTA_APP_URL,
-    process.env.VITE_APP_URL,
-    "https://lista.dpdns.org",
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "http://localhost:4173",
-    "http://127.0.0.1:4173",
-  ].filter((v): v is string => typeof v === "string" && v.length > 0);
+  const allowedOrigins = buildAllowedOrigins();
 
   const reflectCorsOrigin = (req: Request, res: Response): void => {
     const origin = req.headers.origin;
     if (typeof origin !== "string" || !origin) return;
-    const allowed =
-      corsOrigins.length > 0 ? corsOrigins.includes(origin) : true;
-    if (!allowed) return;
+    if (!isAllowedCorsOrigin(origin, allowedOrigins)) return;
     res.setHeader("Access-Control-Allow-Origin", origin);
     res.setHeader("Access-Control-Allow-Credentials", "true");
     res.setHeader("Vary", "Origin");
@@ -38,8 +59,15 @@ export function mountAppRoutes(app: Application): void {
 
   app.use(
     cors({
-      origin: corsOrigins.length > 0 ? corsOrigins : true,
+      origin(origin, callback) {
+        if (!origin) return callback(null, true);
+        if (isAllowedCorsOrigin(origin, allowedOrigins)) return callback(null, origin);
+        return callback(null, false);
+      },
       credentials: true,
+      methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE", "OPTIONS"],
+      allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+      optionsSuccessStatus: 204,
     }),
   );
   app.use((req, res, next) => {

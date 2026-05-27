@@ -17,6 +17,8 @@ compatibility_flags = ["nodejs_compat"]
 [vars]
 CF_WORKER = "1"
 NODE_ENV = "production"
+LISTA_APP_URL = "https://lista.dpdns.org"
+VITE_APP_URL = "https://lista.dpdns.org"
 # Session validation + InsForge admin helpers (must match the project that issues user JWTs).
 INSFORGE_URL = "https://2r6c3q25.ap-southeast.insforge.app"
 # Homepage chat model when GROQ_MODEL secret is unset (groq-env.ts default matches this).
