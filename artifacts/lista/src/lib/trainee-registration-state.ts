@@ -13,6 +13,7 @@ export function isEnrollmentProfileRegistered(
   if (!enrollment) return false;
   const data = enrollment as Partial<Enrollment>;
   const status = (data.status ?? "").toLowerCase();
+  if (["completed", "confirmed", "enrolled"].includes(status)) return true;
   if (status === "ready_to_apply") return true;
   if (hasSubmittedCourseApplication(data)) return true;
   return isTraineeApplicationFormComplete(data);
@@ -29,9 +30,15 @@ export async function resolveTraineeRegistrationFromCloud(user: User): Promise<b
   if (!user.email?.trim()) return false;
 
   const result = await fetchTraineeEnrollmentByEmail(user.email);
-  if (!result.success || !result.data) return false;
+  if (!result.success) return false;
 
-  if (isEnrollmentProfileRegistered(result.data)) {
+  const rows = [
+    result.data,
+    result.activeEnrollment,
+    ...(result.history ?? []),
+  ].filter(Boolean) as Partial<Enrollment>[];
+
+  if (rows.some((row) => isEnrollmentProfileRegistered(row)) || result.canQuickApply) {
     localStorage.setItem(`reg_${user.id}`, "complete");
     return true;
   }

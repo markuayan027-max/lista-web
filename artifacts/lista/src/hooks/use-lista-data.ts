@@ -2,7 +2,10 @@ import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/auth-context";
 import { deriveCertificatesFromEnrollments } from "@/lib/lista-insforge-data";
-import { fetchTraineeEnrollmentByEmail } from "@/lib/trainee-enrollment-insforge";
+import {
+  fetchTraineeEnrollmentByEmail,
+  hasSubmittedCourseApplication,
+} from "@/lib/trainee-enrollment-insforge";
 import {
   bulkUpdateEnrollmentStatus,
   createCourseBatch,
@@ -105,12 +108,23 @@ export function useTraineeProfileBundle(email: string | undefined) {
   });
 }
 
-/** Active enrollment row for pages that expect a single profile record. */
+function pickDisplayEnrollment(bundle: TraineeProfileQuery | undefined): Enrollment | null {
+  if (!bundle) return null;
+  const { activeEnrollment, enrollment, history } = bundle;
+  if (activeEnrollment && hasSubmittedCourseApplication(activeEnrollment)) {
+    return activeEnrollment;
+  }
+  const fromHistory = history.find((row) => hasSubmittedCourseApplication(row));
+  if (fromHistory) return fromHistory;
+  return activeEnrollment ?? enrollment;
+}
+
+/** Active or latest formal enrollment for trainee pages (tracking, application, dashboard). */
 export function useTraineeProfile(email: string | undefined) {
   const bundle = useTraineeProfileBundle(email);
   return {
     ...bundle,
-    data: bundle.data?.activeEnrollment ?? bundle.data?.enrollment ?? null,
+    data: pickDisplayEnrollment(bundle.data),
   };
 }
 

@@ -1,6 +1,6 @@
 import { useAuth } from "@/context/auth-context";
 import { motion } from "framer-motion";
-import { useCourses, useTraineeProfile } from "@/hooks/use-lista-data";
+import { useCourses, useTraineeProfile, useTraineeProfileBundle } from "@/hooks/use-lista-data";
 import { isCourseOpenForEnrollment } from "@/lib/public-data-utils";
 import {
   BookOpen,
@@ -51,6 +51,7 @@ export default function TraineeApplicationPage() {
     coursesQuery;
   const { showSkeleton: coursesLoading } = useQuerySkeleton(coursesQuery);
   const profileQuery = useTraineeProfile(user?.email);
+  const { data: profileBundle } = useTraineeProfileBundle(user?.email);
   const userEnrollment = (profileQuery.data as Enrollment | null) ?? null;
   const enrollmentLoading = profileQuery.isLoading;
   const { data: courseBatches = [] } = useCourseBatches();
@@ -61,10 +62,14 @@ export default function TraineeApplicationPage() {
   );
   const applicationFormComplete = isTraineeApplicationFormComplete(profile);
 
+  const canQuickApply = Boolean(profileBundle?.canQuickApply);
   const hasActiveEnrollment =
-    Boolean(userEnrollment) && enrollmentBlocksNewCourseApplication(userEnrollment?.status);
+    Boolean(userEnrollment) &&
+    enrollmentBlocksNewCourseApplication(userEnrollment?.status) &&
+    !canQuickApply;
 
-  const canApplyToCourse = applicationFormComplete && !hasActiveEnrollment;
+  const canApplyToCourse =
+    applicationFormComplete && (!hasActiveEnrollment || canQuickApply);
 
   const {
     searchQuery,

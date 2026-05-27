@@ -1,6 +1,6 @@
 # LISTA Project — Workflow State
 
-**Last Updated:** 2026-05-22 (mobile live E2E fixes — local; redeploy pending)
+**Last Updated:** 2026-05-28 (trainee prod CORS + registration gate fixes — **deploy pending**)
 
 > Read this before starting. Update when you finish or hand off.
 
@@ -26,6 +26,8 @@
 - **Live E2E (2026-05-19):** Trainee `campioncheryl498@gmail.com` — registration review → course apply **Cookery** → **Pending** in InsForge; tracking + profile show submission. **DB/API:** `consent` column wired in Drizzle + `POST /api/trainees/register` + `PUT /profile`; client `insforgeEnrollmentRowToApiData` reads `consent` from rows. **Playwright:** `enrollment` + `lista-qa-matrix` = **36** tests (`pnpm exec playwright test … --list`).
 - **Docs:** `artifacts/lista/docs/PRE-PRODUCTION-CHECKLIST.md` (🟢/⬜), `FINAL-PILOT-READINESS.md` (pilot steps). **`pnpm run pilot-smoke`** = Playwright 36 + `pilot-insforge-data.mjs`. Sample pending ref `LISTA-2026-76327`.
 - **Sync E2E Phase 4 (2026-05-20):** `docs/PHASE-4-SYNC-E2E-RESULTS.md` — `verify:sync-health` 19/19, `verify:official-form` 8/8, live trainee tracking/profile/print modal OK; `pilot-smoke` **35/36** (dashboard heading regex drift).
+- **Production hardening (2026-05-27):** Fixed Vercel `/api/*` serverless `FUNCTION_INVOCATION_FAILED` and stabilized Worker `/api/courses` failures; verified roles + API smoke via `role-live-audit.mjs` and `post-deploy-api-verify.mjs`.
+- **Trainee prod funnel fix (2026-05-28, uncommitted):** Same-origin API on `lista.dpdns.org` (`api-url.ts`); `trainee-registration-state` treats completed/confirmed/enrolled + `canQuickApply`; `useTraineeProfile` picks display enrollment from history; `application.tsx` honors `canQuickApply`; `vercel.json` drops baked `VITE_LISTA_API_BASE_URL`. **Local:** typecheck + build ✅, Playwright **36/36** ✅. **Prod bundle still has Worker URL** (`index-CaBtOATl.js`) — redeploy Vercel required.
 
 ---
 
@@ -48,7 +50,7 @@
 
 See **`artifacts/lista/docs/REMAINING-TASKS.md`** (master list).
 
-**Deploy now:** https://github.com/markuayan027-max/lista-web/commit/5b20a84
+**Deploy now:** Commit + push these fixes to `main`, then Vercel → **Create Deployment** with full commit URL (see `lista-vercel-deploy-url.mdc`). Prod QA re-run: `node artifacts/lista/.qa/live-browser-qa.mjs` (env `LISTA_TRAINEE_EMAIL` / `LISTA_TRAINEE_PASS`).
 
 ### 2026-05-22 — Public mobile polish (uncommitted)
 - **Nav:** Mobile drawer → 4 links; desktop keeps 7.
