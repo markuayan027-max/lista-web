@@ -1,4 +1,4 @@
-import { authApiUrl } from "@/lib/auth-api";
+import { AUTH_REQUEST_TIMEOUT_MS, authApiUrl } from "@/lib/auth-api";
 import { lista } from "@/lib/insforge";
 
 export type ListaSession = {
@@ -7,7 +7,8 @@ export type ListaSession = {
   user?: unknown;
 };
 
-const SESSION_VERIFY_TTL_MS = 45_000;
+/** Long registration forms re-verify at most every 5 minutes. */
+const SESSION_VERIFY_TTL_MS = 5 * 60_000;
 const VERIFY_CACHE_STORAGE_KEY = "lista_token_verify_cache";
 let verifyInFlight: Promise<string | null> | null = null;
 let refreshInFlight: Promise<ListaSession | null> | null = null;
@@ -128,6 +129,7 @@ async function verifyAccessTokenOnce(): Promise<string | null> {
     try {
       const res = await fetch(authApiUrl("/api/auth/sessions/current"), {
         headers: { Authorization: `Bearer ${existing}` },
+        signal: AbortSignal.timeout(AUTH_REQUEST_TIMEOUT_MS),
       });
       if (res.ok) {
         let current: Record<string, unknown> = {};
@@ -141,21 +143,16 @@ async function verifyAccessTokenOnce(): Promise<string | null> {
         });
         persistSession(merged);
         const token = merged.accessToken ?? existing;
-        lastVerifiedToken = token;
-        lastVerifiedAt = Date.now();
+        markTokenVerified(token);
         return token;
       }
-      // Expired access token — refresh once; do not call /sessions/current again with the old token.
-      if (res.status !== 401 && res.status !== 403) {
-        return null;
-      }
     } catch {
-      // Network blip — try refresh below
+      // Network / timeout — try refresh below
     }
   }
 
   const refreshed = await refreshSessionDeduped(session);
-  const token = refreshed?.accessToken ?? null;
+  const token = refreshed?.accessToken ?? existing ?? null;
   if (token) markTokenVerified(token);
   return token;
 }

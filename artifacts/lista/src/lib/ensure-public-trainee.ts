@@ -1,4 +1,4 @@
-import { authHeadersAsync, ensureAccessToken } from "@/lib/auth-token";
+import { ensureAccessToken } from "@/lib/auth-token";
 import { apiUrl } from "@/lib/api-url";
 
 export type EnsurePublicTraineeResult = {
@@ -13,17 +13,21 @@ async function ensurePublicTraineeUserOnce(input: {
   email: string;
   firstName?: string;
   lastName?: string;
+  bearerToken?: string | null;
 }): Promise<EnsurePublicTraineeResult> {
-  await ensureAccessToken();
-  const headers = await authHeadersAsync();
-  if (!("Authorization" in headers)) {
+  const token = input.bearerToken ?? (await ensureAccessToken());
+  if (!token) {
     return { success: false, error: "Sign in required to sync profile" };
   }
 
   try {
     const res = await fetch(apiUrl("/api/users/ensure-trainee"), {
       method: "POST",
-      headers: { "Content-Type": "application/json", ...headers },
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
       body: JSON.stringify({
         firstName: input.firstName,
         lastName: input.lastName,
@@ -53,6 +57,7 @@ export function ensurePublicTraineeUser(input: {
   email: string;
   firstName?: string;
   lastName?: string;
+  bearerToken?: string | null;
 }): Promise<EnsurePublicTraineeResult> {
   const key = input.email.trim().toLowerCase();
   const existing = ensureTraineeInFlight.get(key);

@@ -344,7 +344,7 @@ async function fetchTraineeEnrollmentViaApi(
   try {
     const res = await fetch(
       apiUrl(`/api/trainees/profile?email=${encodeURIComponent(normalized)}`),
-      { headers: { ...headers }, signal: controller.signal },
+      { credentials: "include", headers: { ...headers }, signal: controller.signal },
     );
     if (res.status === 404) {
       return { success: false, error: "Profile not found" };
@@ -410,19 +410,16 @@ function enrollmentToRegisterApiBody(prepared: Enrollment): Record<string, unkno
 
 async function registerTraineeViaApiFallback(
   prepared: Enrollment,
+  bearerToken: string,
 ): Promise<{ success: boolean; error?: string }> {
-  const headers = await authHeadersAsync();
-  if (!("Authorization" in headers)) {
-    return {
-      success: false,
-      error:
-        "API fallback skipped: sign in again (session expired). Your profile may still save via InsForge when online.",
-    };
-  }
   try {
     const response = await fetch(apiUrl("/api/trainees/register"), {
       method: "POST",
-      headers: { "Content-Type": "application/json", ...headers },
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${bearerToken}`,
+      },
       body: JSON.stringify(enrollmentToRegisterApiBody(prepared)),
     });
     const text = await response.text();
@@ -701,6 +698,7 @@ export async function quickApplyTraineeCourse(
   try {
     const res = await fetch(apiUrl("/api/trainees/apply"), {
       method: "POST",
+      credentials: "include",
       headers: { ...headers, "Content-Type": "application/json" },
       body: JSON.stringify({ traineeEmail: email, courseSlug }),
     });
@@ -730,12 +728,20 @@ export async function registerTraineeFromForm(
     return { success: false, error: "Missing trainee email — sign in again and retry." };
   }
 
+  let bearerToken: string | null;
   try {
-    await withTimeout(ensureAccessToken(), 15_000, "Session refresh");
+    bearerToken = await withTimeout(ensureAccessToken(), 20_000, "Session refresh");
   } catch (err) {
     return {
       success: false,
       error: formatEnrollmentSyncError(err),
+    };
+  }
+  if (!bearerToken) {
+    return {
+      success: false,
+      error:
+        "Your sign-in session expired or could not be refreshed. Sign out, sign in again, then retry saving your profile.",
     };
   }
 
@@ -744,6 +750,7 @@ export async function registerTraineeFromForm(
       email: prepared.traineeEmail,
       firstName: prepared.firstName,
       lastName: prepared.lastName,
+      bearerToken,
     }),
     20_000,
     "User sync",
@@ -757,7 +764,7 @@ export async function registerTraineeFromForm(
 
   // Server upsert first — avoids hung InsForge reads/inserts when a row already exists.
   const apiSync = await withTimeout(
-    registerTraineeViaApiFallback(prepared),
+    registerTraineeViaApiFallback(prepared, bearerToken),
     30_000,
     "Registration sync",
   ).catch((err) => ({
@@ -907,9 +914,20 @@ export async function updateTraineeEnrollmentByEmail(
       normalizedForm.status = (s.charAt(0).toUpperCase() + s.slice(1)) as any;
     }
 
+    const token = await ensureAccessToken();
+    if (!token) {
+      return {
+        success: false,
+        error: "Sign in again to sync profile to the server.",
+      };
+    }
     const response = await fetch(apiUrl(`/api/trainees/profile?email=${encodeURIComponent(normalized)}`), {
       method: "PUT",
-      headers: { "Content-Type": "application/json", ...(await authHeadersAsync()) },
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
       body: JSON.stringify(normalizedForm),
     });
     
