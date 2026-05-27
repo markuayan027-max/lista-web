@@ -3,8 +3,11 @@ import pino from "pino";
 const isProduction = process.env.NODE_ENV === "production";
 /** Vercel sets VERCEL=1 — avoid pino worker threads (FUNCTION_INVOCATION_FAILED). */
 const isVercel = process.env.VERCEL === "1";
+/** Cloudflare Workers set CF_WORKER=1 (via wrangler vars). Avoid pino worker threads there too. */
+const isCloudflareWorker = process.env.CF_WORKER === "1";
+const useConsoleLogger = isVercel || isCloudflareWorker;
 
-export const logger = isVercel
+export const logger = useConsoleLogger
   ? {
       info: (obj: unknown) => console.log(obj),
       warn: (obj: unknown) => console.warn(obj),

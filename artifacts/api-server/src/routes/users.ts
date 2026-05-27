@@ -72,19 +72,16 @@ function profileFromAuth(raw: unknown): { name?: string; avatar_url?: string } {
   };
 }
 
-/** Role for the signed-in user (public.users legacy + auth metadata). */
+/** Role for the signed-in user — same resolution as requireAuth (not raw public.users trainee rows). */
 router.get("/me", requireAuth, async (req, res) => {
   const email = req.authUser!.email.toLowerCase();
-  const { role, deactivated } = await lookupPublicUserRole(email);
+  const { deactivated } = await lookupPublicUserRole(email);
   if (deactivated) {
     return res.status(403).json({
       success: false,
       error: "ACCOUNT_DEACTIVATED",
       message: "This account has been deactivated.",
     });
-  }
-  if (role) {
-    return res.json({ success: true, data: { email, role } });
   }
   return res.json({ success: true, data: { email, role: req.authUser!.role } });
 });
@@ -236,6 +233,10 @@ router.post("/ensure-trainee", requireAuth, async (req, res) => {
       const err = insertErr as { code?: string; cause?: { code?: string } };
       if (err?.code !== "23505" && err?.cause?.code !== "23505") {
         throw insertErr;
+      }
+      const [onConflict] = await db.select().from(users).where(eq(users.email, email)).limit(1);
+      if (onConflict?.role === "admin" || onConflict?.role === "staff") {
+        return res.json({ success: true, data: onConflict, skipped: true });
       }
       [inserted] = await db
         .update(users)
