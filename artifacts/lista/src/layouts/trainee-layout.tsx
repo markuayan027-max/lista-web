@@ -29,8 +29,20 @@ const traineeSidebarProps = {
 };
 
 export default function TraineeLayout({ children }: { children: React.ReactNode }) {
-  const { user, logout, isRegistered } = useAuth();
+  const { user, logout, isRegistered, registrationLoading } = useAuth();
   const [location, setLocation] = useLocation();
+
+  if (registrationLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-background" aria-busy="true" aria-label="Loading profile">
+        <div className="w-full max-w-sm px-6 space-y-4">
+          <div className="h-10 w-10 rounded-xl skeleton-shimmer mx-auto" />
+          <div className="h-3 w-40 skeleton-shimmer mx-auto rounded-md" />
+          <div className="h-2 w-56 skeleton-shimmer mx-auto rounded-md" />
+        </div>
+      </div>
+    );
+  }
 
   if (user?.role === "trainee" && !isRegistered && location !== "/trainee/register") {
     return <Redirect to="/trainee/register" />;

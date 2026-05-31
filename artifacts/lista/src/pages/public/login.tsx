@@ -15,7 +15,7 @@ import { AlertCircle, Loader2 } from "lucide-react";
 
 export default function LoginPage() {
   const [_, setLocation] = useLocation();
-  const { login, signUpWithOAuth, user, loading: authLoading } = useAuth();
+  const { login, signUpWithOAuth, user, loading: authLoading, registrationLoading } = useAuth();
 
   const postLoginPath = useMemo(() => {
     const params = new URLSearchParams(window.location.search);
@@ -45,8 +45,9 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!user) return;
+    if (user.role === "trainee" && registrationLoading) return;
     setLocation(resolvePostLoginPath(user.role, postLoginPath));
-  }, [user, setLocation, postLoginPath]);
+  }, [user, registrationLoading, setLocation, postLoginPath]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 
 export default function AuthCallbackPage() {
   const [_, setLocation] = useLocation();
-  const { user, completeOAuthCallback } = useAuth();
+  const { user, completeOAuthCallback, registrationLoading } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const startedRef = useRef(false);
 
@@ -31,8 +31,9 @@ export default function AuthCallbackPage() {
 
   useEffect(() => {
     if (!user) return;
+    if (user.role === "trainee" && registrationLoading) return;
     setLocation(resolvePostLoginPath(user.role, postLoginPath));
-  }, [user, setLocation, postLoginPath]);
+  }, [user, registrationLoading, setLocation, postLoginPath]);
 
   if (error) {
     return (

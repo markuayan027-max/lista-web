@@ -6,6 +6,7 @@ import { Toaster as SonnerToaster } from "sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/context/auth-context";
 import NotFound from "@/pages/not-found";
+import { getRoleHomePath } from "@/lib/role-navigation";
 
 import PublicLayout from "@/layouts/public-layout";
 import AuthLayout from "@/layouts/auth-layout";
@@ -29,24 +30,6 @@ function Protected({
   allowedRole: "trainee" | "staff" | "admin";
 }) {
   const { user, loading } = useAuth();
-  const [_, setLocation] = useLocation();
-
-  useEffect(() => {
-    if (loading) return;
-    if (!user) {
-      if (import.meta.env.DEV && localStorage.getItem("TEST_MODE") === "true") return;
-      const returnTo = encodeURIComponent(
-        `${window.location.pathname}${window.location.search}`,
-      );
-      setLocation(`/login?redirect=${returnTo}`);
-      return;
-    }
-    if (user.role === allowedRole) return;
-    if (import.meta.env.DEV && localStorage.getItem("TEST_MODE") === "true") return;
-    if (user.role === "admin") setLocation("/admin");
-    else if (user.role === "staff") setLocation("/staff");
-    else setLocation("/trainee");
-  }, [user, loading, allowedRole, setLocation]);
 
   if (loading) {
     return (
@@ -64,22 +47,15 @@ function Protected({
     if (import.meta.env.DEV && localStorage.getItem("TEST_MODE") === "true") {
       return <Layout>{children}</Layout>;
     }
-    return null;
+    const returnTo = encodeURIComponent(`${window.location.pathname}${window.location.search}`);
+    return <Redirect to={`/login?redirect=${returnTo}`} />;
   }
 
   if (user.role !== allowedRole) {
     if (import.meta.env.DEV && localStorage.getItem("TEST_MODE") === "true") {
       return <Layout>{children}</Layout>;
     }
-    
-    // Redirect based on their actual role instead of showing a dead-end
-    if (user.role === "admin") {
-      return <Redirect to="/admin" />;
-    } else if (user.role === "staff") {
-      return <Redirect to="/staff" />;
-    } else {
-      return <Redirect to="/trainee" />;
-    }
+    return <Redirect to={getRoleHomePath(user.role)} />;
   }
 
   return <Layout>{children}</Layout>;

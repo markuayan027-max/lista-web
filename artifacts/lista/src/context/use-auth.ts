@@ -13,6 +13,8 @@ export interface AuthContextType {
   completeOAuthCallback: () => Promise<void>;
   logout: () => Promise<void>;
   isRegistered: boolean;
+  /** Trainee-only: resolving cloud registration gate in background. */
+  registrationLoading: boolean;
   completeRegistration: () => void;
   markRegistrationPartial: () => void;
 }

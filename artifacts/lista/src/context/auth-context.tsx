@@ -72,6 +72,7 @@ async function applySessionPayload(
   payload: Record<string, unknown>,
   setUser: (u: User | null) => void,
   setIsRegistered: (v: boolean) => void,
+  setRegistrationLoading: (v: boolean) => void,
 ) {
   const session = normalizeAuthSession(payload);
   localStorage.setItem("lista_session", JSON.stringify(session));
@@ -87,10 +88,11 @@ async function applySessionPayload(
   );
   setUser(mapped);
   if (mapped) {
+    if (mapped.role === "trainee") setRegistrationLoading(true);
     setIsRegistered(isTraineeRegistrationComplete(mapped));
-    void syncTraineeSideEffects(mapped, setIsRegistered).catch(() =>
-      setIsRegistered(isTraineeRegistrationComplete(mapped)),
-    );
+    void syncTraineeSideEffects(mapped, setIsRegistered)
+      .catch(() => setIsRegistered(isTraineeRegistrationComplete(mapped)))
+      .finally(() => setRegistrationLoading(false));
   }
 }
 
@@ -102,6 +104,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
   const [isRegistered, setIsRegistered] = useState(false);
+  const [registrationLoading, setRegistrationLoading] = useState(false);
 
   /** Restore an existing session on mount */
   useEffect(() => {
@@ -124,10 +127,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const mapped = await mapInsForgeUser(rawUser, token);
             setUser(mapped);
             if (mapped) {
+              if (mapped.role === "trainee") setRegistrationLoading(true);
               setIsRegistered(isTraineeRegistrationComplete(mapped));
-              void syncTraineeSideEffects(mapped, setIsRegistered).catch(() =>
-                setIsRegistered(isTraineeRegistrationComplete(mapped)),
-              );
+              void syncTraineeSideEffects(mapped, setIsRegistered)
+                .catch(() => setIsRegistered(isTraineeRegistrationComplete(mapped)))
+                .finally(() => setRegistrationLoading(false));
             }
           }
           return;
@@ -143,7 +147,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const mapped = await mapInsForgeUser(data.user);
           setUser(mapped);
           if (mapped) {
+            if (mapped.role === "trainee") setRegistrationLoading(true);
             setIsRegistered(isTraineeRegistrationComplete(mapped));
+            void syncTraineeSideEffects(mapped, setIsRegistered)
+              .catch(() => setIsRegistered(isTraineeRegistrationComplete(mapped)))
+              .finally(() => setRegistrationLoading(false));
           }
         }
       } catch (err) {
@@ -153,6 +161,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         clearTraineeSyncMarkers();
         lista.setAccessToken(null);
         setUser(null);
+        setRegistrationLoading(false);
       } finally {
         setIsInitializing(false);
       }
@@ -170,7 +179,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         body: { email: email.trim().toLowerCase(), password },
       },
     );
-    await applySessionPayload(normalizeAuthSession(data), setUser, setIsRegistered);
+    await applySessionPayload(normalizeAuthSession(data), setUser, setIsRegistered, setRegistrationLoading);
   };
 
   const signUp = async (email: string, password: string, name?: string) => {
@@ -193,7 +202,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         body: { email: email.trim().toLowerCase(), otp: otp.trim() },
       },
     );
-    await applySessionPayload(normalizeAuthSession(data), setUser, setIsRegistered);
+    await applySessionPayload(normalizeAuthSession(data), setUser, setIsRegistered, setRegistrationLoading);
   };
 
   const resendVerificationEmail = async (email: string) => {
@@ -233,6 +242,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }),
         setUser,
         setIsRegistered,
+        setRegistrationLoading,
       );
       clearPkceVerifierFromStorage();
       clearOAuthCallbackParams();
@@ -260,7 +270,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
     clearPkceVerifierFromStorage();
     clearOAuthCallbackParams();
-    await applySessionPayload(normalizeAuthSession(data), setUser, setIsRegistered);
+    await applySessionPayload(normalizeAuthSession(data), setUser, setIsRegistered, setRegistrationLoading);
   };
 
   const logout = async () => {
@@ -292,6 +302,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       lista.setAccessToken(null);
       setUser(null);
       setIsRegistered(false);
+      setRegistrationLoading(false);
     }
   };
 
@@ -320,6 +331,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         completeOAuthCallback,
         logout,
         isRegistered,
+        registrationLoading,
         completeRegistration,
         markRegistrationPartial,
       }}
