@@ -1,3 +1,5 @@
+import { prefersListaApiProxy } from "@/lib/api-url";
+
 const DEFAULT_INSFORGE_URL = "https://2r6c3q25.ap-southeast.insforge.app";
 const PLACEHOLDER_URL_FRAGMENT = "your-project.ap-southeast.insforge.app";
 const PLACEHOLDER_KEY_FRAGMENTS = ["your_anon", "your-anon", "replace_me"] as const;
@@ -46,10 +48,11 @@ export function logInsforgeEnvNoticeOnce(): void {
   if (!cfg.usingTemplateEnv) return;
   devNoticeLogged = true;
   console.debug(
-    "[LISTA] InsForge .env not set — catalog/auth use /api/* proxy. Copy artifacts/lista/.env.example → .env and set VITE_INSFORGE_ANON_KEY for direct SDK (OAuth, storage).",
+    "[LISTA] Backend .env not set — catalog/auth use /api/* proxy. Copy artifacts/lista/.env.example → .env and set VITE_INSFORGE_ANON_KEY for direct SDK (OAuth, storage).",
   );
 }
 
 export function canUseInsforgeSdk(): boolean {
+  if (prefersListaApiProxy()) return false;
   return resolveInsforgeEnv().sdkReady;
 }

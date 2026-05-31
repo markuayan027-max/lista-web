@@ -563,7 +563,7 @@ export async function fetchCourses(): Promise<ListaFetchResult<Course[]>> {
     const { data, error } = await withTimeout(
       (async () => lista.from("lms_courses_legacy").select("*").order("name", { ascending: true }))(),
       FETCH_COURSES_MS,
-      "InsForge courses",
+      "LISTA courses",
     );
     if (error) {
       if (api.success) return api;
@@ -646,7 +646,7 @@ export async function fetchAnnouncements(): Promise<ListaFetchResult<ListaAnnoun
         (async () =>
           lista.from("announcements").select("*").order("created_at", { ascending: false }))(),
         FETCH_COURSES_MS,
-        "InsForge announcements",
+        "LISTA announcements",
       );
       if (!error) {
         const mapped = ((data as Record<string, unknown>[]) || []).map((row) =>
@@ -679,7 +679,33 @@ export async function fetchAnnouncements(): Promise<ListaFetchResult<ListaAnnoun
 
 // ── Schedules ────────────────────────────────────────────────────────────────
 
+async function fetchSchedulesFromApi(): Promise<ListaFetchResult<DbSchedule[]>> {
+  try {
+    const res = await fetch(apiUrl("/api/schedules"));
+    if (!res.ok) {
+      return { success: false, error: `Schedules API HTTP ${res.status}` };
+    }
+    const rows = (await res.json()) as unknown;
+    if (!Array.isArray(rows)) {
+      return { success: false, error: "Schedules API returned invalid data" };
+    }
+    return {
+      success: true,
+      data: rows.map((row) => rowToSchedule(row as Record<string, unknown>)),
+    };
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : String(err) };
+  }
+}
+
 export async function fetchSchedules(): Promise<ListaFetchResult<DbSchedule[]>> {
+  const api = await fetchSchedulesFromApi();
+  if (api.success) return api;
+
+  if (!canUseInsforgeSdk()) {
+    return api;
+  }
+
   const { data, error } = await lista.from("schedules").select("*").order("start_date", { ascending: true });
   if (error) return { success: false, error: error.message };
   return { success: true, data: ((data as Record<string, unknown>[]) || []).map(rowToSchedule) };
@@ -781,12 +807,50 @@ export async function updateCourseBatchStatus(
 // ── Testimonials & FAQs ──────────────────────────────────────────────────────
 
 export async function fetchTestimonials(): Promise<ListaFetchResult<DbTestimonial[]>> {
+  try {
+    const res = await fetch(apiUrl("/api/testimonials"));
+    if (res.ok) {
+      const rows = (await res.json()) as unknown;
+      if (Array.isArray(rows)) {
+        return {
+          success: true,
+          data: rows.map((row) => rowToTestimonial(row as Record<string, unknown>)),
+        };
+      }
+    }
+  } catch {
+    // fall through to SDK when allowed
+  }
+
+  if (!canUseInsforgeSdk()) {
+    return { success: true, data: [] };
+  }
+
   const { data, error } = await lista.from("testimonials").select("*");
   if (error) return { success: false, error: error.message };
   return { success: true, data: ((data as Record<string, unknown>[]) || []).map(rowToTestimonial) };
 }
 
 export async function fetchFaqs(): Promise<ListaFetchResult<DbFaq[]>> {
+  try {
+    const res = await fetch(apiUrl("/api/faqs"));
+    if (res.ok) {
+      const rows = (await res.json()) as unknown;
+      if (Array.isArray(rows)) {
+        return {
+          success: true,
+          data: rows.map((row) => rowToFaq(row as Record<string, unknown>)),
+        };
+      }
+    }
+  } catch {
+    // fall through to SDK when allowed
+  }
+
+  if (!canUseInsforgeSdk()) {
+    return { success: true, data: [] };
+  }
+
   const { data, error } = await lista.from("faqs").select("*").order("order", { ascending: true });
   if (error) return { success: false, error: error.message };
   return { success: true, data: ((data as Record<string, unknown>[]) || []).map(rowToFaq) };

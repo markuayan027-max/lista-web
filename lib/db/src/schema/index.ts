@@ -85,6 +85,8 @@ export const enrollments = pgTable("lms_enrollments_legacy", {
   tesdaNcSentBy: uuid("tesda_nc_sent_by"),
   tesdaNcNote: text("tesda_nc_note"),
   placementType: text("placement_type"),
+  documentsJson: text("documents_json"),
+  documentStatus: text("document_status"),
   submittedAt: timestamp("submitted_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, (table) => {

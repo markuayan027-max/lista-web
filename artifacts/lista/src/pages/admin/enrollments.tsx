@@ -79,7 +79,7 @@ export default function AdminEnrollmentsPage() {
       await bulkUpdate.mutateAsync({ ids: selectedIds, status });
       toast({
         title: `Enrollments ${action === "confirm" ? "Approved" : "Rejected"}`,
-        description: `${selectedIds.length} enrollments updated in InsForge.`,
+        description: `${selectedIds.length} enrollments updated in LISTA.`,
       });
       setSelectedIds([]);
     } catch (err) {

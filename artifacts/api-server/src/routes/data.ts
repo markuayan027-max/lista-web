@@ -1,5 +1,5 @@
 import { Router, type Response } from "express";
-import { db, courses, announcements, faqs, testimonials, cases, incidents } from "@workspace/db";
+import { db, courses, announcements, faqs, testimonials, cases, incidents, schedules } from "@workspace/db";
 import { logger } from "../lib/logger";
 import {
   COURSES_HTTP_CACHE_SECONDS,
@@ -110,6 +110,16 @@ router.get("/faqs", async (req, res) => {
     res.json(data);
   } catch (err) {
     logger.warn({ err }, "Database query failed for /faqs, using empty array");
+    res.json([]);
+  }
+});
+
+router.get("/schedules", async (req, res) => {
+  try {
+    const data = await db.select().from(schedules);
+    res.json(data);
+  } catch (err) {
+    logger.warn({ err }, "Database query failed for /schedules, using empty array");
     res.json([]);
   }
 });

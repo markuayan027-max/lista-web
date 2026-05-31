@@ -2,27 +2,35 @@ import { useState, useRef } from "react";
 import { Upload, FileText, CheckCircle2, AlertCircle, X, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { lista } from "@/lib/insforge";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/context/auth-context";
+import type { TraineeDocument } from "@/lib/institutional-data";
+import { uploadTraineeDocument } from "@/lib/trainee-document-upload";
 
 interface DocumentUploadProps {
   label: string;
-  docType: string;
+  docType: TraineeDocument["type"];
   onUploadComplete: (fileUrl: string, fileName: string) => void;
   allowedExtensions?: string[];
   maxSizeMB?: number;
+  /** Restore UI when documents were saved in a prior session. */
+  initialFile?: { name: string; url: string } | null;
 }
 
 export function DocumentUpload({
   label,
   docType,
   onUploadComplete,
-  allowedExtensions = ['pdf', 'jpg', 'jpeg', 'png'],
-  maxSizeMB = 5
+  allowedExtensions = ["pdf", "jpg", "jpeg", "png"],
+  maxSizeMB = 5,
+  initialFile = null,
 }: DocumentUploadProps) {
+  const { user } = useAuth();
   const [isUploading, setIsUploading] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [uploadedFile, setUploadedFile] = useState<{ name: string; url: string } | null>(null);
+  const [uploadedFile, setUploadedFile] = useState<{ name: string; url: string } | null>(
+    initialFile,
+  );
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -31,67 +39,53 @@ export function DocumentUpload({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Reset states
     setError(null);
     setProgress(0);
 
-    // Validate extension
-    const ext = file.name.split('.').pop()?.toLowerCase();
+    const ext = file.name.split(".").pop()?.toLowerCase();
     if (!ext || !allowedExtensions.includes(ext)) {
-      setError(`Invalid file type. Allowed: ${allowedExtensions.join(', ')}`);
+      setError(`Invalid file type. Allowed: ${allowedExtensions.join(", ")}`);
       return;
     }
 
-    // Validate size
     if (file.size > maxSizeMB * 1024 * 1024) {
       setError(`File too large. Max size is ${maxSizeMB}MB`);
       return;
     }
 
     setIsUploading(true);
-    
-    try {
-      // Create a unique file name
-      const fileName = `${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
-      const filePath = `trainee-documents/${docType}/${fileName}`;
 
-      // Simulate progress for better UX (Insforge SDK might not support real progress out of the box)
-      const progressInterval = setInterval(() => {
-        setProgress(prev => (prev >= 90 ? 90 : prev + 10));
+    try {
+      const progressInterval = window.setInterval(() => {
+        setProgress((prev) => (prev >= 90 ? 90 : prev + 10));
       }, 200);
 
-      const { data, error: uploadError } = await lista.storage
-        .from('trainee-documents')
-        .upload(filePath, file);
-
-      clearInterval(progressInterval);
+      const result = await uploadTraineeDocument(file, docType, user?.id, label);
+      window.clearInterval(progressInterval);
       setProgress(100);
 
-      if (uploadError) throw uploadError;
+      setUploadedFile({ name: result.fileName, url: result.fileUrl });
+      onUploadComplete(result.fileUrl, result.fileName);
 
-      const urlResult = lista.storage.from("trainee-documents").getPublicUrl(filePath);
-      const publicUrl =
-        typeof urlResult === "string"
-          ? urlResult
-          : (urlResult as { data?: { publicUrl?: string } })?.data?.publicUrl ?? "";
-
-      setUploadedFile({ name: file.name, url: publicUrl });
-      onUploadComplete(publicUrl, file.name);
-      
       toast({
-        title: "Upload Successful",
-        description: `${label} has been uploaded.`,
+        title: "Upload successful",
+        description:
+          result.storage === "local"
+            ? `${label} saved on this device and will appear on your TESDA form.`
+            : `${label} has been uploaded to LISTA.`,
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Upload error:", err);
-      setError(err.message || "Failed to upload file");
+      const message = err instanceof Error ? err.message : "Failed to upload file";
+      setError(message);
       toast({
-        title: "Upload Failed",
-        description: err.message || "Something went wrong.",
-        variant: "destructive"
+        title: "Upload failed",
+        description: message,
+        variant: "destructive",
       });
     } finally {
       setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
@@ -108,36 +102,39 @@ export function DocumentUpload({
         <label className="text-sm font-bold text-slate-700">{label}</label>
         {uploadedFile && (
           <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-1">
-            <CheckCircle2 className="w-3 h-3" /> VERIFIED
+            <CheckCircle2 className="w-3 h-3" /> UPLOADED
           </span>
         )}
       </div>
 
       {!uploadedFile ? (
-        <div 
-          onClick={() => fileInputRef.current?.click()}
+        <div
+          onClick={() => !isUploading && fileInputRef.current?.click()}
           className={`
             relative border-2 border-dashed rounded-xl p-6 text-center transition-all cursor-pointer
-            ${isUploading ? 'bg-muted/50 border-muted' : 'bg-white border-slate-200 hover:border-primary/50 hover:bg-slate-50'}
-            ${error ? 'border-destructive/50 bg-destructive/5' : ''}
+            ${isUploading ? "bg-muted/50 border-muted" : "bg-white border-slate-200 hover:border-primary/50 hover:bg-slate-50"}
+            ${error ? "border-destructive/50 bg-destructive/5" : ""}
           `}
         >
-          <input 
-            type="file" 
+          <input
+            type="file"
             ref={fileInputRef}
+            data-testid={`document-upload-${docType}`}
             onChange={handleFileSelect}
             className="hidden"
-            accept={allowedExtensions.map(ext => `.${ext}`).join(',')}
+            accept={allowedExtensions.map((ext) => `.${ext}`).join(",")}
             disabled={isUploading}
           />
-          
+
           <div className="space-y-2">
             {isUploading ? (
               <div className="flex flex-col items-center gap-3">
                 <Loader2 className="w-8 h-8 text-primary animate-spin" />
                 <div className="w-full max-w-[150px] space-y-1">
                   <Progress value={progress} className="h-1" />
-                  <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-tight">Uploading... {progress}%</p>
+                  <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-tight">
+                    Uploading… {progress}%
+                  </p>
                 </div>
               </div>
             ) : (
@@ -148,7 +145,7 @@ export function DocumentUpload({
                 <div>
                   <p className="text-xs font-bold text-slate-900">Click to upload or drag and drop</p>
                   <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-tight">
-                    {allowedExtensions.join(', ')} (Max {maxSizeMB}MB)
+                    {allowedExtensions.join(", ")} (Max {maxSizeMB}MB)
                   </p>
                 </div>
               </>
@@ -162,13 +159,16 @@ export function DocumentUpload({
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-xs font-bold text-slate-900 truncate">{uploadedFile.name}</p>
-            <p className="text-[10px] text-emerald-600 font-medium uppercase tracking-tight">Upload Complete</p>
+            <p className="text-[10px] text-emerald-600 font-medium uppercase tracking-tight">
+              Upload complete
+            </p>
           </div>
-          <Button 
-            variant="ghost" 
-            size="icon" 
+          <Button
+            variant="ghost"
+            size="icon"
             className="h-8 w-8 rounded-full text-slate-400 hover:text-destructive hover:bg-destructive/10"
             onClick={removeFile}
+            type="button"
           >
             <X className="w-4 h-4" />
           </Button>

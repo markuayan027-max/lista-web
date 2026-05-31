@@ -249,7 +249,7 @@ export default function AdminUsersPage() {
         <motion.div variants={itemVariants}>
           <h1 className="text-2xl font-bold tracking-tight">Users</h1>
           <p className="text-muted-foreground text-sm mt-1">
-            InsForge Authentication accounts ({users.length} shown). Roles sync with <code className="text-xs">public.users</code> when present.
+            LISTA authentication accounts ({users.length} shown). Roles sync with <code className="text-xs">public.users</code> when present.
           </p>
         </motion.div>
 

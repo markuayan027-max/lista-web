@@ -1,7 +1,9 @@
 /**
- * InsForge auth HTTP client — shared by auth-context, signup, forgot-password.
- * In dev, uses same-origin /api/auth/* (Vite → api-server proxy). In prod, calls InsForge directly.
+ * Auth HTTP client — shared by auth-context, signup, forgot-password.
+ * Uses same-origin /api/auth/* when proxied (dev + lista.dpdns.org); otherwise InsForge URL.
  */
+
+import { apiUrl } from "@/lib/api-url";
 
 const insforgeBase =
   (import.meta.env.VITE_INSFORGE_URL as string | undefined) ||
@@ -13,6 +15,10 @@ export function authApiUrl(path: string): string {
   const normalized = path.startsWith("/") ? path : `/${path}`;
   if (import.meta.env.DEV) {
     return normalized;
+  }
+  const viaLista = apiUrl(normalized);
+  if (!viaLista.startsWith("http")) {
+    return viaLista;
   }
   return `${insforgeBase.replace(/\/$/, "")}${normalized}`;
 }

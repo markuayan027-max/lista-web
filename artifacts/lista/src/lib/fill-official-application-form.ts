@@ -32,6 +32,42 @@ export const LISTA_ASSESSMENT_CENTER = {
   address: "Poblacion, Gingoog City, Misamis Oriental",
 } as const;
 
+/** Character-grid slots on the TESDA template (page 1 name block). */
+export const OFFICIAL_FORM_NAME_GRID_LIMITS = {
+  lastName: 28,
+  firstName: 28,
+  middleName: 18,
+  extensionName: 8,
+} as const;
+
+/** Max visible characters for free-text overlays (approx. box width at default font). */
+export const OFFICIAL_FORM_FIELD_LIMITS = {
+  homeAddress: 40,
+  barangay: 22,
+  district: 18,
+  city: 24,
+  province: 24,
+  region: 12,
+  zipCode: 10,
+  motherMaidenName: 50,
+  fatherName: 50,
+  traineeEmail: 36,
+  contactNumber: 14,
+  birthPlace: 45,
+} as const;
+
+/** Page 2 admission slip — combined surname, first, middle, extension. */
+export const OFFICIAL_FORM_APPLICANT_NAME_MAX = 55;
+
+export const OFFICIAL_FORM_COURSE_TITLE_MAX = 60;
+
+export const OFFICIAL_FORM_TABLE_ROW_LIMITS = {
+  workExperience: 3,
+  otherTrainings: 4,
+  licensureExams: 4,
+  competencyAssessments: 4,
+} as const;
+
 const SAMPLE_CENTER = "GINGOOG CITY COMPREHENSIVE NATIONAL HIGH SCHOOL";
 const SAMPLE_ADDRESS = "Barangay 23, Gingoog City";
 /** BuildVu sample qualification — must not appear unless enrollment has a real course. */
@@ -69,6 +105,127 @@ function escapeHtml(value: string): string {
 
 function upper(value: unknown): string {
   return String(value ?? "").trim().toUpperCase();
+}
+
+function exceedsCharGrid(text: string, slots: number): boolean {
+  return upper(text).length > slots;
+}
+
+/** Clip overlay text; shrink font slightly when still long after clip. */
+export function clipOfficialFormFieldText(text: string, maxLen: number, fontSize: number): {
+  text: string;
+  fontSize: number;
+  truncated: boolean;
+} {
+  const raw = upper(text);
+  if (!raw) return { text: "", fontSize, truncated: false };
+  if (raw.length <= maxLen) return { text: raw, fontSize, truncated: false };
+  const clipped = raw.slice(0, maxLen);
+  const shrunk = raw.length > maxLen + 8 ? Math.max(8, fontSize - 2) : fontSize;
+  return { text: clipped, fontSize: shrunk, truncated: true };
+}
+
+export function clipOfficialFormCourseTitle(title: string): { text: string; truncated: boolean } {
+  const raw = upper(title);
+  if (!raw) return { text: "", truncated: false };
+  if (raw.length <= OFFICIAL_FORM_COURSE_TITLE_MAX) return { text: raw, truncated: false };
+  return { text: raw.slice(0, OFFICIAL_FORM_COURSE_TITLE_MAX), truncated: true };
+}
+
+/**
+ * Warnings when enrollment data exceeds TESDA template capacity (does not block print).
+ */
+export function getOfficialFormTruncationWarnings(input: OfficialFormFillInput): string[] {
+  const e = input.enrollment;
+  const warnings: string[] = [];
+
+  const nameChecks: { key: keyof typeof OFFICIAL_FORM_NAME_GRID_LIMITS; label: string }[] = [
+    { key: "lastName", label: "Last name" },
+    { key: "firstName", label: "First name" },
+    { key: "middleName", label: "Middle name" },
+    { key: "extensionName", label: "Name extension" },
+  ];
+  for (const { key, label } of nameChecks) {
+    const value = field(e, key);
+    const limit = OFFICIAL_FORM_NAME_GRID_LIMITS[key];
+    if (value && exceedsCharGrid(value, limit)) {
+      warnings.push(`${label} truncated to ${limit} characters on the TESDA name grid`);
+    }
+  }
+
+  const fieldChecks: { key: keyof typeof OFFICIAL_FORM_FIELD_LIMITS; label: string }[] = [
+    { key: "homeAddress", label: "Home address" },
+    { key: "barangay", label: "Barangay" },
+    { key: "district", label: "District" },
+    { key: "city", label: "City" },
+    { key: "province", label: "Province" },
+    { key: "region", label: "Region" },
+    { key: "zipCode", label: "ZIP code" },
+    { key: "motherMaidenName", label: "Mother's maiden name" },
+    { key: "fatherName", label: "Father's name" },
+    { key: "traineeEmail", label: "Email" },
+    { key: "birthPlace", label: "Birth place" },
+  ];
+  for (const { key, label } of fieldChecks) {
+    const value = field(e, key);
+    const limit = OFFICIAL_FORM_FIELD_LIMITS[key];
+    if (value && upper(value).length > limit) {
+      warnings.push(`${label} truncated to ${limit} characters on the form`);
+    }
+  }
+
+  const mobile = field(e, "mobileNumber") || field(e, "contactNumber") || field(e, "telephone");
+  if (mobile && upper(mobile).length > OFFICIAL_FORM_FIELD_LIMITS.contactNumber) {
+    warnings.push(
+      `Contact number truncated to ${OFFICIAL_FORM_FIELD_LIMITS.contactNumber} characters on the form`,
+    );
+  }
+
+  const applicantName = [
+    field(e, "lastName"),
+    field(e, "firstName"),
+    field(e, "middleName"),
+    field(e, "extensionName"),
+  ]
+    .filter(Boolean)
+    .join(", ");
+  if (applicantName && upper(applicantName).length > OFFICIAL_FORM_APPLICANT_NAME_MAX) {
+    warnings.push(
+      `Full name on page 2 truncated to ${OFFICIAL_FORM_APPLICANT_NAME_MAX} characters`,
+    );
+  }
+
+  const course = resolveCourseTitle(input);
+  if (course && upper(course).length > OFFICIAL_FORM_COURSE_TITLE_MAX) {
+    warnings.push(
+      `Course title truncated to ${OFFICIAL_FORM_COURSE_TITLE_MAX} characters on the form`,
+    );
+  }
+
+  const tableChecks: {
+    rows: unknown[] | undefined;
+    limit: number;
+    label: string;
+  }[] = [
+    { rows: e.workExperience, limit: OFFICIAL_FORM_TABLE_ROW_LIMITS.workExperience, label: "Work experience" },
+    { rows: e.otherTrainings, limit: OFFICIAL_FORM_TABLE_ROW_LIMITS.otherTrainings, label: "Other trainings" },
+    { rows: e.licensureExams, limit: OFFICIAL_FORM_TABLE_ROW_LIMITS.licensureExams, label: "Licensure exams" },
+    {
+      rows: e.competencyAssessments,
+      limit: OFFICIAL_FORM_TABLE_ROW_LIMITS.competencyAssessments,
+      label: "Competency assessments",
+    },
+  ];
+  for (const { rows, limit, label } of tableChecks) {
+    const count = rows?.length ?? 0;
+    if (count > limit) {
+      warnings.push(
+        `${label}: only the first ${limit} ${limit === 1 ? "row" : "rows"} print (${count} entered)`,
+      );
+    }
+  }
+
+  return warnings;
 }
 
 /** Safe string read from partial enrollment (avoids invalid property access). */
@@ -126,6 +283,8 @@ export function getOfficialFormFillWarnings(input: OfficialFormFillInput): strin
     warnings.push("Missing or incomplete gender");
   }
 
+  warnings.push(...getOfficialFormTruncationWarnings(input));
+
   return warnings;
 }
 
@@ -152,10 +311,20 @@ function charGridHtml(text: string, left: number, bottom: number, slots: number,
     .join("");
 }
 
-function fieldHtml(text: string, left: number, bottom: number, fontSize = 14): string {
-  const value = escapeHtml(upper(text));
-  if (!value) return "";
-  return `<span class="lista-fill" style="left:${left}px;bottom:${bottom}px;font-size:${fontSize}px;">${value}</span>`;
+function fieldHtml(
+  text: string,
+  left: number,
+  bottom: number,
+  fontSize = 14,
+  maxLen?: number,
+): string {
+  const clipped =
+    maxLen !== undefined
+      ? clipOfficialFormFieldText(text, maxLen, fontSize)
+      : { text: upper(text), fontSize, truncated: false };
+  if (!clipped.text) return "";
+  const value = escapeHtml(clipped.text);
+  return `<span class="lista-fill" style="left:${left}px;bottom:${bottom}px;font-size:${clipped.fontSize}px;">${value}</span>`;
 }
 
 function checkboxHtml(slot: FormCheckboxSlot): string {
@@ -215,7 +384,7 @@ function dobGridHtml(dob: string): string {
 function workExperienceOverlays(e: Partial<Enrollment>): string {
   const rows = e.workExperience ?? [];
   const parts: string[] = [];
-  for (let i = 0; i < Math.min(rows.length, 3); i++) {
+  for (let i = 0; i < Math.min(rows.length, OFFICIAL_FORM_TABLE_ROW_LIMITS.workExperience); i++) {
     const slot = workExperienceRowSlots(i);
     if (!slot) continue;
     const row = rows[i];
@@ -249,7 +418,7 @@ function tableRowOverlays<T extends object>(
 }
 
 function otherTrainingsOverlays(e: Partial<Enrollment>): string {
-  return tableRowOverlays(e.otherTrainings, 4, otherTrainingRowSlots, (row, cols, bottom) => [
+  return tableRowOverlays(e.otherTrainings, OFFICIAL_FORM_TABLE_ROW_LIMITS.otherTrainings, otherTrainingRowSlots, (row, cols, bottom) => [
     fieldHtml(row.title, cols.title, bottom, 9),
     fieldHtml(row.venue, cols.venue, bottom, 9),
     fieldHtml(row.inclusiveDates, cols.dates, bottom, 9),
@@ -259,7 +428,7 @@ function otherTrainingsOverlays(e: Partial<Enrollment>): string {
 }
 
 function licensureOverlays(e: Partial<Enrollment>): string {
-  return tableRowOverlays(e.licensureExams, 4, licensureRowSlots, (row, cols, bottom) => [
+  return tableRowOverlays(e.licensureExams, OFFICIAL_FORM_TABLE_ROW_LIMITS.licensureExams, licensureRowSlots, (row, cols, bottom) => [
     fieldHtml(row.title, cols.title, bottom, 9),
     fieldHtml(row.yearTaken, cols.yearTaken, bottom, 9),
     fieldHtml(row.examinationVenue, cols.venue, bottom, 9),
@@ -270,7 +439,11 @@ function licensureOverlays(e: Partial<Enrollment>): string {
 }
 
 function competencyOverlays(e: Partial<Enrollment>): string {
-  return tableRowOverlays(e.competencyAssessments, 4, competencyRowSlots, (row, cols, bottom) => [
+  return tableRowOverlays(
+    e.competencyAssessments,
+    OFFICIAL_FORM_TABLE_ROW_LIMITS.competencyAssessments,
+    competencyRowSlots,
+    (row, cols, bottom) => [
     fieldHtml(row.title, cols.title, bottom, 9),
     fieldHtml(row.qualificationLevel, cols.qualificationLevel, bottom, 9),
     fieldHtml(row.industrySector, cols.industrySector, bottom, 9),
@@ -309,23 +482,29 @@ function buildPage1Overlays(input: OfficialFormFillInput): string {
   const tel = field(e, "telephone");
 
   return [
-    charGridHtml(last, 150, 564, 28),
-    charGridHtml(first, 150, 540, 28),
-    charGridHtml(middle, 150, 518, 18),
-    charGridHtml(ext, 620, 518, 8, 13),
-    fieldHtml(field(e, "homeAddress"), 186, 444, 12),
-    fieldHtml(field(e, "barangay"), 400, 444, 12),
-    fieldHtml(field(e, "district"), 572, 444, 12),
-    fieldHtml(field(e, "city"), 186, 393, 12),
-    fieldHtml(field(e, "province"), 330, 393, 12),
-    fieldHtml(field(e, "region"), 477, 393, 12),
-    fieldHtml(field(e, "zipCode"), 629, 393, 12),
-    fieldHtml(field(e, "motherMaidenName"), 120, 372, 12),
-    fieldHtml(field(e, "fatherName"), 480, 372, 12),
-    fieldHtml(mobile, 460, 284, 11),
-    fieldHtml(field(e, "traineeEmail"), 460, 245, 10),
-    fieldHtml(tel, 460, 264, 11),
-    fieldHtml(field(e, "birthPlace"), PROFILE_FIELD_SLOTS.birthPlace.left, PROFILE_FIELD_SLOTS.birthPlace.bottom, PROFILE_FIELD_SLOTS.birthPlace.fontSize),
+    charGridHtml(last, 150, 564, OFFICIAL_FORM_NAME_GRID_LIMITS.lastName),
+    charGridHtml(first, 150, 540, OFFICIAL_FORM_NAME_GRID_LIMITS.firstName),
+    charGridHtml(middle, 150, 518, OFFICIAL_FORM_NAME_GRID_LIMITS.middleName),
+    charGridHtml(ext, 620, 518, OFFICIAL_FORM_NAME_GRID_LIMITS.extensionName, 13),
+    fieldHtml(field(e, "homeAddress"), 186, 444, 12, OFFICIAL_FORM_FIELD_LIMITS.homeAddress),
+    fieldHtml(field(e, "barangay"), 400, 444, 12, OFFICIAL_FORM_FIELD_LIMITS.barangay),
+    fieldHtml(field(e, "district"), 572, 444, 12, OFFICIAL_FORM_FIELD_LIMITS.district),
+    fieldHtml(field(e, "city"), 186, 393, 12, OFFICIAL_FORM_FIELD_LIMITS.city),
+    fieldHtml(field(e, "province"), 330, 393, 12, OFFICIAL_FORM_FIELD_LIMITS.province),
+    fieldHtml(field(e, "region"), 477, 393, 12, OFFICIAL_FORM_FIELD_LIMITS.region),
+    fieldHtml(field(e, "zipCode"), 629, 393, 12, OFFICIAL_FORM_FIELD_LIMITS.zipCode),
+    fieldHtml(field(e, "motherMaidenName"), 120, 372, 12, OFFICIAL_FORM_FIELD_LIMITS.motherMaidenName),
+    fieldHtml(field(e, "fatherName"), 480, 372, 12, OFFICIAL_FORM_FIELD_LIMITS.fatherName),
+    fieldHtml(mobile, 460, 284, 11, OFFICIAL_FORM_FIELD_LIMITS.contactNumber),
+    fieldHtml(field(e, "traineeEmail"), 460, 245, 10, OFFICIAL_FORM_FIELD_LIMITS.traineeEmail),
+    fieldHtml(tel, 460, 264, 11, OFFICIAL_FORM_FIELD_LIMITS.contactNumber),
+    fieldHtml(
+      field(e, "birthPlace"),
+      PROFILE_FIELD_SLOTS.birthPlace.left,
+      PROFILE_FIELD_SLOTS.birthPlace.bottom,
+      PROFILE_FIELD_SLOTS.birthPlace.fontSize,
+      OFFICIAL_FORM_FIELD_LIMITS.birthPlace,
+    ),
     fieldHtml(field(e, "age"), PROFILE_FIELD_SLOTS.age.left, PROFILE_FIELD_SLOTS.age.bottom, PROFILE_FIELD_SLOTS.age.fontSize),
     dobGridHtml(field(e, "dob")),
     checkboxOverlays(e),
@@ -344,8 +523,8 @@ function buildPage2Overlays(input: OfficialFormFillInput): string {
     otherTrainingsOverlays(e),
     licensureOverlays(e),
     competencyOverlays(e),
-    fieldHtml(applicantName, 200, 515, 13),
-    fieldHtml(mobile || tel, 520, 515, 12),
+    fieldHtml(applicantName, 200, 515, 13, OFFICIAL_FORM_APPLICANT_NAME_MAX),
+    fieldHtml(mobile || tel, 520, 515, 12, OFFICIAL_FORM_FIELD_LIMITS.contactNumber),
     passportPhotoOverlays(input, 2),
   ].join("");
 }
@@ -380,12 +559,15 @@ export function fillOfficialApplicationForm(
   }
 
   let html = template;
-  const course = upper(resolveCourseTitle(fillInput));
+  const courseRaw = resolveCourseTitle(fillInput);
+  const courseClip = clipOfficialFormCourseTitle(courseRaw);
 
   html = html.split(SAMPLE_CENTER).join(escapeHtml(LISTA_ASSESSMENT_CENTER.name));
   // Do not inject a default center address — only enrollment/profile overlays fill mailing address.
   html = html.split(SAMPLE_ADDRESS).join("");
-  html = html.split(SAMPLE_COURSE_TITLE).join(course ? escapeHtml(course) : "");
+  html = html
+    .split(SAMPLE_COURSE_TITLE)
+    .join(courseClip.text ? escapeHtml(courseClip.text) : "");
 
   const schedule = resolveAssessmentScheduleText(fillInput.enrollment);
   html = html

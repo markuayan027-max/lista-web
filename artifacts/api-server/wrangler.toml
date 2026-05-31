@@ -4,6 +4,7 @@
 # --- Required Worker secrets (Dashboard → lista-web → Settings → Variables and Secrets, or CLI) ---
 # DATABASE_URL     — Postgres for Drizzle (@workspace/db). On Workers use Hyperdrive + its URL.
 # GROQ_API_KEY     — Homepage AI chat (see src/lib/groq-env.ts). Aliases: GROQ_KEY, VITE_GROQ_API_KEY.
+# INSFORGE_ANON_KEY — Trainee document uploads via InsForge storage (must match login project).
 #
 # --- Optional secrets / dashboard-only overrides ---
 # LISTA_APP_URL or VITE_APP_URL — Public site origin for staff activation links (insforge-auth-admin).

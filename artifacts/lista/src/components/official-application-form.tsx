@@ -3,11 +3,14 @@ import type { Enrollment } from "@/lib/institutional-data";
 import { fillOfficialApplicationFormHtml } from "@/lib/fill-official-application-form";
 import { waitForPrintableFormImages } from "@/lib/official-form-print-ready";
 import { loadProfilePic } from "@/lib/profile-utils";
+import { resolvePassportPhotoUrl } from "@/lib/official-form-field-map";
 import { useAuth } from "@/context/use-auth";
 
 type OfficialApplicationFormProps = {
   enrollment: Enrollment;
   courseTitle: string;
+  /** Live profile pic from page state (avoids stale localStorage read). */
+  passportPhotoOverride?: string | null;
   /** Passed from PrintModal — used for inline preview note only (banner lives in modal). */
   fillWarnings?: string[];
   /** Fired when HTML is filled and photos (if any) have finished loading — safe for PDF. */
@@ -17,16 +20,17 @@ type OfficialApplicationFormProps = {
 export default function OfficialApplicationForm({
   enrollment,
   courseTitle,
+  passportPhotoOverride,
   fillWarnings = [],
   onFormReady,
 }: OfficialApplicationFormProps) {
   const { user } = useAuth();
   const [html, setHtml] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const passportPhotoUrl = useMemo(
-    () => loadProfilePic(enrollment.userId ?? user?.id),
-    [enrollment.userId, user?.id],
-  );
+  const passportPhotoUrl = useMemo(() => {
+    const stored = loadProfilePic(enrollment.userId ?? user?.id);
+    return resolvePassportPhotoUrl(enrollment, passportPhotoOverride ?? stored);
+  }, [enrollment, passportPhotoOverride, user?.id]);
 
   useEffect(() => {
     let cancelled = false;

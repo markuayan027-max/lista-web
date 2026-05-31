@@ -12,7 +12,6 @@ import {
   FileSpreadsheet,
   Printer,
   FileText,
-  Upload
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
@@ -37,6 +36,45 @@ import {
   maxCompletedRegistrationStep,
 } from "@/lib/profile-utils";
 import { enrollmentBlocksNewCourseApplication } from "@/lib/enrollment-status";
+import { DocumentUpload } from "@/components/document-upload";
+import {
+  documentStatusFromList,
+  upsertTraineeDocument,
+  syncTraineeDocumentsToCloud,
+} from "@/lib/trainee-document-upload";
+import type { TraineeDocument } from "@/lib/institutional-data";
+
+const ENROLL_MATERIALS: {
+  type: TraineeDocument["type"];
+  label: string;
+  sub: string;
+  extensions: string[];
+}[] = [
+  {
+    type: "psa_birth_cert",
+    label: "PSA Birth Certificate",
+    sub: "Required for identity verification",
+    extensions: ["pdf", "jpg", "jpeg", "png"],
+  },
+  {
+    type: "valid_id",
+    label: "Valid Government ID",
+    sub: "Any official PH-issued identification",
+    extensions: ["pdf", "jpg", "jpeg", "png"],
+  },
+  {
+    type: "passport_photo",
+    label: "2x2 Portrait Photo",
+    sub: "White background, formal attire",
+    extensions: ["jpg", "jpeg", "png"],
+  },
+  {
+    type: "diploma",
+    label: "Academic Record",
+    sub: "Latest diploma or transcript",
+    extensions: ["pdf", "jpg", "jpeg", "png"],
+  },
+];
 
 const STEPS = [
   { id: 1, title: "Program", description: "Course selection", icon: CalendarDays },
@@ -97,6 +135,14 @@ export default function TraineeEnrollPage() {
       ...buildRegistrationDraft(initialData as unknown as Enrollment, completed, {
         authEmail: user?.email,
       }),
+      documents:
+        (initialData as unknown as Enrollment).documents ??
+        (draft as unknown as Enrollment | null)?.documents ??
+        [],
+      documentStatus:
+        (initialData as unknown as Enrollment).documentStatus ??
+        (draft as unknown as Enrollment | null)?.documentStatus ??
+        "missing",
     };
 
     setFormData(scoped as Enrollment);
@@ -127,8 +173,36 @@ export default function TraineeEnrollPage() {
   const stepProgress = Math.round((currentStep / STEPS.length) * 100);
 
   const updateForm = useCallback((updates: Partial<Enrollment>) => {
-    setFormData(prev => prev ? { ...prev, ...updates } : null);
-  }, []);
+    setFormData((prev) => {
+      if (!prev) return null;
+      const next = { ...prev, ...updates };
+      saveLocalProfile(next, user?.id);
+      return next;
+    });
+  }, [user?.id]);
+
+  const handleMaterialUpload = useCallback(
+    (docType: TraineeDocument["type"], label: string, fileUrl: string, fileName: string) => {
+      setFormData((prev) => {
+        if (!prev) return null;
+        const documents = upsertTraineeDocument(prev.documents, {
+          type: docType,
+          label,
+          fileName,
+          fileUrl,
+        });
+        const next = {
+          ...prev,
+          documents,
+          documentStatus: documentStatusFromList(documents),
+        };
+        saveLocalProfile(next, user?.id);
+        void syncTraineeDocumentsToCloud(user?.email, documents, next.documentStatus);
+        return next;
+      });
+    },
+    [user?.email, user?.id],
+  );
 
   const isStepValid = () => {
     if (currentStep === 1) {
@@ -430,23 +504,38 @@ export default function TraineeEnrollPage() {
 
                     {currentStep === 2 && (
                       <div className="space-y-12">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          {[
-                            { label: "PSA Birth Certificate", sub: "Required for identity verification" },
-                            { label: "Valid Government ID", sub: "Any official PH-issued identification" },
-                            { label: "2x2 Portrait Photo", sub: "White background, formal attire" },
-                            { label: "Academic Record", sub: "Latest diploma or transcript" }
-                          ].map((doc, idx) => (
-                            <div key={idx} className="group border border-border rounded-3xl p-8 hover:bg-muted transition-all cursor-pointer flex flex-col items-center text-center">
-                              <div className="w-14 h-14 bg-muted border border-border rounded-2xl flex items-center justify-center mb-6 group-hover:bg-card group-hover:scale-105 transition-all shadow-sm">
-                                <Upload className="w-5 h-5 text-muted-foreground group-hover:text-foreground" />
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                          {ENROLL_MATERIALS.map((doc) => {
+                            const existing = formData.documents?.find((d) => d.type === doc.type);
+                            return (
+                              <div
+                                key={doc.type}
+                                className="border border-border rounded-3xl p-6 bg-card"
+                              >
+                                <p className="text-sm font-black text-foreground uppercase tracking-tight mb-1">
+                                  {doc.label}
+                                </p>
+                                <p className="text-[11px] text-muted-foreground font-bold uppercase tracking-wider mb-4">
+                                  {doc.sub}
+                                </p>
+                                <DocumentUpload
+                                  label={doc.label}
+                                  docType={doc.type}
+                                  allowedExtensions={doc.extensions}
+                                  initialFile={
+                                    existing
+                                      ? { name: existing.fileName, url: existing.fileUrl }
+                                      : null
+                                  }
+                                  onUploadComplete={(url, name) =>
+                                    handleMaterialUpload(doc.type, doc.label, url, name)
+                                  }
+                                />
                               </div>
-                              <p className="text-sm font-black text-foreground uppercase tracking-tight">{doc.label}</p>
-                              <p className="text-[11px] text-muted-foreground mt-1 font-bold uppercase tracking-wider">{doc.sub}</p>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
-                        
+
                         <div className="bg-muted rounded-3xl p-8 flex flex-col md:flex-row items-center justify-between gap-6">
                            <div>
                              <h4 className="text-sm font-black text-foreground uppercase tracking-tight mb-1">Missing some files?</h4>
@@ -485,6 +574,13 @@ export default function TraineeEnrollPage() {
                             <div>
                               <span className="block text-xs text-muted-foreground mb-1">Applicant Name</span>
                               <span className="font-medium text-foreground">{formData.firstName} {formData.lastName}</span>
+                            </div>
+                            <div>
+                              <span className="block text-xs text-muted-foreground mb-1">Documents</span>
+                              <span className="font-medium text-foreground">
+                                {formData.documents?.length ?? 0} of {ENROLL_MATERIALS.length} uploaded
+                                {formData.documentStatus === "complete" ? " (complete)" : ""}
+                              </span>
                             </div>
                           </div>
                         </div>

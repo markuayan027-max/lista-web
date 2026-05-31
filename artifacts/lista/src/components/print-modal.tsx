@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/context/use-auth";
 import { loadProfilePic } from "@/lib/profile-utils";
+import { resolvePassportPhotoUrl } from "@/lib/official-form-field-map";
 import { X, Printer, FileText, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Enrollment } from "@/lib/institutional-data";
@@ -16,9 +17,12 @@ import { cn } from "@/lib/utils";
 export default function PrintModal({
   enrollment,
   onClose,
+  passportPhotoOverride,
 }: {
   enrollment: Enrollment;
   onClose: () => void;
+  /** Live profile pic from page state (avoids stale localStorage read). */
+  passportPhotoOverride?: string | null;
 }) {
   const { toast } = useToast();
   const { user } = useAuth();
@@ -27,10 +31,10 @@ export default function PrintModal({
   const [pdfLoading, setPdfLoading] = useState(false);
   const [formReady, setFormReady] = useState(false);
   const [warningsAcknowledged, setWarningsAcknowledged] = useState(false);
-  const passportPhotoUrl = useMemo(
-    () => loadProfilePic(enrollment.userId ?? user?.id),
-    [enrollment.userId, user?.id],
-  );
+  const passportPhotoUrl = useMemo(() => {
+    const stored = loadProfilePic(enrollment.userId ?? user?.id);
+    return resolvePassportPhotoUrl(enrollment, passportPhotoOverride ?? stored);
+  }, [enrollment, passportPhotoOverride, user?.id]);
 
   const fillWarnings = useMemo(
     () => getOfficialFormFillWarnings({ enrollment, courseTitle, passportPhotoUrl }),
@@ -177,12 +181,14 @@ export default function PrintModal({
           Official TESDA application form (2 pages). For <strong className="text-foreground">Print</strong>: use
           A4, margins <strong className="text-foreground">Minimum</strong>, enable{" "}
           <strong className="text-foreground">Background graphics</strong>.
+          Sign and date the form manually before submission.
         </p>
 
         <div className="print-preview-shell overflow-x-auto overflow-y-visible rounded-2xl shadow-2xl border border-border bg-muted/30 print:overflow-visible print:rounded-none print:border-0 print:shadow-none print:bg-white">
           <OfficialApplicationForm
             enrollment={enrollment}
             courseTitle={courseTitle}
+            passportPhotoOverride={passportPhotoUrl}
             fillWarnings={fillWarnings}
             onFormReady={() => setFormReady(true)}
           />

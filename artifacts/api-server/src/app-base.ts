@@ -74,8 +74,8 @@ export function mountAppRoutes(app: Application): void {
     reflectCorsOrigin(req, res);
     next();
   });
-  app.use(express.json());
-  app.use(express.urlencoded({ extended: true }));
+  app.use(express.json({ limit: "8mb" }));
+  app.use(express.urlencoded({ extended: true, limit: "8mb" }));
   app.use("/api", limiter);
   app.use("/api", router);
 

@@ -101,7 +101,7 @@ export default function AdminSchedulePage() {
     setIsPeriodsDialogOpen(false);
     toast({
       title: "Course period noted",
-      description: `Period dates saved locally for ${courseList.find((c) => c.slug === periodForm.courseSlug)?.title ?? periodForm.courseSlug}. Course date fields are not yet stored in InsForge.`,
+      description: `Period dates saved locally for ${courseList.find((c) => c.slug === periodForm.courseSlug)?.title ?? periodForm.courseSlug}. Course date fields are not yet stored in LISTA.`,
     });
   };
 

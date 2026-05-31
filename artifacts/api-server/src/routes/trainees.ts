@@ -16,9 +16,45 @@ import {
   getEnrollmentHistoryByEmail,
   statusBlocksNewApplication,
 } from "../lib/enrollment-lifecycle.js";
+import {
+  documentStatusFromList,
+  ensureEnrollmentDocumentsSchema,
+  persistDocumentOnEnrollment,
+} from "../lib/enrollment-documents.js";
+import { uploadTraineeDocumentToInsforge } from "../lib/insforge-storage.js";
 
 const router = Router();
 router.use(requireAuth);
+
+const TRAINEE_DOC_TYPES = [
+  "psa_birth_cert",
+  "valid_id",
+  "passport_photo",
+  "diploma",
+  "barangay_cert",
+  "voter_cert",
+  "other",
+] as const;
+
+const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
+
+const documentUploadSchema = z.object({
+  docType: z.enum(TRAINEE_DOC_TYPES),
+  fileName: z.string().min(1).max(255),
+  mimeType: z.string().min(1).max(127),
+  contentBase64: z.string().min(1),
+  label: z.string().max(120).optional(),
+});
+
+const DOC_LABELS: Record<(typeof TRAINEE_DOC_TYPES)[number], string> = {
+  psa_birth_cert: "PSA Birth Certificate",
+  valid_id: "Valid Government ID",
+  passport_photo: "2x2 Portrait Photo",
+  diploma: "Academic Record",
+  barangay_cert: "Barangay Certificate",
+  voter_cert: "Voter Certificate",
+  other: "Other Document",
+};
 
 function coerceIsIp(value: unknown): boolean | null {
   if (value === undefined || value === null || value === "") return null;
@@ -74,6 +110,8 @@ const registerSchema = z.object({
   otherTrainings: z.array(z.any()).optional(),
   licensureExams: z.array(z.any()).optional(),
   competencyAssessments: z.array(z.any()).optional(),
+  documents: z.array(z.any()).optional(),
+  documentStatus: z.enum(["complete", "partial", "missing"]).optional(),
   courseSlug: z.string().optional(),
   preferredSchedule: z.string().optional(),
   enrollmentType: z.string().min(1),
@@ -112,6 +150,14 @@ function isUniqueViolation(error: unknown): boolean {
 }
 
 function enrollmentValuesFromRegister(data: RegisterBody, notesExtra?: string) {
+  const documentsJson =
+    data.documents && data.documents.length > 0 ? JSON.stringify(data.documents) : undefined;
+  const documentStatus =
+    data.documentStatus ??
+    (data.documents?.length
+      ? documentStatusFromList(data.documents as Parameters<typeof documentStatusFromList>[0])
+      : undefined);
+
   return {
     refNo: data.refNo,
     firstName: data.firstName,
@@ -160,12 +206,15 @@ function enrollmentValuesFromRegister(data: RegisterBody, notesExtra?: string) {
     motherTongue: data.motherTongue,
     consent: data.consent ?? false,
     status: data.status,
+    ...(documentsJson !== undefined ? { documentsJson } : {}),
+    ...(documentStatus !== undefined ? { documentStatus } : {}),
   };
 }
 
 router.post("/register", async (req, res) => {
   try {
     await ensureBatchSchemaReady();
+    await ensureEnrollmentDocumentsSchema();
     const data = registerSchema.parse(req.body);
     if (!assertEmailAccess(req, data.traineeEmail)) {
       return res.status(403).json({ success: false, error: "Cannot register for another user's email" });
@@ -263,6 +312,7 @@ router.get("/profile", async (req, res) => {
   try {
     await ensureBatchSchemaReady();
     await ensureEnrollmentLifecycleSchema();
+    await ensureEnrollmentDocumentsSchema();
     const active = await getActiveEnrollmentByEmail(normalizedEmail);
     const history = await getEnrollmentHistoryByEmail(normalizedEmail);
     if (!active && history.length === 0) {
@@ -464,6 +514,8 @@ const updateSchema = z.object({
   otherTrainings: z.array(z.any()).optional(),
   licensureExams: z.array(z.any()).optional(),
   competencyAssessments: z.array(z.any()).optional(),
+  documents: z.array(z.any()).optional(),
+  documentStatus: z.enum(["complete", "partial", "missing"]).optional(),
   courseSlug: z.string().min(1).optional(),
   preferredSchedule: z.string().min(1).optional(),
   enrollmentType: z.string().min(1).optional(),
@@ -492,6 +544,7 @@ router.put("/profile", async (req, res) => {
 
   try {
     await ensureBatchSchemaReady();
+    await ensureEnrollmentDocumentsSchema();
     const parsedData = updateSchema.parse(req.body) as any;
 
     if (
@@ -506,6 +559,18 @@ router.put("/profile", async (req, res) => {
     }
 
     const notesExtra = supplementalEnrollmentNotes(parsedData);
+
+    const documentsJson =
+      parsedData.documents && parsedData.documents.length > 0
+        ? JSON.stringify(parsedData.documents)
+        : undefined;
+    const documentStatus =
+      parsedData.documentStatus ??
+      (parsedData.documents?.length
+        ? documentStatusFromList(
+            parsedData.documents as Parameters<typeof documentStatusFromList>[0],
+          )
+        : undefined);
 
     const updatePayload = {
       firstName: parsedData.firstName,
@@ -553,6 +618,8 @@ router.put("/profile", async (req, res) => {
       motherTongue: parsedData.motherTongue,
       consent: parsedData.consent,
       status: parsedData.status,
+      ...(documentsJson !== undefined ? { documentsJson } : {}),
+      ...(documentStatus !== undefined ? { documentStatus } : {}),
     };
 
     const filteredPayload = Object.fromEntries(
@@ -600,6 +667,81 @@ router.put("/profile", async (req, res) => {
     }
     console.error("Error updating trainee profile:", error);
     return res.status(500).json({ success: false, error: "Internal Server Error" });
+  }
+});
+
+router.post("/documents/upload", async (req, res) => {
+  const authHeader = req.headers.authorization;
+  const userToken = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : "";
+  if (!userToken || !req.authUser?.id) {
+    return res.status(401).json({ success: false, error: "Authorization required" });
+  }
+
+  try {
+    await ensureEnrollmentDocumentsSchema();
+    const body = documentUploadSchema.parse(req.body);
+
+    let bytes: Buffer;
+    try {
+      bytes = Buffer.from(body.contentBase64, "base64");
+    } catch {
+      return res.status(400).json({ success: false, error: "Invalid file encoding" });
+    }
+
+    if (!bytes.length) {
+      return res.status(400).json({ success: false, error: "Empty file" });
+    }
+    if (bytes.length > MAX_UPLOAD_BYTES) {
+      return res.status(400).json({
+        success: false,
+        error: `File too large. Maximum size is ${MAX_UPLOAD_BYTES / (1024 * 1024)} MB.`,
+      });
+    }
+
+    const { publicUrl, key } = await uploadTraineeDocumentToInsforge({
+      userId: req.authUser.id,
+      userAccessToken: userToken,
+      docType: body.docType,
+      fileName: body.fileName,
+      mimeType: body.mimeType,
+      bytes: new Uint8Array(bytes),
+    });
+
+    const label = body.label?.trim() || DOC_LABELS[body.docType];
+    const storedDoc = {
+      type: body.docType,
+      label,
+      fileName: body.fileName,
+      fileUrl: publicUrl,
+      storageKey: key,
+      fileSize: bytes.length,
+    };
+
+    const persisted = await persistDocumentOnEnrollment(req.authUser.email, {
+      id: `${body.docType}-${Date.now()}`,
+      ...storedDoc,
+      uploadedAt: new Date().toISOString(),
+      verified: false,
+    });
+
+    return res.status(201).json({
+      success: true,
+      data: {
+        fileUrl: publicUrl,
+        fileName: body.fileName,
+        storageKey: key,
+        storage: "cloud" as const,
+        documents: persisted?.documents,
+        documentStatus: persisted?.documentStatus,
+      },
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ success: false, error: "Validation Error", details: error.errors });
+    }
+    logger.error({ err: error }, "POST /api/trainees/documents/upload failed");
+    const message = error instanceof Error ? error.message : "Upload failed";
+    return res.status(502).json({ success: false, error: message });
   }
 });
 

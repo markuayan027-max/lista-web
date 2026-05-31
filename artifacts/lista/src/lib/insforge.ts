@@ -15,9 +15,11 @@ type InsforgeHttpSession = {
   refreshToken: string | null;
 };
 
-/** In dev, route SDK auth calls through Vite → api-server → InsForge (avoids CORS on OAuth exchange). */
-function createDevAuthFetch(): typeof fetch | undefined {
-  if (!import.meta.env.DEV || typeof window === "undefined") return undefined;
+/** Route SDK auth calls through LISTA `/api/auth/*` proxy (dev + lista.dpdns.org). */
+function createProxiedAuthFetch(): typeof fetch | undefined {
+  if (typeof window === "undefined") return undefined;
+  const useProxy = import.meta.env.DEV || window.location.hostname.toLowerCase().includes("lista.dpdns.org");
+  if (!useProxy) return undefined;
   return (input, init) => {
     const rawUrl = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
     if (rawUrl.includes("/api/auth/")) {
@@ -33,7 +35,7 @@ function createDevAuthFetch(): typeof fetch | undefined {
 const client = new InsForgeClient({
   baseUrl,
   anonKey,
-  fetch: createDevAuthFetch(),
+  fetch: createProxiedAuthFetch(),
 });
 
 /**

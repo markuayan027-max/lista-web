@@ -167,6 +167,31 @@ function str(v: unknown): string {
   return v === undefined || v === null ? "" : String(v);
 }
 
+function parseDocumentsFromRow(r: Record<string, unknown>): Pick<Enrollment, "documents" | "documentStatus"> {
+  const raw = r.documents_json ?? r.documentsJson;
+  let documents: Enrollment["documents"];
+  if (Array.isArray(raw)) {
+    documents = raw as Enrollment["documents"];
+  } else if (typeof raw === "string" && raw.trim()) {
+    try {
+      const parsed = JSON.parse(raw) as unknown;
+      documents = Array.isArray(parsed) ? (parsed as Enrollment["documents"]) : undefined;
+    } catch {
+      documents = undefined;
+    }
+  }
+  const statusRaw = r.document_status ?? r.documentStatus;
+  const documentStatus =
+    statusRaw === "complete" || statusRaw === "partial" || statusRaw === "missing"
+      ? statusRaw
+      : documents?.length
+        ? documents.length >= 4
+          ? "complete"
+          : "partial"
+        : "missing";
+  return { documents, documentStatus };
+}
+
 /** Restore §3–§6 arrays serialized into `notes` during API upsert. */
 function supplementalFieldsFromNotes(notesRaw: unknown): Partial<Enrollment> {
   const notes = str(notesRaw).trim();
@@ -221,6 +246,8 @@ function normalizeEnrollmentDbRow(row: Record<string, unknown>): Record<string, 
     submitted_at: row.submitted_at ?? row.submittedAt,
     updated_at: row.updated_at ?? row.updatedAt,
     consent: row.consent,
+    documents_json: row.documents_json ?? row.documentsJson,
+    document_status: row.document_status ?? row.documentStatus,
   };
 }
 
@@ -304,7 +331,7 @@ export function insforgeEnrollmentRowToApiData(row: Record<string, unknown>): Re
     previousEnrollmentId: str(r.previous_enrollment_id ?? r.previousEnrollmentId) || undefined,
     tesdaNcSentAt: str(r.tesda_nc_sent_at ?? r.tesdaNcSentAt) || undefined,
     placementType: str(r.placement_type ?? r.placementType) || undefined,
-    documentStatus: "missing",
+    ...parseDocumentsFromRow(r),
     createdAt: r.submitted_at ? str(r.submitted_at) : new Date().toISOString(),
     ...supplementalFieldsFromNotes(r.notes),
   };

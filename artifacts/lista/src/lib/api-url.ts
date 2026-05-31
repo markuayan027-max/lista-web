@@ -1,13 +1,19 @@
 const listaApiBaseRaw = (import.meta.env.VITE_LISTA_API_BASE_URL as string | undefined)?.trim();
 
 /** Production SPA hosts use Vercel `/api` rewrite — avoid cross-origin Worker calls (CORS). */
-const SAME_ORIGIN_API_HOSTS = new Set(["lista.dpdns.org", "www.lista.dpdns.org"]);
+export const LISTA_SAME_ORIGIN_API_HOSTS = new Set(["lista.dpdns.org", "www.lista.dpdns.org"]);
+
+/** True when the browser should call LISTA `/api/*` instead of InsForge directly. */
+export function prefersListaApiProxy(): boolean {
+  if (typeof window === "undefined") return false;
+  return LISTA_SAME_ORIGIN_API_HOSTS.has(window.location.hostname.toLowerCase());
+}
 
 function resolveListaApiBase(): string {
   const configured = listaApiBaseRaw ? listaApiBaseRaw.replace(/\/+$/, "") : "";
   if (typeof window !== "undefined") {
     const host = window.location.hostname.toLowerCase();
-    if (SAME_ORIGIN_API_HOSTS.has(host)) return "";
+    if (LISTA_SAME_ORIGIN_API_HOSTS.has(host)) return "";
   }
   return configured;
 }

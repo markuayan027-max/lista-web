@@ -34,9 +34,18 @@ import {
   seedRegistrationDraftFromProfile,
   saveProfilePic,
   loadProfilePic,
+  saveLocalProfile,
 } from "@/lib/profile-utils";
 import { ProfileSkeleton } from "@/components/skeletons";
 import TraineeProfileIntegrityCard from "@/components/trainee-profile-integrity-card";
+import { buildEnrollmentForOfficialForm } from "@/lib/build-official-form-enrollment";
+import { DocumentUpload } from "@/components/document-upload";
+import {
+  documentStatusFromList,
+  upsertTraineeDocument,
+  syncTraineeDocumentsToCloud,
+} from "@/lib/trainee-document-upload";
+import type { TraineeDocument } from "@/lib/institutional-data";
 import { ProfileFieldValue, ProfileTableEmpty } from "@/components/profile-empty-field";
 
 const container = {
@@ -250,7 +259,12 @@ export default function TraineeProfilePage() {
   }, [mergedEnrollment, setLocation, user?.email, user?.id]);
 
   const handleOpenTesdaFormPdf = () => {
-    if (!hasProfileData) {
+    const forPrint = buildEnrollmentForOfficialForm(mergedEnrollment, user);
+    if (
+      !forPrint.firstName?.trim() &&
+      !forPrint.contactNumber?.trim() &&
+      !forPrint.mobileNumber?.trim()
+    ) {
       toast({
         title: "Profile incomplete",
         description: "Add your name and contact details before opening the TESDA form.",
@@ -258,15 +272,34 @@ export default function TraineeProfilePage() {
       });
       return;
     }
-    const forPrint = {
-      ...mergedEnrollment,
-      refNo: mergedEnrollment.refNo || `LISTA-${new Date().getFullYear()}-DRAFT`,
-      traineeEmail: mergedEnrollment.traineeEmail || user?.email || "",
-      contactNumber: displayContact,
-      mobileNumber: displayContact,
-    } as Enrollment;
     setPrintTarget(forPrint);
   };
+
+  const handleDocumentUpload = useCallback(
+    (docType: TraineeDocument["type"], label: string, fileUrl: string, fileName: string) => {
+      const documents = upsertTraineeDocument(existing?.documents, {
+        type: docType,
+        label,
+        fileName,
+        fileUrl,
+      });
+      const next = {
+        ...(existing ?? {}),
+        ...form,
+        documents,
+        documentStatus: documentStatusFromList(documents),
+      } as Enrollment;
+      setExisting(next);
+      setForm(next as unknown as EditableEnrollment);
+      saveLocalProfile(next, user?.id);
+      void syncTraineeDocumentsToCloud(user?.email, documents, next.documentStatus);
+      if (docType === "passport_photo" && fileUrl.startsWith("data:image")) {
+        setProfilePic(fileUrl);
+      }
+      toast({ title: "Document saved", description: `${label} is ready for your TESDA form.` });
+    },
+    [existing, form, toast, user?.email, user?.id],
+  );
 
   if (isLoading) {
     return <ProfileSkeleton />;
@@ -277,7 +310,11 @@ export default function TraineeProfilePage() {
       <AnimatePresence>
         {printTarget && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <PrintModal enrollment={printTarget} onClose={() => setPrintTarget(null)} />
+            <PrintModal
+              enrollment={printTarget}
+              passportPhotoOverride={profilePic}
+              onClose={() => setPrintTarget(null)}
+            />
           </motion.div>
         )}
       </AnimatePresence>
@@ -409,7 +446,7 @@ export default function TraineeProfilePage() {
             <p className="text-sm font-semibold text-foreground">Complete your learner profile</p>
             <p className="text-xs text-muted-foreground max-w-md">
               {cloudSyncHint === "Profile not found"
-                ? "No cloud record yet — finish registration or save from Edit Profile to sync with InsForge."
+                ? "No cloud record yet — finish registration or save from Edit Profile to sync with LISTA."
                 : "Your TESDA profile is empty. Continue registration to pre-fill this page."}
             </p>
           </div>
@@ -421,7 +458,7 @@ export default function TraineeProfilePage() {
 
       {hasProfileData && profileSource === "local" && (
         <motion.div variants={item} className="rounded-md border border-amber-200/80 bg-amber-50/80 px-3 py-2 text-xs text-amber-950">
-          Showing data saved on this device. Save your profile to sync with InsForge.
+          Showing data saved on this device. Save your profile to sync with LISTA.
         </motion.div>
       )}
 
@@ -781,15 +818,42 @@ export default function TraineeProfilePage() {
               )}
 
               {activeTab === "docs" && (
-                <motion.div variants={item} className="flex flex-col items-center justify-center py-12 text-center border border-dashed border-border bg-muted rounded-xl">
-                  <FileText className="h-8 w-8 text-muted-foreground mb-3" />
-                  <h3 className="text-sm font-semibold text-foreground mb-1">No documents uploaded</h3>
-                  <p className="text-xs text-muted-foreground max-w-xs mx-auto mb-4">
-                    Upload your requirements to complete your profile and fast-track your enrollment.
+                <motion.div variants={item} className="space-y-6">
+                  <p className="text-sm text-muted-foreground">
+                    Upload your enrollment requirements. Files appear on your official TESDA application form.
                   </p>
-                  <Button variant="outline" size="sm" className="h-8 rounded-md bg-card" onClick={handleOpenRegistrationWizard}>
-                    <Upload className="mr-2 h-3.5 w-3.5" /> Add via registration
-                  </Button>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {(
+                      [
+                        { type: "psa_birth_cert" as const, label: "PSA Birth Certificate" },
+                        { type: "valid_id" as const, label: "Valid Government ID" },
+                        { type: "passport_photo" as const, label: "2x2 Portrait Photo" },
+                        { type: "diploma" as const, label: "Academic Record" },
+                      ] as const
+                    ).map((doc) => {
+                      const existingDoc = mergedEnrollment.documents?.find((d) => d.type === doc.type);
+                      return (
+                        <DocumentUpload
+                          key={doc.type}
+                          label={doc.label}
+                          docType={doc.type}
+                          allowedExtensions={
+                            doc.type === "passport_photo"
+                              ? ["jpg", "jpeg", "png"]
+                              : ["pdf", "jpg", "jpeg", "png"]
+                          }
+                          initialFile={
+                            existingDoc
+                              ? { name: existingDoc.fileName, url: existingDoc.fileUrl }
+                              : null
+                          }
+                          onUploadComplete={(url, name) =>
+                            handleDocumentUpload(doc.type, doc.label, url, name)
+                          }
+                        />
+                      );
+                    })}
+                  </div>
                 </motion.div>
               )}
             </motion.div>

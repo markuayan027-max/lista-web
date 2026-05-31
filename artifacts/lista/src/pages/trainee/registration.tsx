@@ -370,7 +370,7 @@ export default function TraineeRegistrationPage() {
       if (!partial.success) {
         toast({
           title: "Cloud sync issue",
-          description: partial.error ?? "Could not save to InsForge. Data is kept on this device.",
+          description: partial.error ?? "Could not save to LISTA. Data is kept on this device.",
           variant: "destructive",
         });
       }
@@ -448,7 +448,7 @@ export default function TraineeRegistrationPage() {
       if (success) {
         toast({
           title: "Profile synced",
-          description: "Your progress is saved to InsForge.",
+          description: "Your progress is saved to LISTA.",
         });
       } else {
         toast({
@@ -552,7 +552,7 @@ export default function TraineeRegistrationPage() {
                 <li className="flex gap-2">
                   <span className="font-bold text-primary shrink-0">1.</span>
                   <span>
-                    <strong className="font-semibold">Profile complete</strong> — saved to InsForge
+                    <strong className="font-semibold">Profile complete</strong> — saved to LISTA
                   </span>
                 </li>
                 <li className="flex gap-2">
