@@ -1,6 +1,6 @@
 # LISTA Project — Workflow State
 
-**Last Updated:** 2026-05-28 (trainee prod CORS + registration gate fixes — **deploy pending**)
+**Last Updated:** 2026-06-01 (session revocation denylist + RBAC smoke suite — **Worker deploy pending**)
 
 > Read this before starting. Update when you finish or hand off.
 
@@ -28,6 +28,7 @@
 - **Sync E2E Phase 4 (2026-05-20):** `docs/PHASE-4-SYNC-E2E-RESULTS.md` — `verify:sync-health` 19/19, `verify:official-form` 8/8, live trainee tracking/profile/print modal OK; `pilot-smoke` **35/36** (dashboard heading regex drift).
 - **Production hardening (2026-05-27):** Fixed Vercel `/api/*` serverless `FUNCTION_INVOCATION_FAILED` and stabilized Worker `/api/courses` failures; verified roles + API smoke via `role-live-audit.mjs` and `post-deploy-api-verify.mjs`.
 - **Trainee prod funnel fix (2026-05-28, uncommitted):** Same-origin API on `lista.dpdns.org` (`api-url.ts`); `trainee-registration-state` treats completed/confirmed/enrolled + `canQuickApply`; `useTraineeProfile` picks display enrollment from history; `application.tsx` honors `canQuickApply`; `vercel.json` drops baked `VITE_LISTA_API_BASE_URL`. **Local:** typecheck + build ✅, Playwright **36/36** ✅. **Prod bundle still has Worker URL** (`index-CaBtOATl.js`) — redeploy Vercel required.
+- **Session revocation + RBAC smoke (2026-06-01, uncommitted):** Postgres denylist (`lista_revoked_access_tokens`); auth-proxy `router.all` fixes Express 5 DELETE routing; logout returns **204** + local revoke (InsForge has no DELETE `/sessions/current`). **`pnpm run rbac-smoke`** **12 passed / 3 skipped** (integration off). **`RBAC_INTEGRATION=1`** session-revocation ✅ locally. Test **5.1** concurrent approval script fixed (`.mjs`); **SKIP** on prod (no pending enrollment). **Deploy Worker + Vercel** to fix prod test **1.3**.
 
 ---
 
@@ -50,7 +51,7 @@
 
 See **`artifacts/lista/docs/REMAINING-TASKS.md`** (master list).
 
-**Deploy now:** Commit + push these fixes to `main`, then Vercel → **Create Deployment** with full commit URL (see `lista-vercel-deploy-url.mdc`). Prod QA re-run: `node artifacts/lista/.qa/live-browser-qa.mjs` (env `LISTA_TRAINEE_EMAIL` / `LISTA_TRAINEE_PASS`).
+**Deploy:** `https://github.com/markuayan027-max/lista-web/commit/028305a` (live on lista.dpdns.org). **MCP (2026-05-28):** Windows fix — `npx.cmd` full path in `~/.cursor/mcp.json` + `.cursor/mcp.json` (chrome-devtools, search-console). Reload MCP in Cursor Settings after pull.
 
 ### 2026-05-22 — Public mobile polish (uncommitted)
 - **Nav:** Mobile drawer → 4 links; desktop keeps 7.

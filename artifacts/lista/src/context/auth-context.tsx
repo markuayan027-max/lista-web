@@ -283,6 +283,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             await fetch(authApiUrl("/api/auth/sessions/current"), {
               method: "DELETE",
               headers: { Authorization: `Bearer ${session.accessToken}` },
+              credentials: "include",
             });
           }
         } catch {

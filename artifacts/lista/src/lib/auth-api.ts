@@ -3,7 +3,7 @@
  * Uses same-origin /api/auth/* when proxied (dev + lista.dpdns.org); otherwise InsForge URL.
  */
 
-import { apiUrl } from "@/lib/api-url";
+import { apiUrl, prefersListaApiProxy } from "@/lib/api-url";
 
 const insforgeBase =
   (import.meta.env.VITE_INSFORGE_URL as string | undefined) ||
@@ -15,6 +15,10 @@ export function authApiUrl(path: string): string {
   const normalized = path.startsWith("/") ? path : `/${path}`;
   if (import.meta.env.DEV) {
     return normalized;
+  }
+  // Production LISTA hosts: auth via same-origin /api (proxy + server-side revocation).
+  if (prefersListaApiProxy()) {
+    return apiUrl(normalized);
   }
   const viaLista = apiUrl(normalized);
   if (!viaLista.startsWith("http")) {

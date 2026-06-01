@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import { lookupPublicUserRole } from "../lib/public-user-role.js";
+import { isAccessTokenRevoked } from "../lib/revoked-sessions.js";
 
 export type AuthRole = "trainee" | "staff" | "admin";
 
@@ -74,6 +75,13 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
     return res.status(401).json({ success: false, error: "Authorization required" });
   }
   const token = header.slice(7);
+
+  if (await isAccessTokenRevoked(token)) {
+    return res.status(401).json({
+      success: false,
+      error: "Session ended — sign in again",
+    });
+  }
 
   try {
     const sessionRes = await fetch(`${baseUrl}/api/auth/sessions/current`, {
