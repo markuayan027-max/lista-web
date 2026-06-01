@@ -397,12 +397,7 @@ export default function TraineeTrackingPage() {
               >
                 <motion.div>
                   <div className="flex flex-wrap items-center gap-2 mb-2">
-                    <span
-                      className="px-3 py-1 bg-primary/10 text-primary text-xs font-bold rounded-full uppercase tracking-wider"
-                      role="status"
-                    >
-                      {formatStatusLabel(enrollment.status)}
-                    </span>
+                    <StatusBadge status={enrollment.status} />
                     {enrollment.refNo && (
                       <span className="text-muted-foreground text-sm font-medium">
                         Ref: {enrollment.refNo}

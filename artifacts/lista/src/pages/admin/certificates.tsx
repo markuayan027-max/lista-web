@@ -207,7 +207,7 @@ export default function AdminCertificatesPage() {
                           </Button>
                         )}
                         {cert.status === 'rejected' && (
-                          <span className="text-xs font-semibold text-rose-600 bg-rose-50 px-2 py-1 rounded-md">Revoked</span>
+                          <StatusBadge status="revoked" />
                         )}
                         {cert.status === 'in_progress' && (
                           <span className="text-xs text-muted-foreground">Pending completion</span>

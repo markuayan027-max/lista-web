@@ -229,7 +229,7 @@ export default function AdminEnrollmentsPage() {
         </div>
 
         {/* Search + Filters */}
-        <Card className="border-border shadow-sm rounded-2xl">
+        <Card className="border-card-border shadow-sm rounded-xl">
           <CardContent className="p-4">
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="relative flex-1">
@@ -319,7 +319,7 @@ export default function AdminEnrollmentsPage() {
         </AnimatePresence>
 
         {/* Table */}
-        <Card className="border-border shadow-sm overflow-hidden rounded-2xl">
+        <Card className="border-card-border shadow-sm overflow-hidden rounded-xl">
           {isLoading ? (
             <TableSkeleton rows={10} columns={7} className="py-2" />
           ) : isError ? (

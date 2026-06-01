@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 
-type Status = "pending" | "confirmed" | "rejected" | "issued" | "in_progress" | "cancelled";
+type Status = "pending" | "confirmed" | "rejected" | "issued" | "in_progress" | "cancelled" | "revoked";
 
 /** DB enum uses Pascal case; legacy rows may use other labels. */
 function normalizeStatus(raw: string): Status {
@@ -48,6 +48,10 @@ const statusConfig: Record<Status, { label: string; className: string }> = {
   in_progress: {
     label: "In Progress",
     className: "bg-blue-100 text-blue-700 hover:bg-blue-100 border-blue-200",
+  },
+  revoked: {
+    label: "Revoked",
+    className: "bg-rose-100 text-rose-700 hover:bg-rose-100 border-rose-200",
   },
   cancelled: {
     label: "Cancelled",

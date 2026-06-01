@@ -89,3 +89,4 @@ See **`artifacts/lista/docs/REMAINING-TASKS.md`** (master list).
 | 2026-05-20 | Cloudflare `lista-web` | `artifacts/api-server/wrangler.toml` + `src/worker.ts` (Express + `httpServerHandler`); `pnpm cf:deploy`; runbook Workers Builds table (repo root + pnpm filter) |
 | 2026-05-21 | Prod connect + smoke | `VITE_LISTA_API_BASE_URL` in `vercel.json`; CORS on Worker; live Admin/Staff/Trainee login OK; trainee registration partial save during browser E2E; browser session cleared to `/login` |
 | 2026-05-22 | Mobile fix-all (local) | Live P0 redirect + Worker CORS OK; admin→`/trainee/register` on prod (role bug); patches uncommitted @ `95a9192` base |
+| 2026-06-01 | Visual consistency V1–V6 | `tests/visual-consistency.spec.ts` **91/91**; `pnpm run visual-consistency`; VC-001–004 fixes (StatusBadge on tracking, admin card tokens, staff Card import, cert revoked badge); live prod public pass in `.qa/visual-consistency/` |

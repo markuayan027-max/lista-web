@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { exportSingleTraineeToExcel, exportSingleTraineeToWord } from "@/lib/export-utils";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { 
   Select,
@@ -442,7 +443,3 @@ export default function StaffEnrollmentsPage() {
     </div>
   );
 }
-
-// Temporary workaround since TableBody isn't exported directly in the provided mock snippet, assuming it's called Body or similar.
-// Fixing table body import based on standard shadcn table
-const Card = ({ className, children, ...props }: any) => <div className={`bg-card text-card-foreground rounded-xl border ${className}`} {...props}>{children}</div>;
