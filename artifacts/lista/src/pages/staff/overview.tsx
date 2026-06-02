@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import StatCard from "@/components/stat-card";
 import EnrollmentCard from "@/components/enrollment-card";
-import { CalendarDays, Users, Award, FileText, Plus, Bell, ChevronRight } from "lucide-react";
+import { Users, Plus, Bell, ChevronRight } from "lucide-react";
 import { useDerivedCertificates, useEnrollments, useSchedules, useUsers } from "@/hooks/use-lista-data";
 import {
   computePeriodTrend,
@@ -85,7 +85,8 @@ export default function StaffOverviewPage() {
           <StatCard
             label="Today's Sessions"
             value={todaysSessions.length.toString()}
-            icon={CalendarDays}
+            icon="calendar"
+            iconClassName="text-primary"
             trend={sessionsTrend}
           />
         </motion.div>
@@ -93,9 +94,9 @@ export default function StaffOverviewPage() {
           <StatCard
             label="Pending Enrollments"
             value={pendingEnrollments.toString()}
-            icon={FileText}
+            icon="document"
             className="border-amber-200"
-            accent="bg-amber-100 text-amber-700"
+            iconClassName="text-amber-600"
             trend={pendingTrend}
           />
         </motion.div>
@@ -103,7 +104,8 @@ export default function StaffOverviewPage() {
           <StatCard
             label="Active Trainees"
             value={activeTrainees.toString()}
-            icon={Users}
+            icon="users"
+            iconClassName="text-primary-indigo"
             trend={traineesTrend}
           />
         </motion.div>
@@ -111,7 +113,8 @@ export default function StaffOverviewPage() {
           <StatCard
             label="Certificates Issued"
             value={certificates.filter(c => c.status === "issued").length.toString()}
-            icon={Award}
+            icon="award"
+            iconClassName="text-emerald-600"
           />
         </motion.div>
       </motion.div>

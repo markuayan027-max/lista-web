@@ -225,7 +225,8 @@ export default function TraineeDashboardPage() {
           <StatCard
             label="Enrolled Course"
             value={myCourseTitle || "None"}
-            icon={BookOpen}
+            icon="book"
+            iconClassName="text-primary"
             className="h-full"
           />
         </motion.div>
@@ -241,7 +242,8 @@ export default function TraineeDashboardPage() {
                 "Not Applied"
               )
             }
-            icon={FileText}
+            icon="document"
+            iconClassName="text-primary-indigo"
             className="h-full"
           />
         </motion.div>

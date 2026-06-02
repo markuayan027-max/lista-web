@@ -1,6 +1,6 @@
 # LISTA Project — Workflow State
 
-**Last Updated:** 2026-06-01 (session revocation denylist + RBAC smoke suite — **Worker deploy pending**)
+**Last Updated:** 2026-06-01 (interaction feedback I1–I3 automated — **10/10** Playwright)
 
 > Read this before starting. Update when you finish or hand off.
 
@@ -89,4 +89,6 @@ See **`artifacts/lista/docs/REMAINING-TASKS.md`** (master list).
 | 2026-05-20 | Cloudflare `lista-web` | `artifacts/api-server/wrangler.toml` + `src/worker.ts` (Express + `httpServerHandler`); `pnpm cf:deploy`; runbook Workers Builds table (repo root + pnpm filter) |
 | 2026-05-21 | Prod connect + smoke | `VITE_LISTA_API_BASE_URL` in `vercel.json`; CORS on Worker; live Admin/Staff/Trainee login OK; trainee registration partial save during browser E2E; browser session cleared to `/login` |
 | 2026-05-22 | Mobile fix-all (local) | Live P0 redirect + Worker CORS OK; admin→`/trainee/register` on prod (role bug); patches uncommitted @ `95a9192` base |
-| 2026-06-01 | Visual consistency V1–V6 | `tests/visual-consistency.spec.ts` **91/91**; `pnpm run visual-consistency`; VC-001–004 fixes (StatusBadge on tracking, admin card tokens, staff Card import, cert revoked badge); live prod public pass in `.qa/visual-consistency/` |
+| 2026-06-01 | Registration sync auth | Prod bug: Step 4 "Cloud sync issue" / `Invalid or expired session` while UI still logged in. **Root cause:** `ensureAccessToken()` returned expired access token after failed refresh and cached it 5m. **Fix:** `auth-token.ts` — null on 401+failed refresh; `trainee-enrollment-insforge.ts` — retry sync after cache clear. **Deploy Vercel only** (frontend). |
+| 2026-06-01 | Dashboard stat icon polish | Removed colored icon backdrops from `StatCard`; added `AnimatedStatIcon` (stroke SVG + path draw/hover via framer-motion) + `useSafeMotion`; applied trainee/staff/admin dashboards; typecheck ✅ |
+| 2026-06-01 | Interaction feedback I1–I3 | `tests/interaction-feedback.spec.ts` **10/10**; `pnpm run interaction-feedback`; staff enrollments `TableSkeleton` on load; mock helpers block InsForge enrollments fallback; evidence in `.qa/interaction-feedback/` |

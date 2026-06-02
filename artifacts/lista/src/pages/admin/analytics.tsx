@@ -18,7 +18,6 @@ import StatCard from "@/components/stat-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Users, BookOpen, Clock, Award } from "lucide-react";
 import { useCourses, useDerivedCertificates, useEnrollments, useUsers } from "@/hooks/use-lista-data";
 import {
   buildMonthlyEnrollmentSeries,
@@ -130,22 +129,27 @@ export default function AdminAnalyticsPage() {
           label="Total Enrollments"
           value={totalEnrollments}
           trend={enrollmentTrend}
-          icon={BookOpen}
-          accent="bg-primary-electric/15"
+          icon="book"
+          iconClassName="text-primary-electric"
         />
-        <StatCard label="Active Trainees" value={activeTrainees} icon={Users} accent="bg-primary-indigo/15" />
+        <StatCard
+          label="Active Trainees"
+          value={activeTrainees}
+          icon="users"
+          iconClassName="text-primary-indigo"
+        />
         <StatCard
           label="Pending Applications"
           value={pendingApplications}
           trend={pendingTrend}
-          icon={Clock}
-          accent="bg-amber-100"
+          icon="clock"
+          iconClassName="text-amber-600"
         />
         <StatCard
           label="Certificates Issued"
           value={certificatesIssued}
-          icon={Award}
-          accent="bg-emerald-100"
+          icon="award"
+          iconClassName="text-emerald-600"
         />
       </motion.div>
 

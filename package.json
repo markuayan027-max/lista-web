@@ -17,7 +17,9 @@
     "pilot-smoke": "pnpm exec playwright test enrollment lista-qa-matrix --reporter=list && node artifacts/lista/scripts/pilot-insforge-data.mjs",
     "pilot-smoke:full": "pnpm run typecheck && pnpm run build --filter @workspace/lista && pnpm run pilot-smoke",
     "rbac-smoke": "pnpm exec playwright test security-rbac rbac-duplicate-enrollment session-revocation --reporter=list",
-    "visual-consistency": "pnpm exec playwright test visual-consistency --workers=1 --reporter=list"
+    "visual-consistency": "pnpm exec playwright test visual-consistency --workers=1 --reporter=list",
+    "interaction-feedback": "pnpm exec playwright test interaction-feedback --workers=1 --reporter=list",
+    "responsive-layout": "pnpm exec playwright test responsive-layout --workers=1 --reporter=list"
   },
   "private": true,
   "devDependencies": {

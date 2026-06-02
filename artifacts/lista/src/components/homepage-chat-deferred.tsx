@@ -1,4 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useState } from "react";
+import { useLocation } from "wouter";
 import { Loader2, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -41,6 +42,9 @@ function ChatFab({
 
 /** Loads framer-motion chat bundle after idle or first FAB click — not on initial public paint. */
 export default function HomepageChatDeferred({ programCount }: Props) {
+  const [location] = useLocation();
+  const path = (location.split("?")[0] ?? "").trim();
+  const traineePortal = /^\/trainee(\/|$)/.test(path);
   const [loadChat, setLoadChat] = useState(false);
   const [prefetching, setPrefetching] = useState(false);
 
@@ -71,11 +75,25 @@ export default function HomepageChatDeferred({ programCount }: Props) {
   }, []);
 
   if (!loadChat) {
-    return <ChatFab onClick={activate} busy={prefetching} />;
+    return (
+      <ChatFab
+        onClick={activate}
+        busy={prefetching}
+        className={traineePortal ? "bottom-[calc(5.25rem+env(safe-area-inset-bottom))]" : undefined}
+      />
+    );
   }
 
   return (
-    <Suspense fallback={<ChatFab onClick={() => {}} busy />}>
+    <Suspense
+      fallback={
+        <ChatFab
+          onClick={() => {}}
+          busy
+          className={traineePortal ? "bottom-[calc(5.25rem+env(safe-area-inset-bottom))]" : undefined}
+        />
+      }
+    >
       <HomepageChat programCount={programCount} />
     </Suspense>
   );

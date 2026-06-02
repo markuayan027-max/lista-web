@@ -51,6 +51,7 @@ export default function HomepageChat({ programCount }: HomepageChatProps) {
   const [location] = useLocation();
   const path = location.split("?")[0] ?? "";
   const courseDetailStickyBar = /^\/courses\/[^/]+$/.test(path);
+  const traineePortal = /^\/trainee(\/|$)/.test(path);
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<HomepageChatMessage[]>([WELCOME]);
   const [input, setInput] = useState("");
@@ -328,7 +329,7 @@ export default function HomepageChat({ programCount }: HomepageChatProps) {
         onClick={() => setOpen((v) => !v)}
         className={cn(
           "fixed z-[50] h-14 w-14 overflow-hidden rounded-full border-2 border-white bg-slate-100 p-0 shadow-lg shadow-slate-900/20 hover:bg-slate-50",
-          courseDetailStickyBar
+          courseDetailStickyBar || traineePortal
             ? "bottom-[calc(5.25rem+env(safe-area-inset-bottom))] right-4 max-lg:bottom-[calc(5.25rem+env(safe-area-inset-bottom))] lg:bottom-[max(1.25rem,env(safe-area-inset-bottom))] lg:right-6"
             : "bottom-[max(1.25rem,env(safe-area-inset-bottom))] right-4 md:right-6",
           open && "hidden",

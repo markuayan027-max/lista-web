@@ -125,6 +125,8 @@ async function verifyAccessTokenOnce(): Promise<string | null> {
       ? session.accessToken
       : null;
 
+  let authRejected = false;
+
   if (existing) {
     try {
       const res = await fetch(authApiUrl("/api/auth/sessions/current"), {
@@ -146,15 +148,29 @@ async function verifyAccessTokenOnce(): Promise<string | null> {
         markTokenVerified(token);
         return token;
       }
+      if (res.status === 401 || res.status === 403) {
+        authRejected = true;
+      }
     } catch {
       // Network / timeout — try refresh below
     }
   }
 
   const refreshed = await refreshSessionDeduped(session);
-  const token = refreshed?.accessToken ?? existing ?? null;
-  if (token) markTokenVerified(token);
-  return token;
+  const refreshedToken =
+    typeof refreshed?.accessToken === "string" && refreshed.accessToken.length > 0
+      ? refreshed.accessToken
+      : null;
+  if (refreshedToken) {
+    markTokenVerified(refreshedToken);
+    return refreshedToken;
+  }
+
+  // Do not reuse an access token InsForge already rejected — UI may still show cached user.
+  if (authRejected) return null;
+
+  // Transient verify failure: allow existing token without caching verification.
+  return existing;
 }
 
 /** Bearer token from persisted InsForge session (if any). */

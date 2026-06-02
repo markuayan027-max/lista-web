@@ -1,7 +1,8 @@
 import type * as React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { ArrowUpRight, ArrowDownRight, LucideIcon } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight } from "lucide-react";
+import AnimatedStatIcon, { type StatIconName } from "@/components/animated-stat-icon";
 
 interface StatCardProps {
   label: string;
@@ -10,8 +11,8 @@ interface StatCardProps {
     value: number;
     isPositive: boolean;
   };
-  icon?: LucideIcon;
-  accent?: string;
+  icon?: StatIconName;
+  iconClassName?: string;
   className?: string;
 }
 
@@ -19,17 +20,17 @@ export default function StatCard({
   label,
   value,
   trend,
-  icon: Icon,
-  accent,
+  icon,
+  iconClassName,
   className,
 }: StatCardProps) {
   return (
     <Card className={cn("overflow-hidden border-card-border shadow-sm", className)}>
       <CardContent className="p-6">
-        <div className="flex items-start justify-between">
-          <div className="space-y-1">
+        <div className="flex items-start justify-between gap-4">
+          <div className="space-y-1 min-w-0">
             <p className="text-sm font-medium text-muted-foreground">{label}</p>
-            <div className="flex items-baseline gap-2">
+            <div className="flex items-baseline gap-2 flex-wrap">
               <h3 className="text-2xl font-bold tracking-tight">{value}</h3>
               {trend && (
                 <span
@@ -48,15 +49,11 @@ export default function StatCard({
               )}
             </div>
           </div>
-          {Icon && (
-            <div
-              className={cn(
-                "flex h-10 w-10 items-center justify-center rounded-xl bg-primary/5",
-                accent
-              )}
-            >
-              <Icon className="h-5 w-5 text-primary" />
-            </div>
+          {icon && (
+            <AnimatedStatIcon
+              name={icon}
+              className={cn("text-primary mt-0.5", iconClassName)}
+            />
           )}
         </div>
       </CardContent>

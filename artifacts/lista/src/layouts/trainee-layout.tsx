@@ -2,6 +2,7 @@ import { useAuth } from "@/context/auth-context";
 import { useLocation, Redirect } from "wouter";
 import { ModernSidebar } from "@/components/modern-sidebar";
 import BottomNavTrainee from "@/components/bottom-nav-trainee";
+import HomepageChatDeferred from "@/components/homepage-chat-deferred";
 import AvatarInitials from "@/components/avatar-initials";
 import { LogOut, Bell } from "lucide-react";
 import {
@@ -124,6 +125,7 @@ export default function TraineeLayout({ children }: { children: React.ReactNode 
       </div>
 
       <BottomNavTrainee />
+      <HomepageChatDeferred />
     </div>
   );
 }

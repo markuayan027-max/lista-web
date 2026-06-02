@@ -5,7 +5,7 @@
  */
 
 import type { Enrollment } from "@/lib/institutional-data";
-import { authHeadersAsync, ensureAccessToken } from "@/lib/auth-token";
+import { authHeadersAsync, clearAccessTokenCache, ensureAccessToken } from "@/lib/auth-token";
 import { apiUrl } from "@/lib/api-url";
 import { ensurePublicTraineeUser } from "@/lib/ensure-public-trainee";
 import { lista } from "@/lib/insforge";
@@ -435,6 +435,17 @@ function enrollmentToRegisterApiBody(prepared: Enrollment): Record<string, unkno
   };
 }
 
+function isSessionAuthSyncError(message: string | undefined): boolean {
+  if (!message) return false;
+  const lower = message.toLowerCase();
+  return (
+    lower.includes("invalid or expired session") ||
+    lower.includes("session ended") ||
+    lower.includes("authorization required") ||
+    lower.includes("sign in again")
+  );
+}
+
 async function registerTraineeViaApiFallback(
   prepared: Enrollment,
   bearerToken: string,
@@ -790,7 +801,7 @@ export async function registerTraineeFromForm(
   }
 
   // Server upsert first — avoids hung InsForge reads/inserts when a row already exists.
-  const apiSync = await withTimeout(
+  let apiSync = await withTimeout(
     registerTraineeViaApiFallback(prepared, bearerToken),
     30_000,
     "Registration sync",
@@ -798,6 +809,24 @@ export async function registerTraineeFromForm(
     success: false as const,
     error: formatEnrollmentSyncError(err),
   }));
+
+  if (!apiSync.success && isSessionAuthSyncError(apiSync.error)) {
+    clearAccessTokenCache();
+    const retriedToken = await withTimeout(ensureAccessToken(), 20_000, "Session refresh").catch(
+      () => null,
+    );
+    if (retriedToken) {
+      apiSync = await withTimeout(
+        registerTraineeViaApiFallback(prepared, retriedToken),
+        30_000,
+        "Registration sync",
+      ).catch((err) => ({
+        success: false as const,
+        error: formatEnrollmentSyncError(err),
+      }));
+    }
+  }
+
   if (apiSync.success) {
     return apiSync;
   }

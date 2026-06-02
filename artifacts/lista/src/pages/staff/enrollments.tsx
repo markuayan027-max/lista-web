@@ -41,6 +41,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { Enrollment } from "@/lib/institutional-data";
 import PrintModal from "@/components/print-modal";
 import StatusBadge from "@/components/status-badge";
+import { TableSkeleton } from "@/components/skeletons";
 import {
   useCourseBatches,
   useCourses,
@@ -216,6 +217,9 @@ export default function StaffEnrollmentsPage() {
           </div>
         </div>
 
+        {isLoading ? (
+          <TableSkeleton rows={10} columns={6} className="py-2" />
+        ) : (
         <div className="flex-1 overflow-x-auto neat-scrollbar min-h-0">
           <Table className="min-w-[720px]">
             <TableHeader className="bg-muted/30 sticky top-0 z-10 backdrop-blur-sm">
@@ -295,6 +299,7 @@ export default function StaffEnrollmentsPage() {
             </TableBody>
           </Table>
         </div>
+        )}
       </Card>
 
       {/* Detail Sheet */}
