@@ -78,6 +78,47 @@ async function mockUsersApi(page: Page) {
   });
 }
 
+async function mockCompleteTraineeProfile(page: Page) {
+  // Override default InsForge table mocks so /trainee/enroll doesn't redirect to /trainee/register.
+  await page.unroute("**/api/trainees/profile**").catch(() => {});
+  await page.route("**/api/trainees/profile**", async (route) => {
+    if (route.request().method() !== "GET") {
+      await route.continue();
+      return;
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        success: true,
+        data: {
+          id: "qa-enrollment-id",
+          ref_no: "QA-2026-00001",
+          email: "trainee@example.com",
+          status: "Ready to Apply",
+          first_name: "Test",
+          last_name: "Trainee",
+          dob: "2000-01-01",
+          birth_place: "Manila",
+          nationality: "Filipino",
+          gender: "Male",
+          civil_status: "Single",
+          mobile_number: "09171234567",
+          home_address: "123 Test Street",
+          barangay: "Barangay Test",
+          school_last_attended: "LISTA Test Academy",
+          year_graduated: "2020",
+          consent: true,
+          submitted_at: new Date().toISOString(),
+        },
+        activeEnrollment: null,
+        history: [],
+        canQuickApply: false,
+      }),
+    });
+  });
+}
+
 async function getRect(page: Page, selector: string): Promise<DOMRect> {
   return await page.locator(selector).evaluate((el: Element) => el.getBoundingClientRect());
 }
@@ -230,6 +271,38 @@ test.describe("responsive layout & navigation (R1–R6)", () => {
 
       const appGrid = page.locator("[aria-label='Course catalog']").locator(".grid").first();
       await expect(appGrid).toBeVisible();
+    });
+
+    test("R5 primary actions remain reachable on long forms (registration + enroll)", async ({ page }) => {
+      test.setTimeout(60_000);
+      await mockAuthState(page, "trainee");
+      await mockListaInsforgeTables(page);
+      await mockCoursesApi(page);
+      await mockCompleteTraineeProfile(page);
+
+      await page.goto("/trainee/register?from=profile", { waitUntil: "domcontentloaded" });
+      await waitForAppReady(page);
+      await assertPageRendered(page);
+
+      await page.keyboard.press("End");
+      const regPrimary = page.getByRole("button", { name: /Continue|Complete Registration/i }).first();
+      await expect(regPrimary).toBeVisible({ timeout: 20_000 });
+
+      await page.goto("/trainee/enroll?course=cookery-nc-ii", { waitUntil: "domcontentloaded" });
+      await waitForAppReady(page);
+      await assertPageRendered(page);
+
+      await page.keyboard.press("End");
+      const enrollPrimary = page.getByRole("button", { name: /Continue|Submit Application/i }).first();
+      await expect(enrollPrimary).toBeVisible({ timeout: 20_000 });
+
+      // Ensure the primary button isn't hidden behind the trainee bottom nav.
+      const bottomNav = page.locator("div.fixed.bottom-0.md\\:hidden");
+      if (await bottomNav.count()) {
+        const buttonRect = await enrollPrimary.evaluate((el: Element) => el.getBoundingClientRect());
+        const navRect = await bottomNav.first().evaluate((el: Element) => el.getBoundingClientRect());
+        expect(rectsIntersect(buttonRect, navRect)).toBeFalsy();
+      }
     });
 
     test("R6 guide FAB does not block primary CTA (home + trainee dashboard)", async ({ page }) => {
