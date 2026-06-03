@@ -14,13 +14,15 @@ export function StatCardsSkeleton({ count = 4 }: { count?: number }) {
   );
 }
 
-export function TraineeDashboardSkeleton() {
+export function TraineeDashboardSkeleton({ hideHeader = false }: { hideHeader?: boolean } = {}) {
   return (
     <div className="space-y-8 max-w-6xl mx-auto pb-20">
-      <div className="space-y-2">
-        <Skeleton className="h-9 w-64" />
-        <Skeleton className="h-4 w-80 max-w-full" />
-      </div>
+      {!hideHeader && (
+        <div className="space-y-2">
+          <Skeleton className="h-9 w-64" />
+          <Skeleton className="h-4 w-80 max-w-full" />
+        </div>
+      )}
       <StatCardsSkeleton />
       <div className="grid lg:grid-cols-2 gap-6">
         <Skeleton className="h-64 w-full rounded-2xl" />

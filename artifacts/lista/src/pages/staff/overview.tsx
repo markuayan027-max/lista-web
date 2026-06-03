@@ -16,6 +16,7 @@ import {
 } from "@/lib/analytics-utils";
 import { isSameDay, parseISO } from "date-fns";
 import { useMemo } from "react";
+import { AnalyticsSkeleton, QueryBoundary } from "@/components/skeletons";
 
 const container = {
   hidden: { opacity: 0 },
@@ -32,7 +33,8 @@ const item = {
 
 export default function StaffOverviewPage() {
   const { data: schedules = [] } = useSchedules();
-  const { data: enrollments = [] } = useEnrollments();
+  const enrollmentQuery = useEnrollments();
+  const { data: enrollments = [] } = enrollmentQuery;
   const { data: users = [] } = useUsers();
   const { data: certificates = [] } = useDerivedCertificates();
   const todayDate = new Date();
@@ -66,6 +68,7 @@ export default function StaffOverviewPage() {
   }, [formalEnrollments]);
 
   return (
+    <QueryBoundary query={enrollmentQuery} skeleton={<AnalyticsSkeleton />}>
     <div className="space-y-8">
       <motion.div 
         initial={{ opacity: 0, y: -20 }}
@@ -193,6 +196,8 @@ export default function StaffOverviewPage() {
           </motion.div>
         </motion.div>
       </div>
+      </div>
+      </QueryBoundary>
     </div>
   );
 }

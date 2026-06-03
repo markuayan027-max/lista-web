@@ -32,6 +32,7 @@ import {
 } from "@/hooks/use-lista-data";
 import QuickApplyModal from "@/components/trainee/quick-apply-modal";
 import { useQueryClient } from "@tanstack/react-query";
+import { TraineeDashboardSkeleton, QueryBoundary } from "@/components/skeletons";
 import { courseTitleBySlug } from "@/lib/lista-insforge-data";
 import type { Enrollment } from "@/lib/institutional-data";
 import {
@@ -74,7 +75,8 @@ export default function TraineeDashboardPage() {
   const { data: schedules = [] } = useSchedules();
   const { data: announcements = [] } = useAnnouncements();
   const { data: certificates = [] } = useTraineeDerivedCertificates(user?.email);
-  const { data: profileRow } = useTraineeProfile(user?.email);
+  const profileQuery = useTraineeProfile(user?.email);
+  const { data: profileRow } = profileQuery;
   const { data: profileBundle } = useTraineeProfileBundle(user?.email);
   const [printTarget, setPrintTarget] = useState<any>(null);
   const [isCancelling, setIsCancelling] = useState(false);
@@ -145,6 +147,7 @@ export default function TraineeDashboardPage() {
 
 
   return (
+    <QueryBoundary query={profileQuery} skeleton={<TraineeDashboardSkeleton />}>
     <div className="space-y-8">
       <QuickApplyModal
         open={quickApplyOpen}
@@ -520,7 +523,9 @@ export default function TraineeDashboardPage() {
             </motion.div>
           )}
         </motion.div>
+      )}
       </div>
+      </QueryBoundary>
     </div>
   );
 }

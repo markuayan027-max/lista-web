@@ -18,14 +18,14 @@ import StatCard from "@/components/stat-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { useCourses, useDerivedCertificates, useEnrollments, useUsers } from "@/hooks/use-lista-data";
+import { useCourses, useDerivedCertificates, useEnrollments, useUsers, listaKeys } from "@/hooks/use-lista-data";
 import {
   buildMonthlyEnrollmentSeries,
   computePeriodTrend,
   countInLastDays,
   isFormalEnrollment,
 } from "@/lib/analytics-utils";
-import { AnalyticsSkeleton } from "@/components/skeletons";
+import { AnalyticsSkeleton, QueryBoundary } from "@/components/skeletons";
 import { ContentFadeIn } from "@/components/skeletons/primitives";
 
 const containerVariants = {
@@ -44,7 +44,8 @@ const itemVariants = {
 const COLORS = ["#0f172a", "#3b82f6", "#0ea5e9", "#60a5fa", "#94a3b8"];
 
 export default function AdminAnalyticsPage() {
-  const { data: enrollments = [], isLoading: enrollmentsLoading } = useEnrollments();
+  const enrollmentQuery = useEnrollments();
+  const { data: enrollments = [] } = enrollmentQuery;
   const { data: courses = [] } = useCourses();
   const { data: users = [] } = useUsers();
   const { data: certificates = [] } = useDerivedCertificates();
@@ -116,13 +117,19 @@ export default function AdminAnalyticsPage() {
 
   const hasEnrollmentChartData = enrollmentData.some((d) => d.enrollments > 0);
 
-  if (enrollmentsLoading) {
-    return <AnalyticsSkeleton />;
-  }
-
   return (
-    <ContentFadeIn>
-    <motion.div className="space-y-6" variants={containerVariants} initial="hidden" animate="show">
+    <div className="space-y-6">
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mb-8"
+      >
+        <h1 className="text-2xl font-bold tracking-tight">System Analytics</h1>
+        <p className="text-muted-foreground mt-1">Real-time performance and enrollment metrics across the platform.</p>
+      </motion.div>
+
+      <QueryBoundary query={enrollmentQuery} skeleton={<AnalyticsSkeleton />}>
+      <motion.div className="space-y-6" variants={containerVariants} initial="hidden" animate="show">
 
       <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
@@ -362,6 +369,7 @@ export default function AdminAnalyticsPage() {
         </motion.div>
       </div>
     </motion.div>
-    </ContentFadeIn>
+    </QueryBoundary>
+    </div>
   );
 }

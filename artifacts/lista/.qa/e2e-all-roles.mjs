@@ -60,9 +60,18 @@ async function auditPage(page, url) {
     }
     
     // Check for visible content
+    await page.waitForSelector('body', { state: 'visible' });
     const bodyText = await page.textContent('body');
-    if (!bodyText || bodyText.trim().length < 10) {
+    if (!bodyText || bodyText.trim().length < 100) { // Increased threshold as skeletons are minimal
       issues.push('Page appears to have no visible content');
+    }
+
+    // Explicitly wait for hydration/data if we see skeletons
+    const hasSkeleton = await page.$('.skeleton-shimmer, [aria-busy="true"]');
+    if (hasSkeleton) {
+      console.log(`   Waiting for data to load (found skeletons)...`);
+      await page.waitForSelector('[aria-busy="true"]', { state: 'hidden', timeout: 15000 }).catch(() => {});
+      await page.waitForTimeout(1000); // Final stability
     }
     
     // Check for 404
