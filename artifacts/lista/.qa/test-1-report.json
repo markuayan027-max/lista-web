@@ -1,0 +1,85 @@
+{
+  "test": "Test 1 — Approve / Export / Certificate",
+  "startedAt": "2026-05-24T08:16:01.507Z",
+  "steps": [
+    {
+      "name": "Admin login",
+      "ok": true,
+      "message": "→ http://localhost:5173/admin",
+      "at": "2026-05-24T08:16:15.373Z"
+    },
+    {
+      "name": "Export page lists Cheryl Campion",
+      "ok": true,
+      "message": "LISTA-2026-76327",
+      "at": "2026-05-24T08:16:20.503Z"
+    },
+    {
+      "name": "Export preview dialog opens",
+      "ok": true,
+      "message": "Preview modal visible",
+      "at": "2026-05-24T08:16:23.137Z"
+    },
+    {
+      "name": "PDF export download",
+      "ok": true,
+      "message": "LISTA-2026-76327_AdmissionForm_20260524.docx",
+      "at": "2026-05-24T08:16:25.517Z"
+    },
+    {
+      "name": "Trainee login (submit application)",
+      "ok": true,
+      "at": "2026-05-24T08:16:37.572Z"
+    },
+    {
+      "name": "Trainee course application submit",
+      "ok": true,
+      "message": "Already has active application — skipped",
+      "at": "2026-05-24T08:16:44.429Z"
+    },
+    {
+      "name": "Admin re-login",
+      "ok": true,
+      "at": "2026-05-24T08:16:57.053Z"
+    },
+    {
+      "name": "Enrollments table shows Cheryl after seed",
+      "ok": true,
+      "message": "Row visible",
+      "at": "2026-05-24T08:17:03.129Z"
+    },
+    {
+      "name": "Approve enrollment → confirmed",
+      "ok": true,
+      "message": "Status confirmed in enrollments table",
+      "at": "2026-05-24T08:17:08.271Z"
+    },
+    {
+      "name": "Issue certificate for Cheryl + Poultry",
+      "ok": false,
+      "message": "PATCH HTTP 409",
+      "at": "2026-05-24T08:17:21.786Z"
+    },
+    {
+      "name": "Trainee login (verification)",
+      "ok": true,
+      "at": "2026-05-24T08:17:38.601Z"
+    },
+    {
+      "name": "Trainee tracking shows enrollment status",
+      "ok": true,
+      "message": "My ApplicationsTrack submitted course applications and download your official TESDA form.RefreshConfirmedRef: LISTA-2026",
+      "at": "2026-05-24T08:17:43.855Z"
+    },
+    {
+      "name": "Trainee certificate page loads with status",
+      "ok": true,
+      "message": "Completions & credentialsA short history of programs you finished at LISTA. Official TESDA National Certificates (NC) ar",
+      "at": "2026-05-24T08:17:48.458Z"
+    }
+  ],
+  "finishedAt": "2026-05-24T08:17:49.212Z",
+  "passed": 12,
+  "failed": 1,
+  "total": 13
+}

@@ -595,8 +595,24 @@ export default function TraineeProfilePage() {
                   <div className="space-y-3">
                     <h3 className="text-sm font-semibold text-foreground border-b border-border/60 pb-1.5">Family Details</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <MemoizedInfoRow label="Father's Name" value={form.fatherName || ""} icon={User} fieldKey="fatherName" isEditing={false} inputValue={form.fatherName || ""} onChange={noopChange} />
-                      <MemoizedInfoRow label="Mother's Maiden Name" value={form.motherMaidenName || ""} icon={User} fieldKey="motherMaidenName" isEditing={false} inputValue={form.motherMaidenName || ""} onChange={noopChange} />
+                      <MemoizedInfoRow 
+                      label="Father's Name" 
+                      value={form.fatherName || ""} 
+                      icon={User} 
+                      fieldKey="fatherName" 
+                      isEditing={true} 
+                      inputValue={profileDraft.fatherName || ""} 
+                      onChange={(val) => updateDraft({ fatherName: val })} 
+                    />
+                    <MemoizedInfoRow 
+                      label="Mother's Maiden Name" 
+                      value={form.motherMaidenName || ""} 
+                      icon={User} 
+                      fieldKey="motherMaidenName" 
+                      isEditing={true} 
+                      inputValue={profileDraft.motherMaidenName || ""} 
+                      onChange={(val) => updateDraft({ motherMaidenName: val })} 
+                    />
                     </div>
                   </div>
                 </motion.div>

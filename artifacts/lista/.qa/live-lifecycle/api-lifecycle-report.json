@@ -1,0 +1,51 @@
+{
+  "steps": [
+    {
+      "name": "Staff login",
+      "ok": true,
+      "message": ""
+    },
+    {
+      "name": "Find Cheryl enrollment",
+      "ok": true,
+      "message": "status=Confirmed id=11e0fe7f-7334-4306-aa39-489288cb5bb1"
+    },
+    {
+      "name": "PATCH → enrolled",
+      "ok": true,
+      "message": "HTTP 200"
+    },
+    {
+      "name": "PATCH → completed",
+      "ok": true,
+      "message": "HTTP 200"
+    },
+    {
+      "name": "PATCH tesda-nc-sent",
+      "ok": true,
+      "message": "HTTP 200"
+    },
+    {
+      "name": "Final status",
+      "ok": true,
+      "message": "status=Completed tesdaNc=true"
+    },
+    {
+      "name": "Trainee tracking",
+      "ok": false,
+      "message": ""
+    },
+    {
+      "name": "Trainee certificate",
+      "ok": false,
+      "message": ""
+    },
+    {
+      "name": "Second course apply available",
+      "ok": false,
+      "message": "0 buttons"
+    }
+  ],
+  "passed": 6,
+  "failed": 3
+}

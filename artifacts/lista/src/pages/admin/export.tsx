@@ -1,16 +1,15 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import {
-  Download, FileUp, FileText, Database, Users, Calendar,
-  Loader2, FileSpreadsheet, Search, Eye, Filter,
+  Download, FileUp, FileText, Calendar,
+  Loader2, Search, Eye, Filter,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import PrimaryButton from "@/components/primary-button";
 import AvatarInitials from "@/components/avatar-initials";
@@ -19,7 +18,6 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription
 } from "@/components/ui/dialog";
 import { useCourseBatches, useCourses, useEnrollments } from "@/hooks/use-lista-data";
-import { exportTraineesToExcel } from "@/lib/export-utils";
 import AdminTesdaPdfExportPortal from "@/components/admin-tesda-pdf-export-portal";
 import type { Enrollment } from "@/lib/institutional-data";
 import { format } from "date-fns";
@@ -42,7 +40,6 @@ export default function AdminExportPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [batchFilter, setBatchFilter] = useState("all");
   const [exportingId, setExportingId] = useState<string | null>(null);
-  const [batchLoading, setBatchLoading] = useState<string | null>(null);
   const [previewEnrollment, setPreviewEnrollment] = useState<Enrollment | null>(null);
   const [pdfExportEnrollment, setPdfExportEnrollment] = useState<Enrollment | null>(null);
 
@@ -80,18 +77,6 @@ export default function AdminExportPage() {
     }
   };
 
-  const doBatch = async (fn: () => Promise<void>, label: string) => {
-    setBatchLoading(label);
-    try {
-      await fn();
-      toast({ title: "Batch Export Complete", description: `${label} downloaded.` });
-    } catch {
-      toast({ title: "Export Failed", description: "Could not generate batch file.", variant: "destructive" });
-    } finally {
-      setBatchLoading(null);
-    }
-  };
-
   return (
     <motion.div
       className="space-y-6"
@@ -108,27 +93,14 @@ export default function AdminExportPage() {
           <div className="relative z-10 max-w-2xl">
             <h1 className="text-3xl font-bold tracking-tight">Admission Records Center</h1>
             <p className="text-primary-foreground/80 mt-2">
-              Download official TESDA application forms as PDF for printing, and Excel sheets for batch processing in
-              the Batch Excel tab.
+              Download official TESDA application forms as PDF. Choose A4 or Long bond paper when printing from the
+              browser preview.
             </p>
           </div>
         </div>
       </motion.div>
 
-      <Tabs defaultValue="trainees">
-        <motion.div variants={itemVariants}>
-          <TabsList className="bg-muted/50">
-            <TabsTrigger value="trainees" className="gap-2">
-              <Users className="h-4 w-4" /> Trainees
-            </TabsTrigger>
-            <TabsTrigger value="batch" className="gap-2">
-              <Database className="h-4 w-4" /> Batch Excel
-            </TabsTrigger>
-          </TabsList>
-        </motion.div>
-
-        {/* ── Per-trainee application form (PDF) ── */}
-        <TabsContent value="trainees" className="space-y-4 mt-4">
+      <div className="space-y-4">
           <motion.div variants={itemVariants} className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -255,84 +227,7 @@ export default function AdminExportPage() {
               </Table>
             </Card>
           </motion.div>
-        </TabsContent>
-
-        {/* ── Batch Excel ── */}
-        <TabsContent value="batch" className="mt-4 space-y-3">
-          <p className="text-sm text-muted-foreground max-w-3xl rounded-lg border border-border bg-muted/40 px-4 py-3">
-            <strong className="font-semibold text-foreground">Batch / cohort tip:</strong> target roughly 25 trainees per class. Use the Trainees tab search and status filter, then run{" "}
-            <strong className="font-semibold text-foreground">Filtered / Custom Excel</strong> to pull one cohort’s application packet in one click.
-          </p>
-          <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* All trainees Excel */}
-            <Card className="border-card-border shadow-sm hover:border-emerald-300 transition-colors">
-              <CardHeader>
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center shrink-0">
-                    <FileSpreadsheet className="h-6 w-6 text-emerald-600" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-lg">All Trainees — Excel</CardTitle>
-                    <CardDescription className="mt-1">
-                      Export the complete list of all {enrollments.length} trainee(s) as a formatted Excel spreadsheet.
-                    </CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardFooter className="border-t border-card-border pt-4">
-                <Button
-                  className="w-full font-semibold bg-emerald-600 hover:bg-emerald-700 text-white"
-                  disabled={batchLoading === "excel"}
-                  onClick={() =>
-                    doBatch(() => exportTraineesToExcel(enrollments), "excel")
-                  }
-                >
-                  {batchLoading === "excel" ? (
-                    <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Generating…</>
-                  ) : (
-                    <><Download className="h-4 w-4 mr-2" /> Download Excel</>
-                  )}
-                </Button>
-              </CardFooter>
-            </Card>
-
-            {/* Filtered export */}
-            <Card className="border-card-border shadow-sm md:col-span-2 hover:border-primary/30 transition-colors">
-              <CardHeader>
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-primary/5 rounded-xl flex items-center justify-center shrink-0">
-                    <Filter className="h-6 w-6 text-primary" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-lg">Filtered / Custom Excel</CardTitle>
-                    <CardDescription className="mt-1">
-                      Use the search, status, and batch filter in the Trainees tab, then export only the matching records.
-                      Currently <strong>{filtered.length}</strong> record(s) match your current filter.
-                    </CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardFooter className="border-t border-card-border pt-4 gap-3">
-                <Button
-                  variant="outline"
-                  className="flex-1 font-semibold text-emerald-700 border-emerald-300 hover:bg-emerald-50"
-                  disabled={batchLoading === "filtered-xl"}
-                  onClick={() =>
-                    doBatch(() => exportTraineesToExcel(filtered, "LISTA_Filtered"), "filtered-xl")
-                  }
-                >
-                  {batchLoading === "filtered-xl" ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <FileSpreadsheet className="h-4 w-4 mr-2" />
-                  )}
-                  Download Batch Excel
-                </Button>
-              </CardFooter>
-            </Card>
-          </motion.div>
-        </TabsContent>
-      </Tabs>
+      </div>
 
       {/* Preview Dialog */}
       {previewEnrollment && (

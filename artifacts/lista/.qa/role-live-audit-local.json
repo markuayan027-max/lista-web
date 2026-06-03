@@ -1,0 +1,231 @@
+﻿{
+  "base": "http://localhost:5173",
+  "testedAt": "2026-05-27T09:50:37.405Z",
+  "roles": [
+    {
+      "role": "admin",
+      "email": "campionsamuelnapone.0000@gmail.com",
+      "login": {
+        "ok": true,
+        "finalPath": "/admin"
+      },
+      "routes": [
+        {
+          "route": "/admin",
+          "finalPath": "/admin",
+          "ok": false,
+          "onLogin": false,
+          "blank": true,
+          "sample": "",
+          "consoleErrors": []
+        },
+        {
+          "route": "/admin/enrollments",
+          "finalPath": "/admin/enrollments",
+          "ok": true,
+          "onLogin": false,
+          "blank": false,
+          "sample": "Enrollments C All Enrollments Review trainee submissions ΓÇö approve, reject, or print the official TESDA application form",
+          "consoleErrors": []
+        },
+        {
+          "route": "/admin/users",
+          "finalPath": "/admin/users",
+          "ok": false,
+          "onLogin": false,
+          "blank": true,
+          "sample": "",
+          "consoleErrors": []
+        },
+        {
+          "route": "/admin/announcements",
+          "finalPath": "/admin/announcements",
+          "ok": true,
+          "onLogin": false,
+          "blank": false,
+          "sample": "Announcements C Announcements Broadcast messages to the academy. New Announcement Title Target Author Date Actions Natio",
+          "consoleErrors": []
+        },
+        {
+          "route": "/admin/schedule",
+          "finalPath": "/admin/schedule",
+          "ok": true,
+          "onLogin": false,
+          "blank": false,
+          "sample": "Schedule C Master Schedule Manage classes and resource allocation. Week Month Course Periods New Session Create Batch Ac",
+          "consoleErrors": []
+        },
+        {
+          "route": "/admin/certificates",
+          "finalPath": "/admin/certificates",
+          "ok": true,
+          "onLogin": false,
+          "blank": false,
+          "sample": "Certificates C Certificates Issue and manage digital credentials. Issue New Certificate Generate a credential for course",
+          "consoleErrors": []
+        },
+        {
+          "route": "/admin/export",
+          "finalPath": "/admin/export",
+          "ok": true,
+          "onLogin": false,
+          "blank": false,
+          "sample": "Export C Admission Records Center Download trainee application forms (Word/PDF) for printing, and Excel sheets for batch",
+          "consoleErrors": []
+        },
+        {
+          "route": "/admin/settings",
+          "finalPath": "/admin/settings",
+          "ok": true,
+          "onLogin": false,
+          "blank": false,
+          "sample": "Settings C Settings Manage platform configuration and preferences. Academy Profile Branding Roles & Permissions Integrat",
+          "consoleErrors": []
+        }
+      ],
+      "rbac": {
+        "tried": "/trainee",
+        "finalPath": "/trainee",
+        "blocked": false
+      }
+    },
+    {
+      "role": "staff",
+      "email": "dracs008@gmail.com",
+      "login": {
+        "ok": true,
+        "finalPath": "/staff"
+      },
+      "routes": [
+        {
+          "route": "/staff",
+          "finalPath": "/staff",
+          "ok": true,
+          "onLogin": false,
+          "blank": false,
+          "sample": "D Staff Overview Here's what's happening across the academy today. Today's Sessions 0 Pending Enrollments 0 Active Train",
+          "consoleErrors": []
+        },
+        {
+          "route": "/staff/enrollments",
+          "finalPath": "/staff/enrollments",
+          "ok": true,
+          "onLogin": false,
+          "blank": false,
+          "sample": "D Manage Enrollments Review and process trainee applications. Staff do not submit TESDA forms on this page. Export CSV A",
+          "consoleErrors": []
+        },
+        {
+          "route": "/staff/search",
+          "finalPath": "/staff/search",
+          "ok": true,
+          "onLogin": false,
+          "blank": false,
+          "sample": "D Start typing to search across the entire academy.",
+          "consoleErrors": []
+        },
+        {
+          "route": "/staff/schedule",
+          "finalPath": "/staff/schedule",
+          "ok": true,
+          "onLogin": false,
+          "blank": false,
+          "sample": "D Master Schedule Manage all academy sessions and classes. May 25 - May 31 Course Periods New Session MON 25 TUE 26 WED ",
+          "consoleErrors": []
+        },
+        {
+          "route": "/staff/announcements",
+          "finalPath": "/staff/announcements",
+          "ok": true,
+          "onLogin": false,
+          "blank": false,
+          "sample": "D Announcements Broadcast messages to trainees and staff. New Post National Women's Celebration Month Capability Trainin",
+          "consoleErrors": []
+        }
+      ],
+      "rbac": {
+        "tried": "/admin",
+        "finalPath": "/staff",
+        "blocked": true
+      }
+    },
+    {
+      "role": "trainee",
+      "email": "campioncheryl498@gmail.com",
+      "login": {
+        "ok": true,
+        "finalPath": "/trainee"
+      },
+      "routes": [
+        {
+          "route": "/trainee",
+          "finalPath": "/trainee/register",
+          "ok": false,
+          "onLogin": false,
+          "blank": true,
+          "sample": "",
+          "consoleErrors": []
+        },
+        {
+          "route": "/trainee/application",
+          "finalPath": "/trainee/register",
+          "ok": true,
+          "onLogin": false,
+          "blank": false,
+          "sample": "LISTA OVERALL PROGRESS 25% Save & Exit STEP 01 REGISTRY FLOW Personal Identity details. Please provide accurate informat",
+          "consoleErrors": []
+        },
+        {
+          "route": "/trainee/tracking",
+          "finalPath": "/trainee/register",
+          "ok": true,
+          "onLogin": false,
+          "blank": false,
+          "sample": "Active Enrollment You already have an active application. Please complete or cancel it first. Notification Active Enroll",
+          "consoleErrors": []
+        },
+        {
+          "route": "/trainee/schedule",
+          "finalPath": "/trainee/schedule",
+          "ok": true,
+          "onLogin": false,
+          "blank": false,
+          "sample": "Trainee Portal C Class Schedule Your upcoming sessions and events ANIMAL PRODUCTION (POULTRY-CHICKEN) Week Month Today M",
+          "consoleErrors": []
+        },
+        {
+          "route": "/trainee/certificate",
+          "finalPath": "/trainee/certificate",
+          "ok": true,
+          "onLogin": false,
+          "blank": false,
+          "sample": "Trainee Portal C Completions & credentials A short history of programs you finished at LISTA. Official TESDA National Ce",
+          "consoleErrors": []
+        },
+        {
+          "route": "/trainee/profile",
+          "finalPath": "/trainee/profile",
+          "ok": true,
+          "onLogin": false,
+          "blank": false,
+          "sample": "Trainee Portal C HOME COURSES TRACK SCHEDULE CERTS",
+          "consoleErrors": []
+        },
+        {
+          "route": "/trainee/help",
+          "finalPath": "/trainee/help",
+          "ok": true,
+          "onLogin": false,
+          "blank": false,
+          "sample": "Trainee Portal C Help & FAQ Find answers or get in touch with our support team. Scholarship Who can apply for the TWSP s",
+          "consoleErrors": []
+        }
+      ],
+      "rbac": {
+        "tried": "/admin",
+        "finalPath": "/trainee",
+        "blocked": true
+      }
+    }
+  ]
+}

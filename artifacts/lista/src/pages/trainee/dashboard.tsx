@@ -13,7 +13,8 @@ import {
   User as UserIcon,
   HelpCircle,
   AlertCircle,
-  Download
+  Download,
+  X
 } from "lucide-react";
 import StatCard from "@/components/stat-card";
 import StatusBadge from "@/components/status-badge";
@@ -78,6 +79,15 @@ export default function TraineeDashboardPage() {
   const [printTarget, setPrintTarget] = useState<any>(null);
   const [isCancelling, setIsCancelling] = useState(false);
   const [quickApplyOpen, setQuickApplyOpen] = useState(false);
+  const [dismissedProfileAlert, setDismissedProfileAlert] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("dismissed_profile_alert") === "true";
+  });
+
+  const handleDismissAlert = () => {
+    setDismissedProfileAlert(true);
+    localStorage.setItem("dismissed_profile_alert", "true");
+  };
 
   const userEnrollment = (profileRow as Enrollment | null) ?? null;
 
@@ -129,7 +139,9 @@ export default function TraineeDashboardPage() {
   const myCourseTitle = myCourseSlug ? courseTitleBySlug(courses, myCourseSlug) : null;
   const mySchedules = myCourseSlug ? schedules.filter((s) => s.courseSlug === myCourseSlug).slice(0, 3) : [];
   const recentAnnouncements = announcements
-    .filter(a => a.targetRole === "all" || a.targetRole === "trainee");
+    .filter(a => a.targetRole === "all" || a.targetRole === "trainee")
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, 3);
 
 
   return (
@@ -164,6 +176,14 @@ export default function TraineeDashboardPage() {
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight break-words">Welcome back, {user?.name?.split(' ')[0]}</h1>
           <p className="text-muted-foreground mt-1">Here's what's happening with your learning journey.</p>
         </div>
+        
+        {/* Mobile Header Title (Only visible on small screens where sidebar is hidden) */}
+        <div className="md:hidden flex items-center gap-2 mb-2">
+          <div className="bg-primary/10 p-1.5 rounded-lg">
+            <BookOpen className="h-5 w-5 text-primary" />
+          </div>
+          <span className="font-bold text-lg tracking-tight">Trainee Portal</span>
+        </div>
       </motion.div>
 
       {!activeApplication && (
@@ -191,12 +211,19 @@ export default function TraineeDashboardPage() {
         </motion.div>
       )}
 
-      {profileIncomplete && (
+      {profileIncomplete && !dismissedProfileAlert && (
         <motion.div 
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-card border-l-4 border-l-amber-500 border-y border-r border-border p-5 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm group"
+          className="bg-card border-l-4 border-l-amber-500 border-y border-r border-border p-5 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm group relative"
         >
+          <button 
+            onClick={handleDismissAlert}
+            className="absolute top-2 right-2 p-1 text-muted-foreground hover:text-foreground rounded-full hover:bg-muted transition-colors"
+            aria-label="Dismiss alert"
+          >
+            <X className="h-4 w-4" />
+          </button>
           <div className="flex items-center gap-5 text-center md:text-left">
             <div className="relative shrink-0">
               <div className="w-12 h-12 bg-amber-50 rounded-full flex items-center justify-center text-amber-600">
@@ -213,7 +240,7 @@ export default function TraineeDashboardPage() {
               </p>
             </div>
           </div>
-          <Link href="/trainee/profile" className="w-full md:w-auto bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-2.5 rounded-lg text-[11px] font-black uppercase tracking-widest transition-all shadow-md active:scale-[0.98]">
+          <Link href="/trainee/profile" className="w-full md:w-auto bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-2.5 rounded-lg text-[11px] font-black uppercase tracking-widest transition-all shadow-md active:scale-[0.98] text-center">
             Complete Profile
           </Link>
         </motion.div>
@@ -477,19 +504,21 @@ export default function TraineeDashboardPage() {
           </motion.div>
 
           {/* Recent Announcements */}
-          <motion.div variants={item}>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold tracking-tight">Recent Announcements</h3>
-              <Button variant="ghost" size="sm" asChild className="h-8">
-                <Link href="/trainee/announcements">View All</Link>
-              </Button>
-            </div>
-            <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 no-scrollbar">
-              {recentAnnouncements.map(announcement => (
-                <AnnouncementCard key={announcement.id} announcement={announcement} />
-              ))}
-            </div>
-          </motion.div>
+          {recentAnnouncements.length > 0 && (
+            <motion.div variants={item}>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold tracking-tight">Recent Announcements</h3>
+                <Button variant="ghost" size="sm" asChild className="h-8">
+                  <Link href="/trainee/announcements">View All</Link>
+                </Button>
+              </div>
+              <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 no-scrollbar">
+                {recentAnnouncements.map(announcement => (
+                  <AnnouncementCard key={announcement.id} announcement={announcement} />
+                ))}
+              </div>
+            </motion.div>
+          )}
         </motion.div>
       </div>
     </div>

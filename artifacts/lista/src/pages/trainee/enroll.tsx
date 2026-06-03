@@ -9,9 +9,8 @@ import {
   CheckCircle2, 
   ArrowRight, 
   ArrowLeft,
-  FileSpreadsheet,
-  Printer,
   FileText,
+  Printer,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
@@ -26,7 +25,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useCourses, useTraineeProfile } from "@/hooks/use-lista-data";
 import { courseTitleBySlug } from "@/lib/lista-insforge-data";
 import type { Enrollment } from "@/lib/institutional-data";
-import { exportSingleTraineeToExcel, exportSingleTraineeToWord } from "@/lib/export-utils";
 import { registerTraineeFromForm } from "@/lib/trainee-enrollment-insforge";
 import {
   saveLocalProfile,
@@ -259,9 +257,6 @@ export default function TraineeEnrollPage() {
     }
   };
 
-  const handleDownloadExcel = () => formData && void exportSingleTraineeToExcel(formData as any);
-  const handleDownloadWord = () => formData && void exportSingleTraineeToWord(formData as any);
-
   const stepVariants = {
     hidden: { opacity: 0, x: 4 },
     visible: { opacity: 1, x: 0 },
@@ -316,22 +311,13 @@ export default function TraineeEnrollPage() {
               </div>
             </div>
 
-            <div className="space-y-3 mb-10">
-              <Button 
-                variant="outline" 
-                className="w-full h-12 gap-3 border-border text-muted-foreground hover:text-foreground hover:bg-muted rounded-xl transition-all font-bold text-[11px] uppercase tracking-widest"
-                onClick={handleDownloadExcel}
-              >
-                <FileSpreadsheet className="h-4 w-4" /> Export Admission Slip (.xlsx)
-              </Button>
-              <Button 
-                variant="outline" 
-                className="w-full h-12 gap-3 border-border text-muted-foreground hover:text-foreground hover:bg-muted rounded-xl transition-all font-bold text-[11px] uppercase tracking-widest"
-                onClick={handleDownloadWord}
-              >
-                <Printer className="h-4 w-4" /> Export Form 1 (.docx)
-              </Button>
-            </div>
+            <Button
+              variant="outline"
+              className="w-full h-12 gap-3 border-primary/30 text-primary hover:bg-primary/5 rounded-xl transition-all font-bold text-[11px] uppercase tracking-widest mb-10"
+              onClick={() => setLocation("/trainee/tracking")}
+            >
+              <Printer className="h-4 w-4" /> Print or download official TESDA form (PDF)
+            </Button>
 
             <Button 
               className="w-full h-14 bg-primary text-primary-foreground hover:bg-primary/90 rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-xl shadow-primary/10 transition-all active:scale-[0.98]" 

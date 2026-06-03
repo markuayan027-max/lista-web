@@ -1,0 +1,11 @@
+﻿{
+  "ok": true,
+  "base": "http://localhost:5173",
+  "filePath": "C:\\Users\\PC\\Documents\\LISTA\\artifacts\\lista\\.qa\\trainee-application-form.pdf",
+  "fileSizeBytes": 795724,
+  "screenshots": [
+    "C:\\Users\\PC\\Documents\\LISTA\\artifacts\\lista\\.qa\\trainee-tracking-before-pdf.png",
+    "C:\\Users\\PC\\Documents\\LISTA\\artifacts\\lista\\.qa\\trainee-print-modal-before-download.png"
+  ],
+  "suggestedFilename": "LISTA-2026-76327.pdf"
+}

@@ -1,0 +1,277 @@
+{
+  "url": "https://lista.dpdns.org",
+  "testedAt": "2026-05-27T23:57:15.992Z",
+  "roles": [
+    {
+      "role": "admin",
+      "login": {
+        "ok": true,
+        "url": "https://lista.dpdns.org/admin"
+      },
+      "routes": [
+        {
+          "route": "/admin",
+          "finalPath": "/admin",
+          "ok": true,
+          "onLogin": false,
+          "hijackedByRegister": false,
+          "sample": "LISTA Notifications 6 Analytics Enrollments Users Announcements Schedule Certificates Export Settings c campionsamuelnapone.0000 ADMINISTRAT",
+          "consoleErrors": [],
+          "screenshot": "C:\\Users\\PC\\Documents\\LISTA\\artifacts\\lista\\.qa\\live-tri-role\\admin-_admin.png"
+        },
+        {
+          "route": "/admin/enrollments",
+          "finalPath": "/admin/enrollments",
+          "ok": true,
+          "onLogin": false,
+          "hijackedByRegister": false,
+          "sample": "LISTA Notifications 6 Analytics Enrollments Users Announcements Schedule Certificates Export Settings c campionsamuelnapone.0000 ADMINISTRAT",
+          "consoleErrors": [],
+          "screenshot": "C:\\Users\\PC\\Documents\\LISTA\\artifacts\\lista\\.qa\\live-tri-role\\admin-_admin_enrollments.png"
+        },
+        {
+          "route": "/admin/users",
+          "finalPath": "/admin/users",
+          "ok": true,
+          "onLogin": false,
+          "hijackedByRegister": false,
+          "sample": "LISTA Notifications 6 Analytics Enrollments Users Announcements Schedule Certificates Export Settings c campionsamuelnapone.0000 ADMINISTRAT",
+          "consoleErrors": [],
+          "screenshot": "C:\\Users\\PC\\Documents\\LISTA\\artifacts\\lista\\.qa\\live-tri-role\\admin-_admin_users.png"
+        },
+        {
+          "route": "/admin/settings",
+          "finalPath": "/admin/settings",
+          "ok": true,
+          "onLogin": false,
+          "hijackedByRegister": false,
+          "sample": "LISTA Notifications 6 Analytics Enrollments Users Announcements Schedule Certificates Export Settings c campionsamuelnapone.0000 ADMINISTRAT",
+          "consoleErrors": [],
+          "screenshot": "C:\\Users\\PC\\Documents\\LISTA\\artifacts\\lista\\.qa\\live-tri-role\\admin-_admin_settings.png"
+        }
+      ],
+      "rbac": {
+        "tried": "/trainee",
+        "finalPath": "/trainee",
+        "blocked": false
+      },
+      "traineeChecks": null
+    },
+    {
+      "role": "staff",
+      "login": {
+        "ok": true,
+        "url": "https://lista.dpdns.org/staff"
+      },
+      "routes": [
+        {
+          "route": "/staff",
+          "finalPath": "/staff",
+          "ok": true,
+          "onLogin": false,
+          "hijackedByRegister": false,
+          "sample": "LISTA Overview Enrollments Search Schedule Announcements D dracs008 STAFF MEMBER Staff Overview Here's what's happening across the academy t",
+          "consoleErrors": [],
+          "screenshot": "C:\\Users\\PC\\Documents\\LISTA\\artifacts\\lista\\.qa\\live-tri-role\\staff-_staff.png"
+        },
+        {
+          "route": "/staff/enrollments",
+          "finalPath": "/staff/enrollments",
+          "ok": true,
+          "onLogin": false,
+          "hijackedByRegister": false,
+          "sample": "LISTA Overview Enrollments Search Schedule Announcements D dracs008 STAFF MEMBER Manage Enrollments Review and process trainee applications.",
+          "consoleErrors": [],
+          "screenshot": "C:\\Users\\PC\\Documents\\LISTA\\artifacts\\lista\\.qa\\live-tri-role\\staff-_staff_enrollments.png"
+        },
+        {
+          "route": "/staff/search",
+          "finalPath": "/staff/search",
+          "ok": false,
+          "onLogin": false,
+          "hijackedByRegister": false,
+          "sample": "",
+          "consoleErrors": [],
+          "screenshot": "C:\\Users\\PC\\Documents\\LISTA\\artifacts\\lista\\.qa\\live-tri-role\\staff-_staff_search.png"
+        }
+      ],
+      "rbac": {
+        "tried": "/admin",
+        "finalPath": "/admin",
+        "blocked": false
+      },
+      "traineeChecks": null
+    },
+    {
+      "role": "trainee",
+      "login": {
+        "ok": true,
+        "url": "https://lista.dpdns.org/trainee/register"
+      },
+      "routes": [
+        {
+          "route": "/trainee",
+          "finalPath": "/trainee/register",
+          "ok": true,
+          "onLogin": false,
+          "hijackedByRegister": false,
+          "sample": "LISTA OVERALL PROGRESS 100% Personal Identity details Contact Reach details Profile Education & Work 4 Review Confirmation Save & Exit STEP ",
+          "consoleErrors": [],
+          "screenshot": "C:\\Users\\PC\\Documents\\LISTA\\artifacts\\lista\\.qa\\live-tri-role\\trainee-_trainee.png"
+        },
+        {
+          "route": "/trainee/tracking",
+          "finalPath": "/trainee/tracking",
+          "ok": true,
+          "onLogin": false,
+          "hijackedByRegister": false,
+          "sample": "LISTA Notifications 6 Dashboard Courses My Applications Schedule Certificates Preferences Help c campioncheryl498 TRAINEE Trainee Portal C c",
+          "consoleErrors": [],
+          "screenshot": "C:\\Users\\PC\\Documents\\LISTA\\artifacts\\lista\\.qa\\live-tri-role\\trainee-_trainee_tracking.png"
+        },
+        {
+          "route": "/trainee/certificate",
+          "finalPath": "/trainee/certificate",
+          "ok": true,
+          "onLogin": false,
+          "hijackedByRegister": false,
+          "sample": "LISTA Notifications 6 Dashboard Courses My Applications Schedule Certificates Preferences Help c campioncheryl498 TRAINEE Trainee Portal C c",
+          "consoleErrors": [],
+          "screenshot": "C:\\Users\\PC\\Documents\\LISTA\\artifacts\\lista\\.qa\\live-tri-role\\trainee-_trainee_certificate.png"
+        },
+        {
+          "route": "/trainee/application",
+          "finalPath": "/trainee/application",
+          "ok": true,
+          "onLogin": false,
+          "hijackedByRegister": false,
+          "sample": "LISTA Notifications 6 Dashboard Courses My Applications Schedule Certificates Preferences Help c campioncheryl498 TRAINEE Trainee Portal C c",
+          "consoleErrors": [],
+          "screenshot": "C:\\Users\\PC\\Documents\\LISTA\\artifacts\\lista\\.qa\\live-tri-role\\trainee-_trainee_application.png"
+        },
+        {
+          "route": "/trainee/profile",
+          "finalPath": "/trainee/profile",
+          "ok": true,
+          "onLogin": false,
+          "hijackedByRegister": false,
+          "sample": "LISTA Notifications 6 Dashboard Courses My Applications Schedule Certificates Preferences Help c campioncheryl498 TRAINEE Trainee Portal C c",
+          "consoleErrors": [],
+          "screenshot": "C:\\Users\\PC\\Documents\\LISTA\\artifacts\\lista\\.qa\\live-tri-role\\trainee-_trainee_profile.png"
+        }
+      ],
+      "rbac": {
+        "tried": "/admin",
+        "finalPath": "/admin",
+        "blocked": false
+      },
+      "traineeChecks": {
+        "applyButtons": 0,
+        "certMentionOnApp": true
+      }
+    }
+  ],
+  "interactions": [
+    {
+      "name": "admin login",
+      "ok": true,
+      "detail": "https://lista.dpdns.org/admin"
+    },
+    {
+      "name": "admin /admin",
+      "ok": true,
+      "detail": "/admin — LISTA Notifications 6 Analytics Enrollments Users Announcements Schedule Certificates Export Settings c campionsamuelnapone.0000 ADMINISTRAT"
+    },
+    {
+      "name": "admin /admin/enrollments",
+      "ok": true,
+      "detail": "/admin/enrollments — LISTA Notifications 6 Analytics Enrollments Users Announcements Schedule Certificates Export Settings c campionsamuelnapone.0000 ADMINISTRAT"
+    },
+    {
+      "name": "admin /admin/users",
+      "ok": true,
+      "detail": "/admin/users — LISTA Notifications 6 Analytics Enrollments Users Announcements Schedule Certificates Export Settings c campionsamuelnapone.0000 ADMINISTRAT"
+    },
+    {
+      "name": "admin /admin/settings",
+      "ok": true,
+      "detail": "/admin/settings — LISTA Notifications 6 Analytics Enrollments Users Announcements Schedule Certificates Export Settings c campionsamuelnapone.0000 ADMINISTRAT"
+    },
+    {
+      "name": "admin RBAC block /trainee",
+      "ok": false,
+      "detail": "/trainee"
+    },
+    {
+      "name": "staff login",
+      "ok": true,
+      "detail": "https://lista.dpdns.org/staff"
+    },
+    {
+      "name": "staff /staff",
+      "ok": true,
+      "detail": "/staff — LISTA Overview Enrollments Search Schedule Announcements D dracs008 STAFF MEMBER Staff Overview Here's what's happening across the academy t"
+    },
+    {
+      "name": "staff /staff/enrollments",
+      "ok": true,
+      "detail": "/staff/enrollments — LISTA Overview Enrollments Search Schedule Announcements D dracs008 STAFF MEMBER Manage Enrollments Review and process trainee applications."
+    },
+    {
+      "name": "staff /staff/search",
+      "ok": false,
+      "detail": "/staff/search — "
+    },
+    {
+      "name": "staff RBAC block /admin",
+      "ok": false,
+      "detail": "/admin"
+    },
+    {
+      "name": "trainee login",
+      "ok": true,
+      "detail": "https://lista.dpdns.org/trainee/register"
+    },
+    {
+      "name": "trainee /trainee",
+      "ok": true,
+      "detail": "/trainee/register — LISTA OVERALL PROGRESS 100% Personal Identity details Contact Reach details Profile Education & Work 4 Review Confirmation Save & Exit STEP "
+    },
+    {
+      "name": "trainee /trainee/tracking",
+      "ok": true,
+      "detail": "/trainee/tracking — LISTA Notifications 6 Dashboard Courses My Applications Schedule Certificates Preferences Help c campioncheryl498 TRAINEE Trainee Portal C c"
+    },
+    {
+      "name": "trainee /trainee/certificate",
+      "ok": true,
+      "detail": "/trainee/certificate — LISTA Notifications 6 Dashboard Courses My Applications Schedule Certificates Preferences Help c campioncheryl498 TRAINEE Trainee Portal C c"
+    },
+    {
+      "name": "trainee /trainee/application",
+      "ok": true,
+      "detail": "/trainee/application — LISTA Notifications 6 Dashboard Courses My Applications Schedule Certificates Preferences Help c campioncheryl498 TRAINEE Trainee Portal C c"
+    },
+    {
+      "name": "trainee /trainee/profile",
+      "ok": true,
+      "detail": "/trainee/profile — LISTA Notifications 6 Dashboard Courses My Applications Schedule Certificates Preferences Help c campioncheryl498 TRAINEE Trainee Portal C c"
+    },
+    {
+      "name": "trainee RBAC block /admin",
+      "ok": false,
+      "detail": "/admin"
+    },
+    {
+      "name": "trainee Apply buttons",
+      "ok": false,
+      "detail": "0 control(s)"
+    },
+    {
+      "name": "trainee certificate completion",
+      "ok": true,
+      "detail": "LISTA Notifications 6 Dashboard Courses My Applications Schedule Certificates Preferences Help c ca"
+    }
+  ],
+  "verdict": "NO-SHIP"
+}

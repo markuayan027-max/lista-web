@@ -1,0 +1,25 @@
+{
+  "filled": true,
+  "route": "/trainee/tracking",
+  "form": {
+    "fillSpans": 252,
+    "digitCharCount": 34,
+    "sampleDigits": "2026956200000000000000000000000000",
+    "hasRef2026": true,
+    "hasListaRef": true
+  },
+  "pdf": {
+    "ok": true,
+    "bytes": 773228,
+    "path": "C:\\Users\\PC\\Documents\\LISTA\\artifacts\\lista\\.qa\\live-browser-tab\\trainee-application-live.pdf",
+    "error": null
+  },
+  "buttons": [
+    {
+      "route": "/trainee/tracking",
+      "labels": [
+        "Official form"
+      ]
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 import { format } from "date-fns";
-import { ExternalLink, FileText, Printer, FileSpreadsheet } from "lucide-react";
+import { ExternalLink, FileText, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -14,7 +14,6 @@ import { getEnrollmentStatusActions } from "@/lib/enrollment-staff-actions";
 import type { BatchPickerMode } from "@/components/batch-picker-dialog";
 import type { Course } from "@/lib/institutional-data";
 import type { Enrollment } from "@/lib/institutional-data";
-import { exportSingleTraineeToExcel, exportSingleTraineeToWord } from "@/lib/export-utils";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -132,33 +131,17 @@ export default function EnrollmentDetailSheet({
                 </div>
               )}
 
-              <div className="pt-2 flex flex-col gap-2 border-t border-card-border">
+              <div className="pt-2 border-t border-card-border">
                 <Button
-                  variant="outline"
-                  className="w-full gap-2 border-primary/30 text-primary hover:bg-primary/5"
+                  className="w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm"
                   onClick={() => onPrint(enrollment)}
                 >
                   <Printer className="h-4 w-4" aria-hidden />
-                  TESDA form (print / PDF preview)
+                  TESDA form — print or download PDF
                 </Button>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    className="flex-1 gap-2"
-                    onClick={() => void exportSingleTraineeToExcel(enrollment)}
-                  >
-                    <FileSpreadsheet className="h-4 w-4" aria-hidden />
-                    Excel
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="flex-1 gap-2"
-                    onClick={() => exportSingleTraineeToWord(enrollment)}
-                  >
-                    <FileText className="h-4 w-4" aria-hidden />
-                    Word
-                  </Button>
-                </div>
+                <p className="mt-2 text-xs text-muted-foreground text-center">
+                  Choose A4 or Long bond paper in the preview; adjust margins in your browser print dialog.
+                </p>
               </div>
 
               <div className="pt-4 border-t border-card-border flex flex-col gap-2">

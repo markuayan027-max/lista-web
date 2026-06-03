@@ -1,0 +1,760 @@
+{
+  "base": "https://lista.dpdns.org",
+  "testedAt": "2026-05-31T00:12:35.419Z",
+  "roles": [
+    {
+      "role": "admin",
+      "login": {
+        "ok": true,
+        "expectedHome": "/admin",
+        "finalPath": "/admin",
+        "url": "https://lista.dpdns.org/admin"
+      },
+      "logout": {
+        "ok": true,
+        "finalPath": "/login"
+      },
+      "routes": [
+        {
+          "route": "/admin",
+          "url": "https://lista.dpdns.org/admin",
+          "finalPath": "/admin",
+          "ok": true,
+          "onLogin": false,
+          "blank": false,
+          "hijackedByRegister": false,
+          "corsHint": false,
+          "sample": "LISTA Notifications 6 Analytics Enrollments Users Announcements Schedule Certificates Export Settings c campionsamuelnapone.0000 ADMINISTRAT",
+          "consoleErrors": [],
+          "networkIssues": [
+            {
+              "url": "https://lista.dpdns.org/api/users/me",
+              "status": "FAILED",
+              "error": "net::ERR_ABORTED"
+            }
+          ],
+          "screenshot": "C:\\Users\\PC\\Documents\\LISTA\\artifacts\\lista\\.qa\\live-full-e2e\\admin-_admin.png"
+        },
+        {
+          "route": "/admin/enrollments",
+          "url": "https://lista.dpdns.org/admin/enrollments",
+          "finalPath": "/admin/enrollments",
+          "ok": true,
+          "onLogin": false,
+          "blank": false,
+          "hijackedByRegister": false,
+          "corsHint": false,
+          "sample": "LISTA Notifications 6 Analytics Enrollments Users Announcements Schedule Certificates Export Settings c campionsamuelnapone.0000 ADMINISTRAT",
+          "consoleErrors": [],
+          "networkIssues": [],
+          "screenshot": "C:\\Users\\PC\\Documents\\LISTA\\artifacts\\lista\\.qa\\live-full-e2e\\admin-_admin_enrollments.png"
+        },
+        {
+          "route": "/admin/users",
+          "url": "https://lista.dpdns.org/admin/users",
+          "finalPath": "/admin/users",
+          "ok": true,
+          "onLogin": false,
+          "blank": false,
+          "hijackedByRegister": false,
+          "corsHint": false,
+          "sample": "LISTA Notifications 6 Analytics Enrollments Users Announcements Schedule Certificates Export Settings c campionsamuelnapone.0000 ADMINISTRAT",
+          "consoleErrors": [],
+          "networkIssues": [],
+          "screenshot": "C:\\Users\\PC\\Documents\\LISTA\\artifacts\\lista\\.qa\\live-full-e2e\\admin-_admin_users.png"
+        },
+        {
+          "route": "/admin/announcements",
+          "url": "https://lista.dpdns.org/admin/announcements",
+          "finalPath": "/admin/announcements",
+          "ok": true,
+          "onLogin": false,
+          "blank": false,
+          "hijackedByRegister": false,
+          "corsHint": false,
+          "sample": "LISTA Notifications 6 Analytics Enrollments Users Announcements Schedule Certificates Export Settings c campionsamuelnapone.0000 ADMINISTRAT",
+          "consoleErrors": [],
+          "networkIssues": [],
+          "screenshot": "C:\\Users\\PC\\Documents\\LISTA\\artifacts\\lista\\.qa\\live-full-e2e\\admin-_admin_announcements.png"
+        },
+        {
+          "route": "/admin/schedule",
+          "url": "https://lista.dpdns.org/admin/schedule",
+          "finalPath": "/admin/schedule",
+          "ok": true,
+          "onLogin": false,
+          "blank": false,
+          "hijackedByRegister": false,
+          "corsHint": false,
+          "sample": "LISTA Notifications 6 Analytics Enrollments Users Announcements Schedule Certificates Export Settings c campionsamuelnapone.0000 ADMINISTRAT",
+          "consoleErrors": [],
+          "networkIssues": [
+            {
+              "url": "https://2r6c3q25.ap-southeast.insforge.app/api/database/records/schedules?select=*&order=start_date.asc",
+              "status": 200
+            }
+          ],
+          "screenshot": "C:\\Users\\PC\\Documents\\LISTA\\artifacts\\lista\\.qa\\live-full-e2e\\admin-_admin_schedule.png"
+        },
+        {
+          "route": "/admin/certificates",
+          "url": "https://lista.dpdns.org/admin/certificates",
+          "finalPath": "/admin/certificates",
+          "ok": true,
+          "onLogin": false,
+          "blank": false,
+          "hijackedByRegister": false,
+          "corsHint": false,
+          "sample": "LISTA Notifications 6 Analytics Enrollments Users Announcements Schedule Certificates Export Settings c campionsamuelnapone.0000 ADMINISTRAT",
+          "consoleErrors": [],
+          "networkIssues": [],
+          "screenshot": "C:\\Users\\PC\\Documents\\LISTA\\artifacts\\lista\\.qa\\live-full-e2e\\admin-_admin_certificates.png"
+        },
+        {
+          "route": "/admin/export",
+          "url": "https://lista.dpdns.org/admin/export",
+          "finalPath": "/admin/export",
+          "ok": true,
+          "onLogin": false,
+          "blank": false,
+          "hijackedByRegister": false,
+          "corsHint": false,
+          "sample": "LISTA Notifications 6 Analytics Enrollments Users Announcements Schedule Certificates Export Settings c campionsamuelnapone.0000 ADMINISTRAT",
+          "consoleErrors": [],
+          "networkIssues": [],
+          "screenshot": "C:\\Users\\PC\\Documents\\LISTA\\artifacts\\lista\\.qa\\live-full-e2e\\admin-_admin_export.png"
+        },
+        {
+          "route": "/admin/settings",
+          "url": "https://lista.dpdns.org/admin/settings",
+          "finalPath": "/admin/settings",
+          "ok": true,
+          "onLogin": false,
+          "blank": false,
+          "hijackedByRegister": false,
+          "corsHint": false,
+          "sample": "LISTA Notifications 6 Analytics Enrollments Users Announcements Schedule Certificates Export Settings c campionsamuelnapone.0000 ADMINISTRAT",
+          "consoleErrors": [],
+          "networkIssues": [],
+          "screenshot": "C:\\Users\\PC\\Documents\\LISTA\\artifacts\\lista\\.qa\\live-full-e2e\\admin-_admin_settings.png"
+        }
+      ],
+      "rbac": [
+        {
+          "tried": "/trainee",
+          "finalPath": "/trainee",
+          "blocked": false
+        },
+        {
+          "tried": "/staff",
+          "finalPath": "/staff",
+          "blocked": false
+        }
+      ],
+      "session": {
+        "ok": true,
+        "pathAfterReload": "/admin"
+      }
+    },
+    {
+      "role": "staff",
+      "login": {
+        "ok": true,
+        "expectedHome": "/staff",
+        "finalPath": "/staff",
+        "url": "https://lista.dpdns.org/staff"
+      },
+      "logout": {
+        "ok": true,
+        "finalPath": "/login"
+      },
+      "routes": [
+        {
+          "route": "/staff",
+          "url": "https://lista.dpdns.org/staff",
+          "finalPath": "/staff",
+          "ok": true,
+          "onLogin": false,
+          "blank": false,
+          "hijackedByRegister": false,
+          "corsHint": false,
+          "sample": "LISTA Overview Enrollments Search Schedule Announcements D dracs008 STAFF MEMBER Staff Overview Here's what's happening across the academy t",
+          "consoleErrors": [],
+          "networkIssues": [
+            {
+              "url": "https://2r6c3q25.ap-southeast.insforge.app/api/auth/sessions/current",
+              "status": 200
+            },
+            {
+              "url": "https://lista.dpdns.org/api/users/me",
+              "status": "FAILED",
+              "error": "net::ERR_ABORTED"
+            },
+            {
+              "url": "https://2r6c3q25.ap-southeast.insforge.app/api/database/records/schedules?select=*&order=start_date.asc",
+              "status": 200
+            }
+          ],
+          "screenshot": "C:\\Users\\PC\\Documents\\LISTA\\artifacts\\lista\\.qa\\live-full-e2e\\staff-_staff.png"
+        },
+        {
+          "route": "/staff/enrollments",
+          "url": "https://lista.dpdns.org/staff/enrollments",
+          "finalPath": "/staff/enrollments",
+          "ok": true,
+          "onLogin": false,
+          "blank": false,
+          "hijackedByRegister": false,
+          "corsHint": false,
+          "sample": "LISTA Overview Enrollments Search Schedule Announcements D dracs008 STAFF MEMBER Manage Enrollments Review and process trainee applications.",
+          "consoleErrors": [],
+          "networkIssues": [],
+          "screenshot": "C:\\Users\\PC\\Documents\\LISTA\\artifacts\\lista\\.qa\\live-full-e2e\\staff-_staff_enrollments.png"
+        },
+        {
+          "route": "/staff/search",
+          "url": "https://lista.dpdns.org/staff/search",
+          "finalPath": "/staff/search",
+          "ok": true,
+          "onLogin": false,
+          "blank": false,
+          "hijackedByRegister": false,
+          "corsHint": false,
+          "sample": "LISTA Overview Enrollments Search Schedule Announcements D dracs008 STAFF MEMBER Start typing to search across the entire academy.",
+          "consoleErrors": [],
+          "networkIssues": [],
+          "screenshot": "C:\\Users\\PC\\Documents\\LISTA\\artifacts\\lista\\.qa\\live-full-e2e\\staff-_staff_search.png"
+        },
+        {
+          "route": "/staff/schedule",
+          "url": "https://lista.dpdns.org/staff/schedule",
+          "finalPath": "/staff/schedule",
+          "ok": true,
+          "onLogin": false,
+          "blank": false,
+          "hijackedByRegister": false,
+          "corsHint": false,
+          "sample": "LISTA Overview Enrollments Search Schedule Announcements D dracs008 STAFF MEMBER Master Schedule Manage all academy sessions and classes. Ma",
+          "consoleErrors": [],
+          "networkIssues": [
+            {
+              "url": "https://2r6c3q25.ap-southeast.insforge.app/api/database/records/schedules?select=*&order=start_date.asc",
+              "status": 200
+            }
+          ],
+          "screenshot": "C:\\Users\\PC\\Documents\\LISTA\\artifacts\\lista\\.qa\\live-full-e2e\\staff-_staff_schedule.png"
+        },
+        {
+          "route": "/staff/announcements",
+          "url": "https://lista.dpdns.org/staff/announcements",
+          "finalPath": "/staff/announcements",
+          "ok": true,
+          "onLogin": false,
+          "blank": false,
+          "hijackedByRegister": false,
+          "corsHint": false,
+          "sample": "LISTA Overview Enrollments Search Schedule Announcements D dracs008 STAFF MEMBER Announcements Broadcast messages to trainees and staff. Nat",
+          "consoleErrors": [],
+          "networkIssues": [],
+          "screenshot": "C:\\Users\\PC\\Documents\\LISTA\\artifacts\\lista\\.qa\\live-full-e2e\\staff-_staff_announcements.png"
+        }
+      ],
+      "rbac": [
+        {
+          "tried": "/admin",
+          "finalPath": "/admin",
+          "blocked": false
+        }
+      ],
+      "session": {
+        "ok": true,
+        "pathAfterReload": "/staff"
+      }
+    },
+    {
+      "role": "trainee",
+      "login": {
+        "ok": true,
+        "expectedHome": "/trainee",
+        "finalPath": "/trainee/register",
+        "url": "https://lista.dpdns.org/trainee/register"
+      },
+      "logout": {
+        "ok": false,
+        "finalPath": "/trainee"
+      },
+      "routes": [
+        {
+          "route": "/trainee",
+          "url": "https://lista.dpdns.org/trainee",
+          "finalPath": "/trainee/register",
+          "ok": false,
+          "onLogin": false,
+          "blank": false,
+          "hijackedByRegister": true,
+          "corsHint": false,
+          "sample": "LISTA OVERALL PROGRESS 100% Personal Identity details Contact Reach details Profile Education & Work 4 Review Confirmation Save & Exit STEP ",
+          "consoleErrors": [],
+          "networkIssues": [
+            {
+              "url": "https://lista.dpdns.org/api/users/me",
+              "status": "FAILED",
+              "error": "net::ERR_ABORTED"
+            }
+          ],
+          "screenshot": "C:\\Users\\PC\\Documents\\LISTA\\artifacts\\lista\\.qa\\live-full-e2e\\trainee-_trainee.png"
+        },
+        {
+          "route": "/trainee/application",
+          "url": "https://lista.dpdns.org/trainee/application",
+          "finalPath": "/trainee/application",
+          "ok": true,
+          "onLogin": false,
+          "blank": false,
+          "hijackedByRegister": false,
+          "corsHint": false,
+          "sample": "LISTA Notifications 6 Dashboard Courses My Applications Schedule Certificates Preferences Help c campioncheryl498 TRAINEE Trainee Portal C c",
+          "consoleErrors": [],
+          "networkIssues": [],
+          "screenshot": "C:\\Users\\PC\\Documents\\LISTA\\artifacts\\lista\\.qa\\live-full-e2e\\trainee-_trainee_application.png"
+        },
+        {
+          "route": "/trainee/tracking",
+          "url": "https://lista.dpdns.org/trainee/tracking",
+          "finalPath": "/trainee/tracking",
+          "ok": true,
+          "onLogin": false,
+          "blank": false,
+          "hijackedByRegister": false,
+          "corsHint": false,
+          "sample": "LISTA Notifications 6 Dashboard Courses My Applications Schedule Certificates Preferences Help c campioncheryl498 TRAINEE Trainee Portal C c",
+          "consoleErrors": [],
+          "networkIssues": [],
+          "screenshot": "C:\\Users\\PC\\Documents\\LISTA\\artifacts\\lista\\.qa\\live-full-e2e\\trainee-_trainee_tracking.png"
+        },
+        {
+          "route": "/trainee/schedule",
+          "url": "https://lista.dpdns.org/trainee/schedule",
+          "finalPath": "/trainee/schedule",
+          "ok": true,
+          "onLogin": false,
+          "blank": false,
+          "hijackedByRegister": false,
+          "corsHint": false,
+          "sample": "LISTA Notifications 6 Dashboard Courses My Applications Schedule Certificates Preferences Help c campioncheryl498 TRAINEE Trainee Portal C c",
+          "consoleErrors": [],
+          "networkIssues": [
+            {
+              "url": "https://2r6c3q25.ap-southeast.insforge.app/api/database/records/schedules?select=*&order=start_date.asc",
+              "status": 200
+            }
+          ],
+          "screenshot": "C:\\Users\\PC\\Documents\\LISTA\\artifacts\\lista\\.qa\\live-full-e2e\\trainee-_trainee_schedule.png"
+        },
+        {
+          "route": "/trainee/certificate",
+          "url": "https://lista.dpdns.org/trainee/certificate",
+          "finalPath": "/trainee/certificate",
+          "ok": true,
+          "onLogin": false,
+          "blank": false,
+          "hijackedByRegister": false,
+          "corsHint": false,
+          "sample": "LISTA Notifications 6 Dashboard Courses My Applications Schedule Certificates Preferences Help c campioncheryl498 TRAINEE Trainee Portal C c",
+          "consoleErrors": [],
+          "networkIssues": [],
+          "screenshot": "C:\\Users\\PC\\Documents\\LISTA\\artifacts\\lista\\.qa\\live-full-e2e\\trainee-_trainee_certificate.png"
+        },
+        {
+          "route": "/trainee/profile",
+          "url": "https://lista.dpdns.org/trainee/profile",
+          "finalPath": "/trainee/profile",
+          "ok": true,
+          "onLogin": false,
+          "blank": false,
+          "hijackedByRegister": false,
+          "corsHint": false,
+          "sample": "LISTA Notifications 6 Dashboard Courses My Applications Schedule Certificates Preferences Help c campioncheryl498 TRAINEE Trainee Portal C c",
+          "consoleErrors": [],
+          "networkIssues": [],
+          "screenshot": "C:\\Users\\PC\\Documents\\LISTA\\artifacts\\lista\\.qa\\live-full-e2e\\trainee-_trainee_profile.png"
+        },
+        {
+          "route": "/trainee/help",
+          "url": "https://lista.dpdns.org/trainee/help",
+          "finalPath": "/trainee/help",
+          "ok": true,
+          "onLogin": false,
+          "blank": false,
+          "hijackedByRegister": false,
+          "corsHint": false,
+          "sample": "LISTA Notifications 6 Dashboard Courses My Applications Schedule Certificates Preferences Help c campioncheryl498 TRAINEE Trainee Portal C c",
+          "consoleErrors": [],
+          "networkIssues": [
+            {
+              "url": "https://2r6c3q25.ap-southeast.insforge.app/api/database/records/faqs?select=*&order=order.asc",
+              "status": 200
+            }
+          ],
+          "screenshot": "C:\\Users\\PC\\Documents\\LISTA\\artifacts\\lista\\.qa\\live-full-e2e\\trainee-_trainee_help.png"
+        },
+        {
+          "route": "/trainee/announcements",
+          "url": "https://lista.dpdns.org/trainee/announcements",
+          "finalPath": "/trainee/announcements",
+          "ok": true,
+          "onLogin": false,
+          "blank": false,
+          "hijackedByRegister": false,
+          "corsHint": false,
+          "sample": "LISTA Notifications 6 Dashboard Courses My Applications Schedule Certificates Preferences Help c campioncheryl498 TRAINEE Trainee Portal C c",
+          "consoleErrors": [],
+          "networkIssues": [],
+          "screenshot": "C:\\Users\\PC\\Documents\\LISTA\\artifacts\\lista\\.qa\\live-full-e2e\\trainee-_trainee_announcements.png"
+        }
+      ],
+      "rbac": [
+        {
+          "tried": "/admin",
+          "finalPath": "/admin",
+          "blocked": false
+        },
+        {
+          "tried": "/staff",
+          "finalPath": "/staff",
+          "blocked": false
+        }
+      ],
+      "session": {
+        "ok": true,
+        "pathAfterReload": "/trainee/register"
+      }
+    }
+  ],
+  "networkLog": [
+    {
+      "role": "admin",
+      "route": "/admin",
+      "url": "https://lista.dpdns.org/api/users/me",
+      "status": "FAILED",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "admin",
+      "route": "/admin/schedule",
+      "url": "https://2r6c3q25.ap-southeast.insforge.app/api/database/records/schedules?select=*&order=start_date.asc",
+      "status": 200
+    },
+    {
+      "role": "staff",
+      "route": "/staff",
+      "url": "https://2r6c3q25.ap-southeast.insforge.app/api/auth/sessions/current",
+      "status": 200
+    },
+    {
+      "role": "staff",
+      "route": "/staff",
+      "url": "https://lista.dpdns.org/api/users/me",
+      "status": "FAILED",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "staff",
+      "route": "/staff",
+      "url": "https://2r6c3q25.ap-southeast.insforge.app/api/database/records/schedules?select=*&order=start_date.asc",
+      "status": 200
+    },
+    {
+      "role": "staff",
+      "route": "/staff/schedule",
+      "url": "https://2r6c3q25.ap-southeast.insforge.app/api/database/records/schedules?select=*&order=start_date.asc",
+      "status": 200
+    },
+    {
+      "role": "trainee",
+      "route": "/trainee",
+      "url": "https://lista.dpdns.org/api/users/me",
+      "status": "FAILED",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "role": "trainee",
+      "route": "/trainee/schedule",
+      "url": "https://2r6c3q25.ap-southeast.insforge.app/api/database/records/schedules?select=*&order=start_date.asc",
+      "status": 200
+    },
+    {
+      "role": "trainee",
+      "route": "/trainee/help",
+      "url": "https://2r6c3q25.ap-southeast.insforge.app/api/database/records/faqs?select=*&order=order.asc",
+      "status": 200
+    }
+  ],
+  "auth": [
+    {
+      "test": "admin login",
+      "ok": true,
+      "expected": "/admin",
+      "actual": "/admin"
+    },
+    {
+      "test": "admin session after reload",
+      "ok": true,
+      "actual": "/admin"
+    },
+    {
+      "test": "admin RBAC block /trainee",
+      "ok": false,
+      "actual": "/trainee"
+    },
+    {
+      "test": "admin RBAC block /staff",
+      "ok": false,
+      "actual": "/staff"
+    },
+    {
+      "test": "admin logout blocks /admin",
+      "ok": true,
+      "actual": "/login"
+    },
+    {
+      "test": "staff login",
+      "ok": true,
+      "expected": "/staff",
+      "actual": "/staff"
+    },
+    {
+      "test": "staff session after reload",
+      "ok": true,
+      "actual": "/staff"
+    },
+    {
+      "test": "staff RBAC block /admin",
+      "ok": false,
+      "actual": "/admin"
+    },
+    {
+      "test": "staff logout blocks /staff",
+      "ok": true,
+      "actual": "/login"
+    },
+    {
+      "test": "trainee login",
+      "ok": true,
+      "expected": "/trainee",
+      "actual": "/trainee/register"
+    },
+    {
+      "test": "trainee session after reload",
+      "ok": true,
+      "actual": "/trainee/register"
+    },
+    {
+      "test": "trainee RBAC block /admin",
+      "ok": false,
+      "actual": "/admin"
+    },
+    {
+      "test": "trainee RBAC block /staff",
+      "ok": false,
+      "actual": "/staff"
+    },
+    {
+      "test": "trainee logout blocks /trainee",
+      "ok": false,
+      "actual": "/trainee"
+    },
+    {
+      "test": "anonymous block /admin",
+      "ok": false,
+      "actual": "/admin"
+    },
+    {
+      "test": "anonymous block /staff",
+      "ok": true,
+      "actual": "/login"
+    },
+    {
+      "test": "anonymous block /trainee/profile",
+      "ok": true,
+      "actual": "/login"
+    }
+  ],
+  "pdf": {
+    "ok": false,
+    "filePath": null,
+    "bytes": 0,
+    "error": "No TESDA Form (PDF) or Official Form button"
+  },
+  "moduleMatrix": [
+    {
+      "module": "/admin",
+      "role": "admin",
+      "status": "PASS",
+      "finalPath": "/admin",
+      "issues": [
+        "FAILED https://lista.dpdns.org/api/users/me"
+      ]
+    },
+    {
+      "module": "/admin/enrollments",
+      "role": "admin",
+      "status": "PASS",
+      "finalPath": "/admin/enrollments",
+      "issues": []
+    },
+    {
+      "module": "/admin/users",
+      "role": "admin",
+      "status": "PASS",
+      "finalPath": "/admin/users",
+      "issues": []
+    },
+    {
+      "module": "/admin/announcements",
+      "role": "admin",
+      "status": "PASS",
+      "finalPath": "/admin/announcements",
+      "issues": []
+    },
+    {
+      "module": "/admin/schedule",
+      "role": "admin",
+      "status": "PASS",
+      "finalPath": "/admin/schedule",
+      "issues": [
+        "200 https://2r6c3q25.ap-southeast.insforge.app/api/database/records/schedules?select=*&order=start_date.asc"
+      ]
+    },
+    {
+      "module": "/admin/certificates",
+      "role": "admin",
+      "status": "PASS",
+      "finalPath": "/admin/certificates",
+      "issues": []
+    },
+    {
+      "module": "/admin/export",
+      "role": "admin",
+      "status": "PASS",
+      "finalPath": "/admin/export",
+      "issues": []
+    },
+    {
+      "module": "/admin/settings",
+      "role": "admin",
+      "status": "PASS",
+      "finalPath": "/admin/settings",
+      "issues": []
+    },
+    {
+      "module": "/staff",
+      "role": "staff",
+      "status": "PASS",
+      "finalPath": "/staff",
+      "issues": [
+        "200 https://2r6c3q25.ap-southeast.insforge.app/api/auth/sessions/current",
+        "FAILED https://lista.dpdns.org/api/users/me",
+        "200 https://2r6c3q25.ap-southeast.insforge.app/api/database/records/schedules?select=*&order=start_date.asc"
+      ]
+    },
+    {
+      "module": "/staff/enrollments",
+      "role": "staff",
+      "status": "PASS",
+      "finalPath": "/staff/enrollments",
+      "issues": []
+    },
+    {
+      "module": "/staff/search",
+      "role": "staff",
+      "status": "PASS",
+      "finalPath": "/staff/search",
+      "issues": []
+    },
+    {
+      "module": "/staff/schedule",
+      "role": "staff",
+      "status": "PASS",
+      "finalPath": "/staff/schedule",
+      "issues": [
+        "200 https://2r6c3q25.ap-southeast.insforge.app/api/database/records/schedules?select=*&order=start_date.asc"
+      ]
+    },
+    {
+      "module": "/staff/announcements",
+      "role": "staff",
+      "status": "PASS",
+      "finalPath": "/staff/announcements",
+      "issues": []
+    },
+    {
+      "module": "/trainee",
+      "role": "trainee",
+      "status": "FAIL",
+      "finalPath": "/trainee/register",
+      "issues": [
+        "FAILED https://lista.dpdns.org/api/users/me"
+      ]
+    },
+    {
+      "module": "/trainee/application",
+      "role": "trainee",
+      "status": "PASS",
+      "finalPath": "/trainee/application",
+      "issues": []
+    },
+    {
+      "module": "/trainee/tracking",
+      "role": "trainee",
+      "status": "PASS",
+      "finalPath": "/trainee/tracking",
+      "issues": []
+    },
+    {
+      "module": "/trainee/schedule",
+      "role": "trainee",
+      "status": "PASS",
+      "finalPath": "/trainee/schedule",
+      "issues": [
+        "200 https://2r6c3q25.ap-southeast.insforge.app/api/database/records/schedules?select=*&order=start_date.asc"
+      ]
+    },
+    {
+      "module": "/trainee/certificate",
+      "role": "trainee",
+      "status": "PASS",
+      "finalPath": "/trainee/certificate",
+      "issues": []
+    },
+    {
+      "module": "/trainee/profile",
+      "role": "trainee",
+      "status": "PASS",
+      "finalPath": "/trainee/profile",
+      "issues": []
+    },
+    {
+      "module": "/trainee/help",
+      "role": "trainee",
+      "status": "PASS",
+      "finalPath": "/trainee/help",
+      "issues": [
+        "200 https://2r6c3q25.ap-southeast.insforge.app/api/database/records/faqs?select=*&order=order.asc"
+      ]
+    },
+    {
+      "module": "/trainee/announcements",
+      "role": "trainee",
+      "status": "PASS",
+      "finalPath": "/trainee/announcements",
+      "issues": []
+    }
+  ],
+  "summary": {
+    "routeFails": 1,
+    "authFails": 7,
+    "pdfOk": false,
+    "verdict": "FAIL"
+  }
+}

@@ -1,0 +1,119 @@
+{
+  "url": "https://lista.dpdns.org",
+  "testedAt": "2026-05-27T23:43:43.539Z",
+  "smoke": {
+    "consoleCritical": 1,
+    "consoleSamples": [
+      "Failed to load resource: the server responded with a status of 401 ()"
+    ],
+    "networkFailures": [],
+    "lcpApproxMs": 3536,
+    "homeTitle": "LISTA — Lorenz International Skills Training Academy"
+  },
+  "interactions": [
+    {
+      "name": "GET /api/healthz",
+      "ok": true,
+      "detail": "HTTP 200"
+    },
+    {
+      "name": "GET /api/courses",
+      "ok": true,
+      "detail": "HTTP 200"
+    },
+    {
+      "name": "Navigate /courses",
+      "ok": true,
+      "detail": "https://lista.dpdns.org/courses"
+    },
+    {
+      "name": "Navigate /about",
+      "ok": true,
+      "detail": "https://lista.dpdns.org/about"
+    },
+    {
+      "name": "Navigate /admissions",
+      "ok": true,
+      "detail": "https://lista.dpdns.org/admissions"
+    },
+    {
+      "name": "Navigate /login",
+      "ok": true,
+      "detail": "https://lista.dpdns.org/login"
+    },
+    {
+      "name": "LISTA Guide opens",
+      "ok": false,
+      "detail": "FAB not found"
+    },
+    {
+      "name": "Trainee login",
+      "ok": true,
+      "detail": "https://lista.dpdns.org/trainee"
+    },
+    {
+      "name": "Trainee /trainee/tracking",
+      "ok": true,
+      "detail": "LISTA OVERALL PROGRESS 25% 1 Personal Identity details 2 Contact Reach details 3"
+    },
+    {
+      "name": "Trainee /trainee/certificate",
+      "ok": true,
+      "detail": "LISTA OVERALL PROGRESS 25% 1 Personal Identity details 2 Contact Reach details 3"
+    },
+    {
+      "name": "Trainee /trainee/application",
+      "ok": true,
+      "detail": "LISTA Notifications 6 Dashboard Courses My Applications Schedule Certificates Pr"
+    },
+    {
+      "name": "Second course Apply control",
+      "ok": false,
+      "detail": "0 button(s)"
+    },
+    {
+      "name": "Certificate shows completion",
+      "ok": true,
+      "detail": "completion copy found"
+    }
+  ],
+  "visual": [
+    {
+      "breakpoint": "375",
+      "route": "/courses",
+      "horizontalOverflow": false,
+      "screenshot": "C:\\Users\\PC\\Documents\\LISTA\\artifacts\\lista\\.qa\\browser-qa\\courses-375.png"
+    },
+    {
+      "breakpoint": "768",
+      "route": "/courses",
+      "horizontalOverflow": false,
+      "screenshot": "C:\\Users\\PC\\Documents\\LISTA\\artifacts\\lista\\.qa\\browser-qa\\courses-768.png"
+    },
+    {
+      "breakpoint": "1440",
+      "route": "/courses",
+      "horizontalOverflow": false,
+      "screenshot": "C:\\Users\\PC\\Documents\\LISTA\\artifacts\\lista\\.qa\\browser-qa\\courses-1440.png"
+    }
+  ],
+  "accessibility": [
+    {
+      "page": "/",
+      "violations": 2,
+      "samples": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "help": "Elements must meet minimum color contrast ratio thresholds"
+        },
+        {
+          "id": "link-name",
+          "impact": "serious",
+          "help": "Links must have discernible text"
+        }
+      ]
+    }
+  ],
+  "verdict": "SHIP"
+}

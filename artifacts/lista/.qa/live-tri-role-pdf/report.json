@@ -1,0 +1,43 @@
+{
+  "base": "https://lista.dpdns.org",
+  "testedAt": "2026-06-02T15:13:12.617Z",
+  "logins": [
+    {
+      "role": "admin",
+      "ok": true,
+      "finalPath": "/admin",
+      "error": null,
+      "screenshot": "C:\\Users\\PC\\Documents\\LISTA\\artifacts\\lista\\.qa\\live-tri-role-pdf\\admin-dashboard.png"
+    },
+    {
+      "role": "staff",
+      "ok": true,
+      "finalPath": "/staff",
+      "error": null,
+      "screenshot": "C:\\Users\\PC\\Documents\\LISTA\\artifacts\\lista\\.qa\\live-tri-role-pdf\\staff-dashboard.png"
+    },
+    {
+      "role": "trainee",
+      "ok": true,
+      "finalPath": "/trainee",
+      "error": null,
+      "screenshot": "C:\\Users\\PC\\Documents\\LISTA\\artifacts\\lista\\.qa\\live-tri-role-pdf\\trainee-dashboard.png"
+    }
+  ],
+  "pdfNumbers": {
+    "ok": false,
+    "route": null,
+    "formAnalysis": null,
+    "pdf": {
+      "ok": false,
+      "bytes": 0,
+      "path": null,
+      "error": "No Official Form / TESDA PDF entry on tracking or profile"
+    },
+    "screenshots": [
+      "C:\\Users\\PC\\Documents\\LISTA\\artifacts\\lista\\.qa\\live-tri-role-pdf\\trainee-_trainee_tracking.png",
+      "C:\\Users\\PC\\Documents\\LISTA\\artifacts\\lista\\.qa\\live-tri-role-pdf\\trainee-_trainee_profile.png"
+    ]
+  },
+  "verdict": "PARTIAL"
+}

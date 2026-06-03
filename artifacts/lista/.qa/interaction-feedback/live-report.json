@@ -1,0 +1,77 @@
+{
+  "baseUrl": "https://lista.dpdns.org",
+  "testedAt": "2026-06-01T02:00:25.961Z",
+  "plan": "artifacts/lista/docs/UI-UX-INTERACTION-FEEDBACK-PLAN.md",
+  "scope": "public I1-I3 live (courses content, login labels, courses overflow)",
+  "results": [
+    {
+      "check": "I1-courses-content",
+      "route": "/courses",
+      "viewport": "mobile",
+      "httpStatus": 200,
+      "settledAfterLoading": true,
+      "coursesState": "catalog",
+      "screenshot": "/artifacts/lista/.qa/interaction-feedback/live-courses-mobile.png",
+      "pass": true
+    },
+    {
+      "check": "I4-login-form",
+      "route": "/login",
+      "viewport": "mobile",
+      "httpStatus": 200,
+      "hasEmailLabel": true,
+      "hasPasswordLabel": true,
+      "hasSubmit": true,
+      "submitText": "Log in",
+      "screenshot": "/artifacts/lista/.qa/interaction-feedback/live-login-mobile.png",
+      "pass": true
+    },
+    {
+      "check": "V6-courses-overflow",
+      "route": "/courses",
+      "viewport": "mobile",
+      "v6_overflow": false,
+      "v6_deltaPx": 0,
+      "pass": true
+    },
+    {
+      "check": "I1-courses-content",
+      "route": "/courses",
+      "viewport": "desktop",
+      "httpStatus": 200,
+      "settledAfterLoading": true,
+      "coursesState": "catalog",
+      "screenshot": "/artifacts/lista/.qa/interaction-feedback/live-courses-desktop.png",
+      "pass": true
+    },
+    {
+      "check": "I4-login-form",
+      "route": "/login",
+      "viewport": "desktop",
+      "httpStatus": 200,
+      "hasEmailLabel": true,
+      "hasPasswordLabel": true,
+      "hasSubmit": true,
+      "submitText": "Log in",
+      "screenshot": "/artifacts/lista/.qa/interaction-feedback/live-login-desktop.png",
+      "pass": true
+    },
+    {
+      "check": "V6-courses-overflow",
+      "route": "/courses",
+      "viewport": "desktop",
+      "v6_overflow": false,
+      "v6_deltaPx": 0,
+      "pass": true
+    }
+  ],
+  "summary": {
+    "total": 6,
+    "passed": 6,
+    "failed": 0,
+    "coursesStates": [
+      "catalog"
+    ],
+    "overflowFailures": 0
+  }
+}

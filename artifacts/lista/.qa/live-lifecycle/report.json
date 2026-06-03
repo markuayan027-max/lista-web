@@ -1,0 +1,83 @@
+{
+  "test": "Live enrollment lifecycle (prod)",
+  "base": "https://lista.dpdns.org",
+  "startedAt": "2026-05-27T22:14:31.813Z",
+  "steps": [
+    {
+      "name": "Trainee login",
+      "ok": true,
+      "message": "https://lista.dpdns.org/trainee",
+      "at": "2026-05-27T22:14:43.598Z"
+    },
+    {
+      "name": "Trainee enrollment API",
+      "ok": true,
+      "message": "no active row; history=0",
+      "at": "2026-05-27T22:14:47.927Z"
+    },
+    {
+      "name": "Trainee tracking page",
+      "ok": false,
+      "message": "",
+      "at": "2026-05-27T22:15:22.032Z"
+    },
+    {
+      "name": "Trainee application page loads",
+      "ok": true,
+      "message": "catalog visible, no apply button",
+      "at": "2026-05-27T22:15:25.408Z"
+    },
+    {
+      "name": "Trainee submits course application",
+      "ok": true,
+      "message": "Skipped — already has formal application in progress",
+      "at": "2026-05-27T22:15:26.134Z"
+    },
+    {
+      "name": "Staff login",
+      "ok": true,
+      "message": "https://lista.dpdns.org/staff/enrollments",
+      "at": "2026-05-27T22:16:01.099Z"
+    },
+    {
+      "name": "Staff sees trainee enrollment row",
+      "ok": false,
+      "message": "Search enrollments list manually",
+      "at": "2026-05-27T22:16:06.044Z"
+    },
+    {
+      "name": "Admin login",
+      "ok": true,
+      "message": "https://lista.dpdns.org/admin/enrollments",
+      "at": "2026-05-27T22:16:10.274Z"
+    },
+    {
+      "name": "Admin issue certificate UI",
+      "ok": true,
+      "message": "Completed Course",
+      "at": "2026-05-27T22:16:53.400Z"
+    },
+    {
+      "name": "Trainee certificate page",
+      "ok": false,
+      "message": "",
+      "at": "2026-05-27T22:17:55.549Z"
+    },
+    {
+      "name": "Trainee can apply another course",
+      "ok": false,
+      "message": "No second apply — may need NC sent + completed status",
+      "at": "2026-05-27T22:17:59.568Z"
+    },
+    {
+      "name": "Trainee dashboard final state",
+      "ok": false,
+      "message": "",
+      "at": "2026-05-27T22:18:30.542Z"
+    }
+  ],
+  "finishedAt": "2026-05-27T22:18:30.823Z",
+  "passed": 7,
+  "failed": 5,
+  "total": 12
+}

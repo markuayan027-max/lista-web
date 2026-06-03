@@ -12,7 +12,6 @@ import {
   CheckCircle2, 
   ArrowRight, 
   ArrowLeft,
-  FileSpreadsheet,
   Printer,
   FileCheck,
   FileText,
@@ -34,7 +33,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useCourses, useTraineeProfile } from "@/hooks/use-lista-data";
 import type { Enrollment } from "@/lib/institutional-data";
-import { exportSingleTraineeToExcel, exportSingleTraineeToWord } from "@/lib/export-utils";
 import {
   prepareEnrollmentForInsforge,
   registerTraineeFromForm,
@@ -502,14 +500,6 @@ export default function TraineeRegistrationPage() {
     }
   };
 
-  const handleDownloadExcel = () => {
-    void exportSingleTraineeToExcel(formData as any);
-  };
-
-  const handleDownloadWord = () => {
-    exportSingleTraineeToWord(formData as any);
-  };
-
   const stepVariants = {
     hidden: { opacity: 0, x: 4 },
     visible: { opacity: 1, x: 0 },
@@ -806,6 +796,29 @@ export default function TraineeRegistrationPage() {
                               placeholder="City/Province" 
                               value={formData.birthPlace} 
                               onChange={e => updateForm({ birthPlace: e.target.value })} 
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                          <div className="space-y-2">
+                            <label className="text-xs font-semibold text-foreground/90">Mother's Maiden Name</label>
+                            <Input 
+                              name="motherMaidenName"
+                              className="h-10 border-border focus:border-primary focus:ring-ring rounded-md"
+                              placeholder="Full maiden name"
+                              value={formData.motherMaidenName} 
+                              onChange={handleChange} 
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-xs font-semibold text-foreground/90">Father's Name</label>
+                            <Input 
+                              name="fatherName"
+                              className="h-10 border-border focus:border-primary focus:ring-ring rounded-md"
+                              placeholder="Full name"
+                              value={formData.fatherName} 
+                              onChange={handleChange} 
                             />
                           </div>
                         </div>

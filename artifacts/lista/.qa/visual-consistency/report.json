@@ -1,0 +1,557 @@
+{
+  "generatedAt": "2026-06-01T01:39:37.910Z",
+  "overflow": [
+    {
+      "check": "V6",
+      "route": "/",
+      "viewport": "mobile",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/",
+      "viewport": "tablet",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/",
+      "viewport": "desktop",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/courses",
+      "viewport": "mobile",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/courses",
+      "viewport": "tablet",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/courses",
+      "viewport": "desktop",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/login",
+      "viewport": "mobile",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/login",
+      "viewport": "tablet",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/login",
+      "viewport": "desktop",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/trainee",
+      "viewport": "mobile",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/trainee",
+      "viewport": "tablet",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/trainee",
+      "viewport": "desktop",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/trainee/profile",
+      "viewport": "mobile",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/trainee/profile",
+      "viewport": "tablet",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/trainee/profile",
+      "viewport": "desktop",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/trainee/application",
+      "viewport": "mobile",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/trainee/application",
+      "viewport": "tablet",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/trainee/application",
+      "viewport": "desktop",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/trainee/tracking",
+      "viewport": "mobile",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/trainee/tracking",
+      "viewport": "tablet",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/trainee/tracking",
+      "viewport": "desktop",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/trainee/schedule",
+      "viewport": "mobile",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/trainee/schedule",
+      "viewport": "tablet",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/trainee/schedule",
+      "viewport": "desktop",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/trainee/certificate",
+      "viewport": "mobile",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/trainee/certificate",
+      "viewport": "tablet",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/trainee/certificate",
+      "viewport": "desktop",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/trainee/announcements",
+      "viewport": "mobile",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/trainee/announcements",
+      "viewport": "tablet",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/trainee/announcements",
+      "viewport": "desktop",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/trainee/help",
+      "viewport": "mobile",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/trainee/help",
+      "viewport": "tablet",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/trainee/help",
+      "viewport": "desktop",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/trainee/register",
+      "viewport": "mobile",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/trainee/register",
+      "viewport": "tablet",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/trainee/register",
+      "viewport": "desktop",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/trainee/enroll?course=bookkeeping-nc3",
+      "viewport": "mobile",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/trainee/enroll?course=bookkeeping-nc3",
+      "viewport": "tablet",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/trainee/enroll?course=bookkeeping-nc3",
+      "viewport": "desktop",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/staff",
+      "viewport": "mobile",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/staff",
+      "viewport": "tablet",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/staff",
+      "viewport": "desktop",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/staff/enrollments",
+      "viewport": "mobile",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/staff/enrollments",
+      "viewport": "tablet",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/staff/enrollments",
+      "viewport": "desktop",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/staff/search",
+      "viewport": "mobile",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/staff/search",
+      "viewport": "tablet",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/staff/search",
+      "viewport": "desktop",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/staff/schedule",
+      "viewport": "mobile",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/staff/schedule",
+      "viewport": "tablet",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/staff/schedule",
+      "viewport": "desktop",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/staff/announcements",
+      "viewport": "mobile",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/staff/announcements",
+      "viewport": "tablet",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/staff/announcements",
+      "viewport": "desktop",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/admin",
+      "viewport": "mobile",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/admin",
+      "viewport": "tablet",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/admin",
+      "viewport": "desktop",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/admin/enrollments",
+      "viewport": "mobile",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/admin/enrollments",
+      "viewport": "tablet",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/admin/enrollments",
+      "viewport": "desktop",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/admin/users",
+      "viewport": "mobile",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/admin/users",
+      "viewport": "tablet",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/admin/users",
+      "viewport": "desktop",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/admin/announcements",
+      "viewport": "mobile",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/admin/announcements",
+      "viewport": "tablet",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/admin/announcements",
+      "viewport": "desktop",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/admin/schedule",
+      "viewport": "mobile",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/admin/schedule",
+      "viewport": "tablet",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/admin/schedule",
+      "viewport": "desktop",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/admin/certificates",
+      "viewport": "mobile",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/admin/certificates",
+      "viewport": "tablet",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/admin/certificates",
+      "viewport": "desktop",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/admin/export",
+      "viewport": "mobile",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/admin/export",
+      "viewport": "tablet",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/admin/export",
+      "viewport": "desktop",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/admin/settings",
+      "viewport": "mobile",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/admin/settings",
+      "viewport": "tablet",
+      "pass": true,
+      "delta": 0
+    },
+    {
+      "check": "V6",
+      "route": "/admin/settings",
+      "viewport": "desktop",
+      "pass": true,
+      "delta": 0
+    }
+  ],
+  "overflowFailures": [],
+  "summary": {
+    "v6Total": 78,
+    "v6Passed": 78,
+    "v6Failed": 0
+  }
+}

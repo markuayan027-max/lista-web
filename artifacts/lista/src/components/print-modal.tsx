@@ -10,9 +10,23 @@ import { courseTitleBySlug } from "@/lib/lista-insforge-data";
 import OfficialApplicationForm from "@/components/official-application-form";
 import { OfficialFormWarningsBanner } from "@/components/official-form-warnings-banner";
 import { getOfficialFormFillWarnings } from "@/lib/fill-official-application-form";
+import { applyPrintPaper, clearPrintPaper } from "@/lib/apply-print-paper";
 import { downloadApplicationFormPdf } from "@/lib/download-tesda-pdf";
+import {
+  DEFAULT_PRINT_PAPER,
+  PRINT_PAPER_SPECS,
+  printPaperSpec,
+  type PrintPaperSize,
+} from "@/lib/print-paper";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function PrintModal({
   enrollment,
@@ -31,6 +45,8 @@ export default function PrintModal({
   const [pdfLoading, setPdfLoading] = useState(false);
   const [formReady, setFormReady] = useState(false);
   const [warningsAcknowledged, setWarningsAcknowledged] = useState(false);
+  const [paperSize, setPaperSize] = useState<PrintPaperSize>(DEFAULT_PRINT_PAPER);
+  const paperSpec = printPaperSpec(paperSize);
   const passportPhotoUrl = useMemo(() => {
     const stored = loadProfilePic(enrollment.userId ?? user?.id);
     return resolvePassportPhotoUrl(enrollment, passportPhotoOverride ?? stored);
@@ -48,6 +64,11 @@ export default function PrintModal({
     setWarningsAcknowledged(false);
     setFormReady(false);
   }, [enrollment.id, enrollment.refNo, passportPhotoUrl]);
+
+  useEffect(() => {
+    applyPrintPaper(paperSize);
+    return () => clearPrintPaper();
+  }, [paperSize]);
 
   const handlePrint = () => {
     if (printBlocked) {
@@ -71,10 +92,10 @@ export default function PrintModal({
     setPdfLoading(true);
     try {
       const safeRef = (enrollment.refNo || "Application-Form").replace(/[^\w-]+/g, "_");
-      await downloadApplicationFormPdf(`${safeRef}.pdf`);
+      await downloadApplicationFormPdf(`${safeRef}.pdf`, paperSize);
       toast({
         title: "PDF downloaded",
-        description: "Saved as A4 (2 pages).",
+        description: `Saved as ${paperSpec.label} (2 pages).`,
       });
     } catch (err) {
       toast({
@@ -114,15 +135,34 @@ export default function PrintModal({
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                Paper
+              </span>
+              <Select
+                value={paperSize}
+                onValueChange={(v) => setPaperSize(v as PrintPaperSize)}
+              >
+                <SelectTrigger className="h-9 w-[9.5rem] rounded-xl font-semibold text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {(Object.keys(PRINT_PAPER_SPECS) as PrintPaperSize[]).map((id) => (
+                    <SelectItem key={id} value={id}>
+                      {PRINT_PAPER_SPECS[id].label} — {PRINT_PAPER_SPECS[id].subtitle}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <Button variant="outline" onClick={onClose} className="rounded-xl font-bold">
               <X className="w-4 h-4 mr-2" aria-hidden />
               Close
             </Button>
             <Button
-              variant="outline"
               onClick={() => void handleDownloadPdf()}
               disabled={pdfLoading || printBlocked || !formReady}
-              className="rounded-xl font-bold gap-2"
+              className="rounded-xl font-bold gap-2 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20"
               aria-disabled={printBlocked}
               title={
                 printBlocked
@@ -134,10 +174,11 @@ export default function PrintModal({
               {!formReady ? "Preparing form…" : pdfLoading ? "Generating…" : "Download PDF"}
             </Button>
             <Button
+              variant="outline"
               onClick={handlePrint}
               disabled={printBlocked}
               className={cn(
-                "rounded-xl font-bold gap-2 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20",
+                "rounded-xl font-bold gap-2",
                 printBlocked && "opacity-60 cursor-not-allowed",
               )}
               aria-disabled={printBlocked}
@@ -179,10 +220,10 @@ export default function PrintModal({
         )}
 
         <p className="no-print mb-3 rounded-lg border border-border bg-card/95 px-3 py-2 text-center text-xs text-foreground/90">
-          Official TESDA application form (2 pages). For <strong className="text-foreground">Print</strong>: use
-          A4, margins <strong className="text-foreground">Minimum</strong>, enable{" "}
-          <strong className="text-foreground">Background graphics</strong>.
-          Sign and date the form manually before submission.
+          Official TESDA application form (2 pages). Paper:{" "}
+          <strong className="text-foreground">{paperSpec.label}</strong> ({paperSpec.subtitle}). In the print
+          dialog, set paper to match, use margins <strong className="text-foreground">Minimum</strong>, and enable{" "}
+          <strong className="text-foreground">Background graphics</strong>. Sign and date manually before submission.
         </p>
 
         <div className="print-preview-shell overflow-x-auto overflow-y-visible rounded-2xl shadow-2xl border border-border bg-muted/30 print:overflow-visible print:rounded-none print:border-0 print:shadow-none print:bg-white">

@@ -1,7 +1,11 @@
 import { isPrintableFormReady, waitForPrintableFormImages } from "@/lib/official-form-print-ready";
+import { DEFAULT_PRINT_PAPER, printPaperSpec, type PrintPaperSize } from "@/lib/print-paper";
 
 /** Client-side PDF export for the official 2-page application form. */
-export async function downloadApplicationFormPdf(filename: string): Promise<void> {
+export async function downloadApplicationFormPdf(
+  filename: string,
+  paper: PrintPaperSize = DEFAULT_PRINT_PAPER,
+): Promise<void> {
   const element = document.getElementById("printable-form");
   if (!element || !isPrintableFormReady(element)) {
     throw new Error("Form is still loading. Wait a moment, then try Download PDF again.");
@@ -10,10 +14,13 @@ export async function downloadApplicationFormPdf(filename: string): Promise<void
   await waitForPrintableFormImages(element);
 
   const html2pdf = (await import("html2pdf.js")).default;
+  const spec = printPaperSpec(paper);
+  const jsPdfFormat =
+    paper === "a4" ? "a4" : ([spec.widthIn, spec.heightIn] as [number, number]);
 
   await html2pdf()
     .set({
-      margin: 0.25,
+      margin: spec.pageMarginIn,
       filename,
       image: { type: "jpeg", quality: 0.98 },
       html2canvas: {
@@ -24,7 +31,7 @@ export async function downloadApplicationFormPdf(filename: string): Promise<void
       },
       jsPDF: {
         unit: "in",
-        format: "a4",
+        format: jsPdfFormat,
         orientation: "portrait",
       },
       pagebreak: { mode: ["css", "legacy"], before: ".page-container:nth-of-type(2)" },

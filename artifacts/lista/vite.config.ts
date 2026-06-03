@@ -70,9 +70,6 @@ export default defineConfig({
           ) {
             return "pdf";
           }
-          if (id.includes("xlsx") || id.includes("docx") || id.includes("file-saver")) {
-            return "office";
-          }
           if (id.includes("@insforge")) return "insforge";
           if (
             id.includes("/react/") ||

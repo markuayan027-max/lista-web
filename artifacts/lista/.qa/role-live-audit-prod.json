@@ -1,0 +1,100 @@
+﻿{
+  "base": "https://lista.dpdns.org",
+  "testedAt": "2026-05-27T09:52:09.201Z",
+  "roles": [
+    {
+      "role": "admin",
+      "email": "campionsamuelnapone.0000@gmail.com",
+      "login": null,
+      "routes": [],
+      "rbac": null,
+      "error": "page.waitForURL: Timeout 45000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation until \"load\"\n============================================================"
+    },
+    {
+      "role": "staff",
+      "email": "dracs008@gmail.com",
+      "login": null,
+      "routes": [],
+      "rbac": null,
+      "error": "page.waitForURL: Timeout 45000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation until \"load\"\n============================================================"
+    },
+    {
+      "role": "trainee",
+      "email": "campioncheryl498@gmail.com",
+      "login": {
+        "ok": true,
+        "finalPath": "/trainee"
+      },
+      "routes": [
+        {
+          "route": "/trainee",
+          "finalPath": "/trainee",
+          "ok": false,
+          "onLogin": false,
+          "blank": true,
+          "sample": "",
+          "consoleErrors": []
+        },
+        {
+          "route": "/trainee/application",
+          "finalPath": "/trainee/application",
+          "ok": false,
+          "onLogin": false,
+          "blank": true,
+          "sample": "",
+          "consoleErrors": []
+        },
+        {
+          "route": "/trainee/tracking",
+          "finalPath": "/trainee/tracking",
+          "ok": false,
+          "onLogin": false,
+          "blank": true,
+          "sample": "",
+          "consoleErrors": []
+        },
+        {
+          "route": "/trainee/schedule",
+          "finalPath": "/trainee/schedule",
+          "ok": false,
+          "onLogin": false,
+          "blank": true,
+          "sample": "",
+          "consoleErrors": []
+        },
+        {
+          "route": "/trainee/certificate",
+          "finalPath": "/trainee/certificate",
+          "ok": false,
+          "onLogin": false,
+          "blank": true,
+          "sample": "",
+          "consoleErrors": []
+        },
+        {
+          "route": "/trainee/profile",
+          "finalPath": "/trainee/profile",
+          "ok": false,
+          "onLogin": false,
+          "blank": true,
+          "sample": "",
+          "consoleErrors": []
+        },
+        {
+          "route": "/trainee/help",
+          "finalPath": "/trainee/help",
+          "ok": false,
+          "onLogin": false,
+          "blank": true,
+          "sample": "",
+          "consoleErrors": []
+        }
+      ],
+      "rbac": {
+        "tried": "/admin",
+        "finalPath": "/admin",
+        "blocked": false
+      }
+    }
+  ]
+}

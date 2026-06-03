@@ -1,0 +1,231 @@
+﻿{
+  "base": "https://lista.dpdns.org",
+  "testedAt": "2026-05-27T23:41:58.701Z",
+  "roles": [
+    {
+      "role": "admin",
+      "email": "campionsamuelnapone.0000@gmail.com",
+      "login": {
+        "ok": true,
+        "finalPath": "/admin"
+      },
+      "routes": [
+        {
+          "route": "/admin",
+          "finalPath": "/admin",
+          "ok": false,
+          "onLogin": false,
+          "blank": true,
+          "sample": "",
+          "consoleErrors": []
+        },
+        {
+          "route": "/admin/enrollments",
+          "finalPath": "/admin/enrollments",
+          "ok": false,
+          "onLogin": false,
+          "blank": true,
+          "sample": "",
+          "consoleErrors": []
+        },
+        {
+          "route": "/admin/users",
+          "finalPath": "/admin/users",
+          "ok": false,
+          "onLogin": false,
+          "blank": true,
+          "sample": "",
+          "consoleErrors": []
+        },
+        {
+          "route": "/admin/announcements",
+          "finalPath": "/admin/announcements",
+          "ok": false,
+          "onLogin": false,
+          "blank": true,
+          "sample": "",
+          "consoleErrors": []
+        },
+        {
+          "route": "/admin/schedule",
+          "finalPath": "/admin/schedule",
+          "ok": false,
+          "onLogin": false,
+          "blank": true,
+          "sample": "",
+          "consoleErrors": []
+        },
+        {
+          "route": "/admin/certificates",
+          "finalPath": "/admin/certificates",
+          "ok": false,
+          "onLogin": false,
+          "blank": true,
+          "sample": "",
+          "consoleErrors": []
+        },
+        {
+          "route": "/admin/export",
+          "finalPath": "/admin/export",
+          "ok": false,
+          "onLogin": false,
+          "blank": true,
+          "sample": "",
+          "consoleErrors": []
+        },
+        {
+          "route": "/admin/settings",
+          "finalPath": "/admin/settings",
+          "ok": false,
+          "onLogin": false,
+          "blank": true,
+          "sample": "",
+          "consoleErrors": []
+        }
+      ],
+      "rbac": {
+        "tried": "/trainee",
+        "finalPath": "/trainee",
+        "blocked": false
+      }
+    },
+    {
+      "role": "staff",
+      "email": "dracs008@gmail.com",
+      "login": {
+        "ok": true,
+        "finalPath": "/staff"
+      },
+      "routes": [
+        {
+          "route": "/staff",
+          "finalPath": "/staff",
+          "ok": false,
+          "onLogin": false,
+          "blank": true,
+          "sample": "",
+          "consoleErrors": []
+        },
+        {
+          "route": "/staff/enrollments",
+          "finalPath": "/staff/enrollments",
+          "ok": false,
+          "onLogin": false,
+          "blank": true,
+          "sample": "",
+          "consoleErrors": []
+        },
+        {
+          "route": "/staff/search",
+          "finalPath": "/staff/search",
+          "ok": false,
+          "onLogin": false,
+          "blank": true,
+          "sample": "",
+          "consoleErrors": []
+        },
+        {
+          "route": "/staff/schedule",
+          "finalPath": "/staff/schedule",
+          "ok": false,
+          "onLogin": false,
+          "blank": true,
+          "sample": "",
+          "consoleErrors": []
+        },
+        {
+          "route": "/staff/announcements",
+          "finalPath": "/staff/announcements",
+          "ok": false,
+          "onLogin": false,
+          "blank": true,
+          "sample": "",
+          "consoleErrors": []
+        }
+      ],
+      "rbac": {
+        "tried": "/admin",
+        "finalPath": "/admin",
+        "blocked": false
+      }
+    },
+    {
+      "role": "trainee",
+      "email": "campioncheryl498@gmail.com",
+      "login": {
+        "ok": true,
+        "finalPath": "/trainee"
+      },
+      "routes": [
+        {
+          "route": "/trainee",
+          "finalPath": "/trainee",
+          "ok": false,
+          "onLogin": false,
+          "blank": true,
+          "sample": "",
+          "consoleErrors": []
+        },
+        {
+          "route": "/trainee/application",
+          "finalPath": "/trainee/application",
+          "ok": false,
+          "onLogin": false,
+          "blank": true,
+          "sample": "",
+          "consoleErrors": []
+        },
+        {
+          "route": "/trainee/tracking",
+          "finalPath": "/trainee/register",
+          "ok": true,
+          "onLogin": false,
+          "blank": false,
+          "sample": "LISTA OVERALL PROGRESS 25% Save & Exit STEP 01 REGISTRY FLOW Personal Identity details. Please provide accurate informat",
+          "consoleErrors": []
+        },
+        {
+          "route": "/trainee/schedule",
+          "finalPath": "/trainee/schedule",
+          "ok": false,
+          "onLogin": false,
+          "blank": true,
+          "sample": "",
+          "consoleErrors": []
+        },
+        {
+          "route": "/trainee/certificate",
+          "finalPath": "/trainee/certificate",
+          "ok": false,
+          "onLogin": false,
+          "blank": true,
+          "sample": "",
+          "consoleErrors": []
+        },
+        {
+          "route": "/trainee/profile",
+          "finalPath": "/trainee/register",
+          "ok": false,
+          "onLogin": false,
+          "blank": true,
+          "sample": "",
+          "consoleErrors": []
+        },
+        {
+          "route": "/trainee/help",
+          "finalPath": "/trainee/register",
+          "ok": true,
+          "onLogin": false,
+          "blank": false,
+          "sample": "LISTA OVERALL PROGRESS 25% Save & Exit STEP 01 REGISTRY FLOW Personal Identity details. Please provide accurate informat",
+          "consoleErrors": []
+        }
+      ],
+      "rbac": {
+        "tried": "/admin",
+        "finalPath": "/admin",
+        "blocked": false
+      }
+    }
+  ]
+}

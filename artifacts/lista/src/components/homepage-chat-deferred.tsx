@@ -25,16 +25,16 @@ function ChatFab({
       onClick={onClick}
       disabled={busy}
       className={cn(
-        "fixed z-50 h-14 w-14 rounded-full bg-blue-700 shadow-lg shadow-blue-900/20 hover:bg-blue-800",
-        "bottom-[max(1.25rem,env(safe-area-inset-bottom))] right-4 md:right-6",
+        "fixed z-50 h-12 w-12 sm:h-14 sm:w-14 rounded-full bg-blue-700 shadow-lg shadow-blue-900/20 hover:bg-blue-800 transition-all",
+        "bottom-[max(1rem,env(safe-area-inset-bottom))] right-4 md:right-6",
         className,
       )}
       aria-label={busy ? "Loading LISTA Guide" : "Open LISTA Guide"}
     >
       {busy ? (
-        <Loader2 className="h-6 w-6 animate-spin" aria-hidden />
+        <Loader2 className="h-5 w-5 sm:h-6 sm:w-6 animate-spin" aria-hidden />
       ) : (
-        <MessageCircle className="h-6 w-6" aria-hidden />
+        <MessageCircle className="h-5 w-5 sm:h-6 sm:w-6" aria-hidden />
       )}
     </Button>
   );
@@ -79,7 +79,7 @@ export default function HomepageChatDeferred({ programCount }: Props) {
       <ChatFab
         onClick={activate}
         busy={prefetching}
-        className={traineePortal ? "bottom-[calc(5.25rem+env(safe-area-inset-bottom))]" : undefined}
+        className={traineePortal ? "bottom-[calc(5rem+env(safe-area-inset-bottom))] sm:bottom-[calc(5.25rem+env(safe-area-inset-bottom))]" : undefined}
       />
     );
   }
@@ -90,7 +90,7 @@ export default function HomepageChatDeferred({ programCount }: Props) {
         <ChatFab
           onClick={() => {}}
           busy
-          className={traineePortal ? "bottom-[calc(5.25rem+env(safe-area-inset-bottom))]" : undefined}
+          className={traineePortal ? "bottom-[calc(5rem+env(safe-area-inset-bottom))] sm:bottom-[calc(5.25rem+env(safe-area-inset-bottom))]" : undefined}
         />
       }
     >

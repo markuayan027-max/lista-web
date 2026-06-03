@@ -1,0 +1,38 @@
+{
+  "steps": [
+    {
+      "name": "Staff login",
+      "ok": true,
+      "message": "",
+      "at": "2026-05-27T22:28:53.350Z"
+    },
+    {
+      "name": "Staff finds Cheryl row",
+      "ok": true,
+      "message": "LISTA-2026-76327",
+      "at": "2026-05-27T22:29:26.981Z"
+    },
+    {
+      "name": "Mark enrolled",
+      "ok": true,
+      "message": "",
+      "at": "2026-05-27T22:29:33.906Z"
+    },
+    {
+      "name": "Mark completed",
+      "ok": false,
+      "message": "button not visible",
+      "at": "2026-05-27T22:29:39.732Z"
+    },
+    {
+      "name": "Fatal",
+      "ok": false,
+      "message": "page.reload: Timeout 30000ms exceeded.\nCall log:\n  - waiting for navigation until \"networkidle\"\n    - navigated to \"https://lista.dpdns.org/staff/enrollments\"\n",
+      "at": "2026-05-27T22:30:09.802Z"
+    }
+  ],
+  "startedAt": "2026-05-27T22:28:47.708Z",
+  "finishedAt": "2026-05-27T22:30:11.912Z",
+  "passed": 3,
+  "failed": 2
+}

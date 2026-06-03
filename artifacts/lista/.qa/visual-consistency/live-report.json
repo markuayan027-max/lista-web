@@ -1,0 +1,77 @@
+{
+  "baseUrl": "https://lista.dpdns.org",
+  "testedAt": "2026-06-01T01:32:32.698Z",
+  "results": [
+    {
+      "route": "/",
+      "viewport": "mobile",
+      "httpStatus": 200,
+      "v1_nav": true,
+      "v1_footer": true,
+      "v2_h1Count": 1,
+      "v6_overflow": false,
+      "v6_deltaPx": 0,
+      "screenshot": "/artifacts/lista/.qa/visual-consistency/live-_-mobile.png"
+    },
+    {
+      "route": "/courses",
+      "viewport": "mobile",
+      "httpStatus": 200,
+      "v1_nav": true,
+      "v1_footer": true,
+      "v2_h1Count": 1,
+      "v6_overflow": false,
+      "v6_deltaPx": 0,
+      "screenshot": "/artifacts/lista/.qa/visual-consistency/live-_courses-mobile.png"
+    },
+    {
+      "route": "/login",
+      "viewport": "mobile",
+      "httpStatus": 200,
+      "v1_nav": false,
+      "v1_footer": "n/a",
+      "v2_h1Count": 1,
+      "v6_overflow": false,
+      "v6_deltaPx": 0,
+      "screenshot": "/artifacts/lista/.qa/visual-consistency/live-_login-mobile.png"
+    },
+    {
+      "route": "/",
+      "viewport": "desktop",
+      "httpStatus": 200,
+      "v1_nav": true,
+      "v1_footer": true,
+      "v2_h1Count": 1,
+      "v6_overflow": false,
+      "v6_deltaPx": 0,
+      "screenshot": "/artifacts/lista/.qa/visual-consistency/live-_-desktop.png"
+    },
+    {
+      "route": "/courses",
+      "viewport": "desktop",
+      "httpStatus": 200,
+      "v1_nav": true,
+      "v1_footer": true,
+      "v2_h1Count": 1,
+      "v6_overflow": false,
+      "v6_deltaPx": 0,
+      "screenshot": "/artifacts/lista/.qa/visual-consistency/live-_courses-desktop.png"
+    },
+    {
+      "route": "/login",
+      "viewport": "desktop",
+      "httpStatus": 200,
+      "v1_nav": false,
+      "v1_footer": "n/a",
+      "v2_h1Count": 1,
+      "v6_overflow": false,
+      "v6_deltaPx": 0,
+      "screenshot": "/artifacts/lista/.qa/visual-consistency/live-_login-desktop.png"
+    }
+  ],
+  "summary": {
+    "total": 6,
+    "overflowFailures": 0,
+    "v1NavOk": 4
+  }
+}

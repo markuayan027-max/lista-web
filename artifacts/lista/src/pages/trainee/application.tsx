@@ -113,6 +113,14 @@ export default function TraineeApplicationPage() {
 
   return (
     <motion.main className="space-y-8 sm:space-y-10 max-w-6xl mx-auto pb-4 md:pb-8 px-4 sm:px-6 lg:px-0">
+      {/* Mobile Header Title */}
+      <div className="md:hidden flex items-center gap-2 mb-4">
+        <div className="bg-primary/10 p-1.5 rounded-lg">
+          <BookOpen className="h-5 w-5 text-primary" />
+        </div>
+        <span className="font-bold text-lg tracking-tight">Trainee Portal</span>
+      </div>
+
       <nav aria-label="Breadcrumb" className="text-sm text-muted-foreground">
         <ol className="flex flex-wrap items-center gap-1.5">
           <li>

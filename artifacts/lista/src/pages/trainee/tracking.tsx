@@ -225,10 +225,17 @@ export default function TraineeTrackingPage() {
 
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
       className="space-y-8 max-w-6xl mx-auto pb-4 md:pb-8"
     >
+      {/* Mobile Header Title */}
+      <div className="md:hidden flex items-center gap-2 mb-4">
+        <div className="bg-primary/10 p-1.5 rounded-lg">
+          <BookOpen className="h-5 w-5 text-primary" />
+        </div>
+        <span className="font-bold text-lg tracking-tight">Trainee Portal</span>
+      </div>
       {printTarget && (
         <PrintModal enrollment={printTarget} onClose={() => setPrintTarget(null)} />
       )}

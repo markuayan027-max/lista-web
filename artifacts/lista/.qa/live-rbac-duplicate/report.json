@@ -1,0 +1,214 @@
+{
+  "generatedAt": "2026-06-01T00:07:32.200Z",
+  "baseUrl": "https://lista.dpdns.org",
+  "results": [
+    {
+      "id": "1.1",
+      "role": "Anonymous",
+      "steps": "POST /api/trainees/apply without auth",
+      "expected": "401/403 blocked",
+      "actual": "HTTP 401",
+      "status": "Pass",
+      "severity": "High"
+    },
+    {
+      "id": "1.1b",
+      "role": "Anonymous",
+      "steps": "POST /api/trainees/register without auth",
+      "expected": "401 blocked",
+      "actual": "HTTP 401",
+      "status": "Pass",
+      "severity": "High"
+    },
+    {
+      "id": "1.1c",
+      "role": "Anonymous",
+      "steps": "Visit /enroll",
+      "expected": "Redirect to login",
+      "actual": "Redirected to https://lista.dpdns.org/login?redirect=%2Ftrainee%2Fregister",
+      "status": "Pass",
+      "severity": "Med"
+    },
+    {
+      "id": "1.2a",
+      "role": "Trainee+Staff tabs",
+      "steps": "Trainee tab opens /staff",
+      "expected": "Redirect away from staff",
+      "actual": "https://lista.dpdns.org/trainee",
+      "status": "Pass",
+      "severity": "High"
+    },
+    {
+      "id": "1.2b",
+      "role": "Trainee+Staff tabs",
+      "steps": "Staff tab opens /admin",
+      "expected": "Redirect away from admin",
+      "actual": "https://lista.dpdns.org/staff",
+      "status": "Pass",
+      "severity": "High"
+    },
+    {
+      "id": "1.3",
+      "role": "Trainee",
+      "steps": "Reuse bearer token after logout",
+      "expected": "401 invalid session",
+      "actual": "HTTP 200",
+      "status": "Fail",
+      "severity": "Critical"
+    },
+    {
+      "id": "0.0",
+      "role": "Trainee",
+      "steps": "Baseline enrollment state",
+      "expected": "Known active row",
+      "actual": "status=Waitlisted course=driving-nc-ii id=58bf0f6e-c53c-47b5-aa10-9530d183ce85",
+      "status": "Info",
+      "severity": "Low"
+    },
+    {
+      "id": "2.1",
+      "role": "Trainee",
+      "steps": "Apply twice to driving-nc-ii",
+      "expected": "Second blocked",
+      "actual": "1st HTTP 409; 2nd HTTP 409 — You already have an active application. Cancel it or wait for staff to complete the cycle.",
+      "status": "Pass",
+      "severity": "Med"
+    },
+    {
+      "id": "2.2",
+      "role": "Trainee",
+      "steps": "Simultaneous duplicate apply (2 parallel POST)",
+      "expected": "≤1 active enrollment",
+      "actual": "HTTP 409/409; active rows=1",
+      "status": "Pass",
+      "severity": "Med"
+    },
+    {
+      "id": "2.3",
+      "role": "Trainee+Staff",
+      "steps": "Reject then re-apply same program family",
+      "expected": "New active row; old rejected preserved",
+      "actual": "reject HTTP 200; re-apply HTTP 201; active=1; history=4",
+      "status": "Pass",
+      "severity": "Med"
+    },
+    {
+      "id": "2.4",
+      "role": "Trainee",
+      "steps": "Apply TWSP variant while active on another course",
+      "expected": "Block or single active seat",
+      "actual": "HTTP 409 — You already have an active application. Cancel it or wait for staff to complete the cycle.",
+      "status": "Pass",
+      "severity": "Med"
+    },
+    {
+      "id": "3.1a",
+      "role": "Staff",
+      "steps": "Staff account visits /trainee/application",
+      "expected": "Redirect to staff home",
+      "actual": "https://lista.dpdns.org/staff",
+      "status": "Pass",
+      "severity": "High"
+    },
+    {
+      "id": "3.1b",
+      "role": "Staff",
+      "steps": "Staff POST /api/trainees/apply as self",
+      "expected": "403 or no trainee profile",
+      "actual": "HTTP 400 — Complete your TESDA profile before applying to a course.",
+      "status": "Pass",
+      "severity": "Med"
+    },
+    {
+      "id": "3.2",
+      "role": "Admin",
+      "steps": "Inspect trainee enrollment history for duplicate actives",
+      "expected": "≤1 active row per email",
+      "actual": "active=1 total history=4",
+      "status": "Pass",
+      "severity": "Med"
+    },
+    {
+      "id": "3.3",
+      "role": "Trainee",
+      "steps": "Application page vs course detail entry points",
+      "expected": "Both gate on auth/profile",
+      "actual": "application cards=0; course detail CTAs=0",
+      "status": "Warn",
+      "severity": "Low"
+    },
+    {
+      "id": "4.1",
+      "role": "Trainee",
+      "steps": "Rapid apply to 3 programs",
+      "expected": "Only one active at a time",
+      "actual": "driving-nc-ii:409; computer-systems-servicing-nc-ii:409; agricultural-crops-production-nc-i:409; active=1",
+      "status": "Pass",
+      "severity": "Med"
+    },
+    {
+      "id": "4.2",
+      "role": "Trainee+Staff",
+      "steps": "Cancel then immediate re-apply",
+      "expected": "Fresh pending row; cancelled archived",
+      "actual": "re-apply HTTP 201; cancelled rows=1",
+      "status": "Pass",
+      "severity": "Med"
+    },
+    {
+      "id": "5.1",
+      "role": "Staff×2",
+      "steps": "Concurrent approval",
+      "expected": "Single outcome",
+      "actual": "No pending row found",
+      "status": "Skip",
+      "severity": "Med"
+    },
+    {
+      "id": "RBAC-admin-/trainee/register",
+      "role": "admin",
+      "steps": "admin visits /trainee/register",
+      "expected": "Redirect/blocked",
+      "actual": "https://lista.dpdns.org/admin",
+      "status": "Pass",
+      "severity": "High"
+    },
+    {
+      "id": "RBAC-staff-/admin/users",
+      "role": "staff",
+      "steps": "staff visits /admin/users",
+      "expected": "Redirect/blocked",
+      "actual": "https://lista.dpdns.org/staff",
+      "status": "Pass",
+      "severity": "High"
+    },
+    {
+      "id": "RBAC-trainee-/admin",
+      "role": "trainee",
+      "steps": "trainee visits /admin",
+      "expected": "Redirect/blocked",
+      "actual": "https://lista.dpdns.org/trainee",
+      "status": "Pass",
+      "severity": "High"
+    }
+  ],
+  "duplicateVerdict": "Weak – partial protection or edge-case gaps",
+  "summary": {
+    "total": 21,
+    "pass": 17,
+    "fail": 1,
+    "warn": 1,
+    "skip": 2
+  },
+  "criticalFindings": [
+    {
+      "id": "1.3",
+      "role": "Trainee",
+      "steps": "Reuse bearer token after logout",
+      "expected": "401 invalid session",
+      "actual": "HTTP 200",
+      "status": "Fail",
+      "severity": "Critical"
+    }
+  ]
+}
