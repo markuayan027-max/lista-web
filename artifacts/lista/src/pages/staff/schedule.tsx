@@ -95,7 +95,9 @@ export default function StaffSchedulePage() {
       >
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Master Schedule</h1>
-          <p className="text-muted-foreground mt-1">Manage all academy sessions and classes.</p>
+          <p className="text-muted-foreground mt-1">
+            Manage class sessions here. Course cohort batches (capacity, open/close) are created by administrators under Admin → Schedule.
+          </p>
         </div>
         
         <div className="flex items-center gap-3">

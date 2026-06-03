@@ -618,7 +618,21 @@ function buildUpdateSnakePatch(form: Partial<Enrollment>): Record<string, unknow
     status: (() => {
       if (form.status === undefined) return undefined;
       const s = String(form.status).toLowerCase();
-      const valid = ["pending", "confirmed", "rejected", "waitlisted", "review", "interview", "enrolled", "cancelled", "completed", "ready_to_apply"];
+      const valid = [
+        "pending",
+        "confirmed",
+        "rejected",
+        "waitlisted",
+        "review",
+        "interview",
+        "for_assessment",
+        "assessment_scheduled",
+        "assessment_failed",
+        "enrolled",
+        "cancelled",
+        "completed",
+        "ready_to_apply",
+      ];
       if (!valid.includes(s)) return undefined;
       // Try to match Title Case which is what the Drizzle schema uses, except for ready_to_apply
       if (s === "ready_to_apply") return "Ready to Apply";

@@ -51,6 +51,7 @@ import {
   saveRegistrationMaxStep,
 } from "@/lib/profile-utils";
 import { enrollmentBlocksNewCourseApplication } from "@/lib/enrollment-status";
+import TesdaRequirementsChecklist from "@/components/tesda-requirements-checklist";
 
 const STEPS = [
   { id: 1, title: "Personal", description: "Identity details", icon: User },
@@ -626,6 +627,9 @@ export default function TraineeRegistrationPage() {
                 className="h-full bg-primary transition-all duration-300 ease-out" 
               />
             </div>
+            <p className="text-[10px] text-muted-foreground mt-2" role="note">
+              Progress is saved locally in this browser until you submit. Sign in on another device to continue from the cloud profile.
+            </p>
           </div>
         </div>
 
@@ -1088,6 +1092,8 @@ export default function TraineeRegistrationPage() {
                             </div>
                           </div>
                         </div>
+
+                        <TesdaRequirementsChecklist profile={formData} compact title="TESDA requirements checklist" />
 
                         <label className="flex items-start gap-3 p-6 border border-border rounded-3xl cursor-pointer hover:bg-muted/50 transition-colors">
                           <Checkbox 

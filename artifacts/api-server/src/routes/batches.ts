@@ -4,7 +4,7 @@ import { courseBatches } from "@workspace/db/schema";
 import { asc, desc, sql } from "drizzle-orm";
 import { z } from "zod";
 import { logger } from "../lib/logger.js";
-import { requireAuth, requireStaffOrAdmin } from "../middleware/auth.js";
+import { requireAuth, requireAdmin } from "../middleware/auth.js";
 
 const router = Router();
 router.use(requireAuth);
@@ -95,7 +95,8 @@ router.get("/", async (req, res) => {
   }
 });
 
-router.post("/", requireStaffOrAdmin, async (req, res) => {
+/** Create cohort batches — admin only (staff assign trainees to existing batches). */
+router.post("/", requireAdmin, async (req, res) => {
   try {
     await ensureCourseBatchesTable();
     const input = createBatchSchema.parse(req.body);
@@ -136,7 +137,7 @@ router.post("/", requireStaffOrAdmin, async (req, res) => {
   }
 });
 
-router.patch("/:id/status", requireStaffOrAdmin, async (req, res) => {
+router.patch("/:id/status", requireAdmin, async (req, res) => {
   try {
     await ensureCourseBatchesTable();
     const { status } = z.object({ status: statusSchema }).parse(req.body);

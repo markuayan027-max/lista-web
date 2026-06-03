@@ -4,7 +4,7 @@ import { courseBatches, enrollments } from "@workspace/db/schema";
 import { and, desc, eq, inArray, lt, sql } from "drizzle-orm";
 import { z } from "zod";
 import { logger } from "../lib/logger.js";
-import { requireAuth, requireStaffOrAdmin } from "../middleware/auth.js";
+import { requireAuth, requireAdmin, requireStaffOrAdmin } from "../middleware/auth.js";
 import { ensureBatchSchemaReady } from "./batches.js";
 import {
   assignBatchIfApplicable,
@@ -29,6 +29,9 @@ const statusSchema = z.enum([
   "waitlisted",
   "review",
   "interview",
+  "for_assessment",
+  "assessment_scheduled",
+  "assessment_failed",
   "enrolled",
   "cancelled",
   "completed",
@@ -44,6 +47,9 @@ function mapStatusToDb(status: string): (typeof enrollments.$inferSelect)["statu
   if (s === "waitlisted") return "Waitlisted";
   if (s === "review") return "Review";
   if (s === "interview") return "Interview";
+  if (s === "for_assessment") return "For Assessment" as (typeof enrollments.$inferSelect)["status"];
+  if (s === "assessment_scheduled") return "Assessment Scheduled" as (typeof enrollments.$inferSelect)["status"];
+  if (s === "assessment_failed") return "Assessment Failed" as (typeof enrollments.$inferSelect)["status"];
   if (s === "enrolled") return "Enrolled";
   if (s === "cancelled") return "Cancelled";
   if (s === "completed") return "Completed";
@@ -62,7 +68,8 @@ router.get("/", requireStaffOrAdmin, async (_req, res) => {
   }
 });
 
-router.patch("/bulk", requireStaffOrAdmin, async (req, res) => {
+/** Bulk status changes — admin only (staff use single-row updates). */
+router.patch("/bulk", requireAdmin, async (req, res) => {
   try {
     await ensureBatchSchemaReady();
     const body = z

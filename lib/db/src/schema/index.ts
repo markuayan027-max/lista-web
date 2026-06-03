@@ -24,7 +24,21 @@ export const users = pgTable("lms_users_legacy", {
   }
 });
 
-export const enrollmentStatusEnum = pgEnum("enrollment_status", ["Pending", "Confirmed", "Rejected", "Waitlisted", "Review", "Interview", "Enrolled", "Cancelled", "Completed", "Ready to Apply"]);
+export const enrollmentStatusEnum = pgEnum("enrollment_status", [
+  "Pending",
+  "Confirmed",
+  "Rejected",
+  "Waitlisted",
+  "Review",
+  "Interview",
+  "For Assessment",
+  "Assessment Scheduled",
+  "Assessment Failed",
+  "Enrolled",
+  "Cancelled",
+  "Completed",
+  "Ready to Apply",
+]);
 
 export const enrollments = pgTable("lms_enrollments_legacy", {
   id: uuid("id").primaryKey().defaultRandom(),

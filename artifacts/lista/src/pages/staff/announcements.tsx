@@ -88,6 +88,9 @@ export default function StaffAnnouncementsPage() {
       >
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Announcements</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Staff can publish new posts. Editing or deleting announcements requires an administrator.
+          </p>
           <p className="text-muted-foreground mt-1">Broadcast messages to trainees and staff.</p>
         </div>
         

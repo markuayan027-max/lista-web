@@ -17,6 +17,7 @@ import {
 import { resolveCourseCoverImage, resolveCourseGalleryImages } from "@/lib/course-images";
 import { formatNcLevel } from "@/lib/format-nc-level";
 import { apiUrl } from "@/lib/api-url";
+import { handleAccountDeactivatedIfNeeded } from "@/lib/api-auth-errors";
 
 export type ListaAnnouncement = {
   id: string;
@@ -70,8 +71,15 @@ function str(v: unknown): string {
   return v === undefined || v === null ? "" : String(v);
 }
 
+const STATUS_TO_DB: Partial<Record<Enrollment["status"], string>> = {
+  ready_to_apply: "Ready to Apply",
+  for_assessment: "For Assessment",
+  assessment_scheduled: "Assessment Scheduled",
+  assessment_failed: "Assessment Failed",
+};
+
 function enrollmentStatusToDb(status: Enrollment["status"]): string {
-  if (status === "ready_to_apply") return "Ready to Apply";
+  if (STATUS_TO_DB[status]) return STATUS_TO_DB[status]!;
   return status.charAt(0).toUpperCase() + status.slice(1);
 }
 
@@ -482,6 +490,9 @@ export async function updateEnrollmentStatus(
         body: JSON.stringify({ status }),
       });
       const body = (await apiRes.json().catch(() => ({}))) as { success?: boolean; error?: string };
+      if (await handleAccountDeactivatedIfNeeded(apiRes, body)) {
+        return { success: false, error: "ACCOUNT_DEACTIVATED" };
+      }
       if (apiRes.ok && body.success) return { success: true, data: undefined };
       if (apiRes.status !== 404 && apiRes.status !== 503) {
         return { success: false, error: body.error || `Update failed (${apiRes.status})` };
@@ -508,17 +519,21 @@ export async function bulkUpdateEnrollmentStatus(
         body: JSON.stringify({ ids, status }),
       });
       const body = (await apiRes.json().catch(() => ({}))) as { success?: boolean; error?: string };
+      if (await handleAccountDeactivatedIfNeeded(apiRes, body)) {
+        return { success: false, error: "ACCOUNT_DEACTIVATED" };
+      }
       if (apiRes.ok && body.success) return { success: true, data: undefined };
-    } catch {
-      /* fall through to SDK */
+      if (!apiRes.ok) {
+        return { success: false, error: body.error ?? `Bulk update failed (${apiRes.status})` };
+      }
+    } catch (err) {
+      return {
+        success: false,
+        error: err instanceof Error ? err.message : "Bulk update failed",
+      };
     }
   }
-  const dbStatus = enrollmentStatusToDb(status);
-  for (const id of ids) {
-    const { error } = await lista.from("lms_enrollments_legacy").update({ status: dbStatus }).eq("id", id);
-    if (error) return { success: false, error: error.message };
-  }
-  return { success: true, data: undefined };
+  return { success: false, error: "Sign in as an administrator to run bulk updates." };
 }
 
 // ── Courses ──────────────────────────────────────────────────────────────────
@@ -863,35 +878,117 @@ export async function createAnnouncement(input: {
   body: string;
   targetRole: string;
 }): Promise<ListaFetchResult<ListaAnnouncement>> {
-  const { data, error } = await lista
-    .from("announcements")
-    .insert([{ title: input.title, body: input.body, target: input.targetRole }])
-    .select("*");
-  if (error) return { success: false, error: error.message };
-  const row = (data as Record<string, unknown>[])?.[0];
-  if (!row) return { success: false, error: "Insert returned no row" };
-  return { success: true, data: rowToAnnouncement(row) };
+  try {
+    const res = await fetch(apiUrl("/api/announcements"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...authHeaders() },
+      body: JSON.stringify(input),
+    });
+    if (await handleAccountDeactivatedIfNeeded(res)) {
+      return { success: false, error: "Account deactivated" };
+    }
+    if (!res.ok) {
+      const errBody = (await res.json().catch(() => ({}))) as { error?: string };
+      return { success: false, error: errBody.error ?? `Create announcement HTTP ${res.status}` };
+    }
+    const row = (await res.json()) as Record<string, unknown>;
+    return { success: true, data: rowToAnnouncement(row) };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return { success: false, error: msg };
+  }
 }
 
 export async function updateAnnouncement(
   id: string,
   input: { title: string; body: string; targetRole: string },
 ): Promise<ListaFetchResult<ListaAnnouncement>> {
-  const { data, error } = await lista
-    .from("announcements")
-    .update({ title: input.title, body: input.body, target: input.targetRole })
-    .eq("id", id)
-    .select("*")
-    .maybeSingle();
-  if (error) return { success: false, error: error.message };
-  if (!data) return { success: false, error: "Announcement not found" };
-  return { success: true, data: rowToAnnouncement(data as Record<string, unknown>) };
+  try {
+    const res = await fetch(apiUrl(`/api/announcements/${encodeURIComponent(id)}`), {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...authHeaders() },
+      body: JSON.stringify(input),
+    });
+    if (await handleAccountDeactivatedIfNeeded(res)) {
+      return { success: false, error: "Account deactivated" };
+    }
+    if (!res.ok) {
+      const errBody = (await res.json().catch(() => ({}))) as { error?: string };
+      return { success: false, error: errBody.error ?? `Update announcement HTTP ${res.status}` };
+    }
+    const row = (await res.json()) as Record<string, unknown>;
+    return { success: true, data: rowToAnnouncement(row) };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return { success: false, error: msg };
+  }
 }
 
 export async function deleteAnnouncement(id: string): Promise<ListaFetchResult<void>> {
-  const { error } = await lista.from("announcements").delete().eq("id", id);
-  if (error) return { success: false, error: error.message };
-  return { success: true, data: undefined };
+  try {
+    const res = await fetch(apiUrl(`/api/announcements/${encodeURIComponent(id)}`), {
+      method: "DELETE",
+      headers: authHeaders(),
+    });
+    if (await handleAccountDeactivatedIfNeeded(res)) {
+      return { success: false, error: "Account deactivated" };
+    }
+    if (!res.ok && res.status !== 204) {
+      const errBody = (await res.json().catch(() => ({}))) as { error?: string };
+      return { success: false, error: errBody.error ?? `Delete announcement HTTP ${res.status}` };
+    }
+    return { success: true, data: undefined };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return { success: false, error: msg };
+  }
+}
+
+// ── Site settings (server-persisted) ───────────────────────────────────────────
+
+export async function fetchSiteSettingsFromApi(): Promise<ListaFetchResult<import("@/lib/public-data-utils").SiteSettings>> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), FETCH_COURSES_MS);
+  try {
+    const res = await fetch(apiUrl("/api/settings/site"), { signal: controller.signal });
+    if (res.status === 404) {
+      return { success: false, error: "not_configured" };
+    }
+    if (!res.ok) {
+      return { success: false, error: `Site settings HTTP ${res.status}` };
+    }
+    const data = (await res.json()) as import("@/lib/public-data-utils").SiteSettings;
+    return { success: true, data };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return { success: false, error: msg };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+export async function saveSiteSettingsToApi(
+  settings: import("@/lib/public-data-utils").SiteSettings,
+): Promise<ListaFetchResult<import("@/lib/public-data-utils").SiteSettings>> {
+  try {
+    const res = await fetch(apiUrl("/api/settings/site"), {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", ...authHeaders() },
+      body: JSON.stringify(settings),
+    });
+    if (await handleAccountDeactivatedIfNeeded(res)) {
+      return { success: false, error: "Account deactivated" };
+    }
+    if (!res.ok) {
+      const errBody = (await res.json().catch(() => ({}))) as { error?: string };
+      return { success: false, error: errBody.error ?? `Save settings HTTP ${res.status}` };
+    }
+    const data = (await res.json()) as import("@/lib/public-data-utils").SiteSettings;
+    return { success: true, data };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return { success: false, error: msg };
+  }
 }
 
 // ── Schedule mutations ─────────────────────────────────────────────────────────

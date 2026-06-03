@@ -54,6 +54,9 @@ const BLOCKING_STATUSES = new Set([
   "waitlisted",
   "review",
   "interview",
+  "for_assessment",
+  "assessment_scheduled",
+  "assessment_failed",
   "enrolled",
   "ready_to_apply",
 ]);
@@ -175,15 +178,18 @@ export async function assignBatchIfApplicable(
 
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   ready_to_apply: ["pending", "cancelled"],
-  pending: ["confirmed", "rejected", "waitlisted", "cancelled"],
+  pending: ["confirmed", "rejected", "waitlisted", "review", "cancelled"],
   waitlisted: ["pending", "confirmed", "rejected", "cancelled"],
-  confirmed: ["enrolled", "rejected", "cancelled"],
-  enrolled: ["completed", "cancelled"],
+  confirmed: ["enrolled", "review", "interview", "for_assessment", "rejected", "cancelled"],
+  review: ["pending", "confirmed", "interview", "for_assessment", "rejected", "cancelled"],
+  interview: ["for_assessment", "confirmed", "rejected", "cancelled"],
+  for_assessment: ["assessment_scheduled", "enrolled", "rejected", "cancelled"],
+  assessment_scheduled: ["enrolled", "assessment_failed", "for_assessment", "cancelled"],
+  assessment_failed: ["for_assessment", "assessment_scheduled", "rejected", "cancelled"],
+  enrolled: ["completed", "for_assessment", "assessment_scheduled", "cancelled"],
   completed: [],
   rejected: [],
   cancelled: [],
-  review: ["pending", "confirmed", "rejected", "cancelled"],
-  interview: ["pending", "confirmed", "rejected", "cancelled"],
 };
 
 export function isStatusTransitionAllowed(from: string, to: string): boolean {

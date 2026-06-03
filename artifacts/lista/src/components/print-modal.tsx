@@ -109,6 +109,7 @@ export default function PrintModal({
               <p className="font-black text-foreground text-sm">{enrollment.traineeName}</p>
               <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
                 {enrollment.refNo}
+                {hasFillWarnings ? " · Draft preview" : " · Final form"}
               </p>
             </div>
           </div>

@@ -5,6 +5,8 @@ import traineesRouter from "./trainees.js";
 import usersRouter from "./users.js";
 import enrollmentsRouter from "./enrollments.js";
 import batchesRouter from "./batches.js";
+import announcementsRouter from "./announcements.js";
+import settingsRouter from "./settings.js";
 import authProxyRouter from "./auth-proxy.js";
 import homepageChatRouter from "./homepage-chat.js";
 
@@ -17,6 +19,8 @@ router.use(dataRouter);
 router.use("/users", usersRouter);
 router.use("/enrollments", enrollmentsRouter);
 router.use("/batches", batchesRouter);
+router.use("/announcements", announcementsRouter);
+router.use("/settings", settingsRouter);
 router.use("/trainees", traineesRouter);
 
 export default router;

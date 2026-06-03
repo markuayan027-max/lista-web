@@ -33,6 +33,10 @@ import QuickApplyModal from "@/components/trainee/quick-apply-modal";
 import { useQueryClient } from "@tanstack/react-query";
 import { courseTitleBySlug } from "@/lib/lista-insforge-data";
 import type { Enrollment } from "@/lib/institutional-data";
+import {
+  TRAINEE_PIPELINE_STEPS,
+  pipelineStepIndexForStatus,
+} from "@/lib/enrollment-domain";
 import { format } from "date-fns";
 import {
   calculateProfileCompletion,
@@ -342,35 +346,65 @@ export default function TraineeDashboardPage() {
                     if (statusLower === 'rejected') {
                       return <div className="w-full text-center text-destructive font-semibold py-2 bg-destructive/10 rounded-lg">Application Rejected</div>;
                     }
+                    if (statusLower === 'assessment_failed') {
+                      return (
+                        <div className="w-full text-center text-amber-800 font-semibold py-2 bg-amber-500/10 rounded-lg text-sm">
+                          Competency assessment not passed — contact staff for next steps.
+                        </div>
+                      );
+                    }
 
-                    const steps = ['Submitted', 'Review', 'Interview', 'Enrolled'];
-                    
-                    let currentStepIndex = 0; // Default to 0 for no active app
-                    if (statusLower === 'pending' || statusLower === 'submitted') currentStepIndex = 1;
-                    else if (statusLower === 'review') currentStepIndex = 2;
-                    else if (statusLower === 'interview') currentStepIndex = 3;
-                    else if (statusLower === 'approved' || statusLower === 'enrolled') currentStepIndex = 4;
-                    
-                    const progressWidth = currentStepIndex === 0 ? "0%" : `${((currentStepIndex - 1) / (steps.length - 1)) * 100}%`;
+                    const steps = TRAINEE_PIPELINE_STEPS.map((step) => {
+                      const short: Record<string, string> = {
+                        submitted: "Submitted",
+                        review: "Review",
+                        interview: "Interview",
+                        assessment: "Assessment",
+                        training: "Training",
+                        certification: "NC",
+                      };
+                      return short[step.id] ?? step.label;
+                    });
+                    const currentStepIndex = pipelineStepIndexForStatus(statusLower);
+                    const progressWidth =
+                      currentStepIndex <= 0
+                        ? "0%"
+                        : `${((currentStepIndex - 1) / (steps.length - 1)) * 100}%`;
 
                     return (
-                      <div className="flex items-center justify-between relative">
-                        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-muted rounded-full" />
-                        <div className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-primary rounded-full transition-all duration-500" style={{ width: progressWidth }} />
+                      <div
+                        className="flex items-center justify-between relative"
+                        role="list"
+                        aria-label="Enrollment progress"
+                      >
+                        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-muted rounded-full" aria-hidden />
+                        <div
+                          className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-primary rounded-full transition-all duration-500"
+                          style={{ width: progressWidth }}
+                          aria-hidden
+                        />
                         {steps.map((step, i) => {
-                          const isCompleted = i < currentStepIndex;
-                          const isCurrent = i === currentStepIndex - 1 || (currentStepIndex === 0 && i === 0);
-                          
+                          const isCompleted = currentStepIndex > 0 && i < currentStepIndex;
+                          const isCurrent =
+                            currentStepIndex > 0 && i === currentStepIndex - 1;
+
                           return (
-                            <div key={step} className="relative flex flex-col items-center gap-2 bg-card px-2 z-10">
-                              <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 transition-colors ${
-                                isCompleted ? 'bg-primary border-primary text-primary-foreground' : 
-                                isCurrent && currentStepIndex > 0 ? 'bg-background border-primary text-primary' : 
-                                'bg-background border-muted text-muted-foreground'
-                              }`}>
+                            <div key={step} className="relative flex flex-col items-center gap-2 bg-card px-1 z-10" role="listitem">
+                              <div
+                                className={`w-8 h-8 rounded-full flex items-center justify-center border-2 transition-colors text-xs ${
+                                  isCompleted
+                                    ? "bg-primary border-primary text-primary-foreground"
+                                    : isCurrent
+                                      ? "bg-background border-primary text-primary"
+                                      : "bg-background border-muted text-muted-foreground"
+                                }`}
+                                aria-current={isCurrent ? "step" : undefined}
+                              >
                                 {i + 1}
                               </div>
-                              <span className="text-xs font-semibold">{step}</span>
+                              <span className="text-[10px] sm:text-xs font-semibold text-center leading-tight max-w-[3.5rem]">
+                                {step}
+                              </span>
                             </div>
                           );
                         })}

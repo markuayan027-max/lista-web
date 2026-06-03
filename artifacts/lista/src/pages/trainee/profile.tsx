@@ -38,6 +38,7 @@ import {
 } from "@/lib/profile-utils";
 import { ProfileSkeleton } from "@/components/skeletons";
 import TraineeProfileIntegrityCard from "@/components/trainee-profile-integrity-card";
+import TesdaRequirementsChecklist from "@/components/tesda-requirements-checklist";
 import { buildEnrollmentForOfficialForm } from "@/lib/build-official-form-enrollment";
 import { DocumentUpload } from "@/components/document-upload";
 import {
@@ -819,6 +820,11 @@ export default function TraineeProfilePage() {
 
               {activeTab === "docs" && (
                 <motion.div variants={item} className="space-y-6">
+                  <TesdaRequirementsChecklist
+                    profile={mergedEnrollment}
+                    documents={mergedEnrollment.documents}
+                    compact
+                  />
                   <p className="text-sm text-muted-foreground">
                     Upload your enrollment requirements. Files appear on your official TESDA application form.
                   </p>

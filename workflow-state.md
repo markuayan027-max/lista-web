@@ -1,6 +1,6 @@
 # LISTA Project — Workflow State
 
-**Last Updated:** 2026-06-01 (interaction feedback I1–I3 automated — **10/10** Playwright)
+**Last Updated:** 2026-06-03 (Phase 3 — announcements RBAC API, server site settings, trainee stepper, Playwright)
 
 > Read this before starting. Update when you finish or hand off.
 
@@ -11,6 +11,8 @@
 ---
 
 ## Completed
+
+- **Phase 3 (2026-06-03):** `POST/PATCH/DELETE /api/announcements` (staff create, admin edit/delete) + cache invalidation; `GET/PUT /api/settings/site` (admin persist); client mutations via API; trainee dashboard uses `TRAINEE_PIPELINE_STEPS`; Playwright `tests/enrollment-phase3.spec.ts` + RBAC API cases in `security-rbac.spec.ts`.
 
 - **Step 1:** P0 runtime crashes
 - **Step 2:** tracking + official TESDA form

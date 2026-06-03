@@ -19,11 +19,8 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription
 } from "@/components/ui/dialog";
 import { useCourseBatches, useCourses, useEnrollments } from "@/hooks/use-lista-data";
-import {
-  exportTraineesToExcel,
-  exportSingleTraineeToWord,
-  exportAllTraineesToWord,
-} from "@/lib/export-utils";
+import { exportTraineesToExcel } from "@/lib/export-utils";
+import AdminTesdaPdfExportPortal from "@/components/admin-tesda-pdf-export-portal";
 import type { Enrollment } from "@/lib/institutional-data";
 import { format } from "date-fns";
 
@@ -47,6 +44,7 @@ export default function AdminExportPage() {
   const [exportingId, setExportingId] = useState<string | null>(null);
   const [batchLoading, setBatchLoading] = useState<string | null>(null);
   const [previewEnrollment, setPreviewEnrollment] = useState<Enrollment | null>(null);
+  const [pdfExportEnrollment, setPdfExportEnrollment] = useState<Enrollment | null>(null);
 
   const filtered = enrollments.filter((e) => {
     const q = search.toLowerCase();
@@ -63,15 +61,22 @@ export default function AdminExportPage() {
     return matchesSearch && matchesStatus && matchesBatch;
   });
 
-  const doExport = async (fn: () => Promise<void> | void, id: string) => {
+  const startPdfExport = (enrollment: Enrollment, id: string) => {
     setExportingId(id);
-    try {
-      await fn();
-      toast({ title: "Export Successful", description: "File downloaded successfully." });
-    } catch {
-      toast({ title: "Export Failed", description: "Could not generate file.", variant: "destructive" });
-    } finally {
-      setExportingId(null);
+    setPdfExportEnrollment(enrollment);
+  };
+
+  const finishPdfExport = (success: boolean) => {
+    setPdfExportEnrollment(null);
+    setExportingId(null);
+    if (success) {
+      toast({ title: "PDF downloaded", description: "Official TESDA application form (A4, 2 pages)." });
+    } else {
+      toast({
+        title: "PDF export failed",
+        description: "Could not generate the application form PDF.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -103,8 +108,8 @@ export default function AdminExportPage() {
           <div className="relative z-10 max-w-2xl">
             <h1 className="text-3xl font-bold tracking-tight">Admission Records Center</h1>
             <p className="text-primary-foreground/80 mt-2">
-              Download trainee application forms (Word/PDF) for printing, and Excel sheets for batch processing in the
-              Batch Excel tab.
+              Download official TESDA application forms as PDF for printing, and Excel sheets for batch processing in
+              the Batch Excel tab.
             </p>
           </div>
         </div>
@@ -122,7 +127,7 @@ export default function AdminExportPage() {
           </TabsList>
         </motion.div>
 
-        {/* ── Per-trainee application form (Word/PDF) ── */}
+        {/* ── Per-trainee application form (PDF) ── */}
         <TabsContent value="trainees" className="space-y-4 mt-4">
           <motion.div variants={itemVariants} className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
@@ -231,10 +236,8 @@ export default function AdminExportPage() {
                                 size="icon"
                                 className="h-8 w-8 opacity-0 group-hover:opacity-100 text-blue-600"
                                 disabled={exportingId === `${rowId}-doc`}
-                                onClick={() =>
-                                  doExport(() => exportSingleTraineeToWord(e), `${rowId}-doc`)
-                                }
-                                title="PDF export application form"
+                                onClick={() => startPdfExport(e, `${rowId}-doc`)}
+                                title="Download PDF application form"
                               >
                                 {exportingId === `${rowId}-doc` ? (
                                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -254,7 +257,7 @@ export default function AdminExportPage() {
           </motion.div>
         </TabsContent>
 
-        {/* ── Batch Excel / Word ── */}
+        {/* ── Batch Excel ── */}
         <TabsContent value="batch" className="mt-4 space-y-3">
           <p className="text-sm text-muted-foreground max-w-3xl rounded-lg border border-border bg-muted/40 px-4 py-3">
             <strong className="font-semibold text-foreground">Batch / cohort tip:</strong> target roughly 25 trainees per class. Use the Trainees tab search and status filter, then run{" "}
@@ -288,36 +291,6 @@ export default function AdminExportPage() {
                     <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Generating…</>
                   ) : (
                     <><Download className="h-4 w-4 mr-2" /> Download Excel</>
-                  )}
-                </Button>
-              </CardFooter>
-            </Card>
-
-            {/* All trainees Word */}
-            <Card className="border-card-border shadow-sm hover:border-blue-300 transition-colors">
-              <CardHeader>
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center shrink-0">
-                    <FileText className="h-6 w-6 text-blue-600" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-lg">All Trainees — Word</CardTitle>
-                    <CardDescription className="mt-1">
-                      Export all {enrollments.length} trainee record(s) as a combined Word document suitable for printing.
-                    </CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardFooter className="border-t border-card-border pt-4">
-                <Button
-                  className="w-full font-semibold bg-primary-indigo hover:bg-primary-indigo/90 text-primary-foreground"
-                  disabled={batchLoading === "word"}
-                  onClick={() => doBatch(() => exportAllTraineesToWord(enrollments), "word")}
-                >
-                  {batchLoading === "word" ? (
-                    <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Generating…</>
-                  ) : (
-                    <><Download className="h-4 w-4 mr-2" /> Download Word</>
                   )}
                 </Button>
               </CardFooter>
@@ -396,9 +369,10 @@ export default function AdminExportPage() {
                 variant="outline"
                 size="sm"
                 className="flex-1 text-blue-700 border-blue-300 hover:bg-blue-50"
-                onClick={async () => {
-                  await exportSingleTraineeToWord(previewEnrollment);
+                onClick={() => {
+                  const target = previewEnrollment;
                   setPreviewEnrollment(null);
+                  startPdfExport(target, `preview-${target.id}`);
                 }}
               >
                 <FileText className="h-4 w-4 mr-2" /> PDF application form
@@ -406,6 +380,13 @@ export default function AdminExportPage() {
             </div>
           </DialogContent>
         </Dialog>
+      )}
+
+      {pdfExportEnrollment && (
+        <AdminTesdaPdfExportPortal
+          enrollment={pdfExportEnrollment}
+          onDone={finishPdfExport}
+        />
       )}
     </motion.div>
   );

@@ -23,6 +23,35 @@ test.describe("API authorization", () => {
     expect(res.status()).toBe(401);
   });
 
+  test("POST /api/announcements without token returns 401", async ({ request }) => {
+    const res = await request.post(`${API_BASE}/api/announcements`, {
+      data: { title: "T", body: "B", targetRole: "all" },
+    });
+    expect(res.status()).toBe(401);
+  });
+
+  test("PATCH /api/announcements/:id without token returns 401", async ({ request }) => {
+    const res = await request.patch(
+      `${API_BASE}/api/announcements/00000000-0000-0000-0000-000000000001`,
+      { data: { title: "T", body: "B", targetRole: "all" } },
+    );
+    expect(res.status()).toBe(401);
+  });
+
+  test("PUT /api/settings/site without token returns 401", async ({ request }) => {
+    const res = await request.put(`${API_BASE}/api/settings/site`, {
+      data: {
+        institutionName: "LISTA",
+        supportEmail: "admin@example.com",
+        phoneNumber: "09000000000",
+        address: "Test",
+        primaryColor: "#0f172a",
+        accentColor: "#3b82f6",
+      },
+    });
+    expect(res.status()).toBe(401);
+  });
+
   test("GET /api/trainees/profile cannot read another user's email with trainee token", async ({
     request,
   }) => {

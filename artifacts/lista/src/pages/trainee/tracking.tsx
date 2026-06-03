@@ -19,6 +19,12 @@ import { Link } from "wouter";
 import { useCourses, useTraineeProfile, useTraineeProfileBundle, listaKeys } from "@/hooks/use-lista-data";
 import StatusBadge from "@/components/status-badge";
 import { enrollmentStatusIs } from "@/lib/enrollment-status";
+import {
+  ENROLLMENT_STATUS_GUIDANCE,
+  ENROLLMENT_STATUS_LABELS,
+  TRAINEE_PIPELINE_STEPS,
+  pipelineStepIndexForStatus,
+} from "@/lib/enrollment-domain";
 import { useQueryClient } from "@tanstack/react-query";
 import { courseTitleBySlug } from "@/lib/lista-insforge-data";
 import type { Enrollment } from "@/lib/institutional-data";
@@ -55,29 +61,25 @@ const item = {
   show: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 300, damping: 24 } },
 };
 
-const TIMELINE_STEPS = [
-  { id: "submitted", label: "Application Submitted", sub: "We have received your application." },
-  { id: "review", label: "Under Review", sub: "We are reviewing your profile and documents." },
-  { id: "interview", label: "Interview / Assessment", sub: "Pending technical assessment." },
-  { id: "enrolled", label: "Enrolled", sub: "Admission completed successfully." },
-] as const;
+const TIMELINE_STEPS = TRAINEE_PIPELINE_STEPS.map((step) => ({
+  id: step.id,
+  label: step.label,
+  sub:
+    step.id === "submitted"
+      ? "We have received your application."
+      : step.id === "assessment"
+        ? "Competency assessment with TESDA-accredited assessors when scheduled."
+        : step.id === "certification"
+          ? "Training complete — watch your Gmail for the official TESDA NC."
+          : "In progress — check status updates below.",
+}));
 
-const STATUS_LABELS: Record<string, string> = {
-  pending: "Pending Review",
-  review: "Under Review",
-  interview: "Interview / Assessment",
-  enrolled: "Enrolled",
-  confirmed: "Confirmed",
-  completed: "Completed",
-  cancelled: "Cancelled",
-  rejected: "Rejected",
-  waitlisted: "Waitlisted",
-  ready_to_apply: "Profile Only",
-};
+const STATUS_LABELS: Record<string, string> = { ...ENROLLMENT_STATUS_LABELS };
 
 const STATUS_GUIDANCE: Record<string, string> = {
-  pending: "Your application is in the queue. Staff will review it soon — check back here for updates.",
-  review: "Our team is verifying your documents. You may be contacted if anything is missing.",
+  ...ENROLLMENT_STATUS_GUIDANCE,
+  pending: ENROLLMENT_STATUS_GUIDANCE.pending ?? "Your application is in the queue. Staff will review it soon — check back here for updates.",
+  review: ENROLLMENT_STATUS_GUIDANCE.review ?? "Our team is verifying your documents. You may be contacted if anything is missing.",
   interview: "Prepare for your assessment. Watch your email and SMS for schedule details.",
   enrolled: "Congratulations — you are enrolled. Visit Schedule for class details.",
   confirmed: "Your slot is confirmed. Download your official form for your records.",
@@ -91,6 +93,9 @@ const PRINTABLE_STATUSES = new Set([
   "pending",
   "review",
   "interview",
+  "for_assessment",
+  "assessment_scheduled",
+  "assessment_failed",
   "enrolled",
   "confirmed",
   "completed",
@@ -119,11 +124,7 @@ function displayField(value: string | null | undefined, fallback = "Not specifie
 }
 
 function timelineStepIndex(statusLower: string): number {
-  if (["pending", "submitted"].includes(statusLower)) return 1;
-  if (statusLower === "review" || statusLower === "waitlisted") return 2;
-  if (statusLower === "interview") return 3;
-  if (["enrolled", "confirmed", "completed"].includes(statusLower)) return 4;
-  return 0;
+  return pipelineStepIndexForStatus(statusLower);
 }
 
 type TrackingView =

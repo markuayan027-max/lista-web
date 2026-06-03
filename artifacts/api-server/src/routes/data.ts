@@ -8,6 +8,12 @@ import {
   setCachedCourses,
 } from "../lib/courses-cache";
 import { MOCK_ANNOUNCEMENTS } from "../lib/announcements-mock.js";
+import {
+  ANNOUNCEMENTS_CACHE_TTL_MS,
+  getAnnouncementsCache,
+  invalidateAnnouncementsCache,
+  setAnnouncementsCache,
+} from "../lib/announcements-cache.js";
 import { MOCK_COURSES } from "../lib/courses-mock.js";
 
 const router = Router();
@@ -75,13 +81,12 @@ router.get("/courses", async (req, res) => {
   }
 });
 
-const ANNOUNCEMENTS_CACHE_TTL_MS = 60_000;
-let announcementsCache: { data: unknown; cachedAt: number } | null = null;
 
 router.get("/announcements", async (req, res) => {
   const forceRefresh = req.query.refresh === "1" || req.query.refresh === "true";
-  if (forceRefresh) announcementsCache = null;
+  if (forceRefresh) invalidateAnnouncementsCache();
 
+  const announcementsCache = getAnnouncementsCache();
   if (
     !forceRefresh &&
     announcementsCache &&
@@ -93,12 +98,12 @@ router.get("/announcements", async (req, res) => {
 
   try {
     const data = await db.select().from(announcements);
-    announcementsCache = { data, cachedAt: Date.now() };
+    setAnnouncementsCache(data);
     res.setHeader("X-Lista-Cache", "MISS");
     return res.json(data);
   } catch (err) {
     logger.warn({ err }, "Database query failed for /announcements, using mock seed data");
-    announcementsCache = { data: MOCK_ANNOUNCEMENTS, cachedAt: Date.now() };
+    setAnnouncementsCache(MOCK_ANNOUNCEMENTS);
     res.setHeader("X-Lista-Source", "mock");
     return res.json(MOCK_ANNOUNCEMENTS);
   }

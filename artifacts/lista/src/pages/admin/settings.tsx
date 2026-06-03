@@ -16,6 +16,7 @@ import {
   loadSiteSettings,
   saveSiteSettings,
 } from "@/lib/public-data-utils";
+import { fetchSiteSettingsFromApi, saveSiteSettingsToApi } from "@/lib/lista-insforge-data";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -44,16 +45,39 @@ export default function AdminSettingsPage() {
   const [settings, setSettings] = useState<SiteSettings>(() => defaultSiteSettings());
 
   useEffect(() => {
-    setSettings(loadSiteSettings());
+    let cancelled = false;
+    (async () => {
+      const api = await fetchSiteSettingsFromApi();
+      if (cancelled) return;
+      if (api.success) {
+        setSettings(api.data);
+        saveSiteSettings(api.data);
+      } else {
+        setSettings(loadSiteSettings());
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setIsSaving(true);
     try {
-      saveSiteSettings(settings);
+      const result = await saveSiteSettingsToApi(settings);
+      if (!result.success) {
+        toast({
+          title: "Save failed",
+          description: result.error,
+          variant: "destructive",
+        });
+        return;
+      }
+      saveSiteSettings(result.data);
+      setSettings(result.data);
       toast({
         title: "Settings saved",
-        description: "Academy profile preferences are stored for this browser session.",
+        description: "Academy profile is stored on the server for all users.",
       });
     } finally {
       setIsSaving(false);
