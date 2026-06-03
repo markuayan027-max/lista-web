@@ -1,0 +1,50 @@
+[
+  {
+    "role": "Admin",
+    "email": "campionsamuelnapone.0000@gmail.com",
+    "login": {
+      "success": false,
+      "error": "Redirected to unexpected URL: https://lista.dpdns.org/login"
+    },
+    "pages": [],
+    "overall": {
+      "score": 70,
+      "issues": [],
+      "recommendations": [
+        "Good UI/UX - address identified issues"
+      ]
+    }
+  },
+  {
+    "role": "Staff",
+    "email": "dracs008@gmail.com",
+    "login": {
+      "success": false,
+      "error": "Redirected to unexpected URL: https://lista.dpdns.org/login"
+    },
+    "pages": [],
+    "overall": {
+      "score": 70,
+      "issues": [],
+      "recommendations": [
+        "Good UI/UX - address identified issues"
+      ]
+    }
+  },
+  {
+    "role": "Trainee",
+    "email": "campioncheryl498@gmail.com",
+    "login": {
+      "success": false,
+      "error": "Redirected to unexpected URL: https://lista.dpdns.org/login"
+    },
+    "pages": [],
+    "overall": {
+      "score": 70,
+      "issues": [],
+      "recommendations": [
+        "Good UI/UX - address identified issues"
+      ]
+    }
+  }
+]

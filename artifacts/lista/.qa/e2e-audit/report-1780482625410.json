@@ -1,0 +1,148 @@
+[
+  {
+    "role": "Admin",
+    "email": "campionsamuelnapone.0000@gmail.com",
+    "login": {
+      "success": true,
+      "error": null
+    },
+    "pages": [
+      {
+        "path": "/admin",
+        "desktop": {
+          "screenshot": ".qa/e2e-audit/admin-desktop-1280.png",
+          "loadTime": 5496,
+          "issues": [
+            "Page appears to have no visible content"
+          ]
+        },
+        "mobile": {
+          "screenshot": ".qa/e2e-audit/admin-mobile-390.png",
+          "loadTime": 9603,
+          "issues": []
+        }
+      },
+      {
+        "path": "/admin/announcements",
+        "desktop": {
+          "screenshot": ".qa/e2e-audit/admin-announcements-desktop-1280.png",
+          "loadTime": 4977,
+          "issues": []
+        }
+      },
+      {
+        "path": "/admin/enrollments",
+        "desktop": {
+          "screenshot": ".qa/e2e-audit/admin-enrollments-desktop-1280.png",
+          "loadTime": 3558,
+          "issues": []
+        }
+      }
+    ],
+    "overall": {
+      "score": 95,
+      "issues": [
+        "Page appears to have no visible content"
+      ],
+      "recommendations": [
+        "Excellent UI/UX - maintain current standards"
+      ]
+    }
+  },
+  {
+    "role": "Staff",
+    "email": "dracs008@gmail.com",
+    "login": {
+      "success": true,
+      "error": null
+    },
+    "pages": [
+      {
+        "path": "/staff",
+        "desktop": {
+          "screenshot": ".qa/e2e-audit/staff-desktop-1280.png",
+          "loadTime": 7932,
+          "issues": []
+        },
+        "mobile": {
+          "screenshot": ".qa/e2e-audit/staff-mobile-390.png",
+          "loadTime": 7645,
+          "issues": []
+        }
+      },
+      {
+        "path": "/staff/announcements",
+        "desktop": {
+          "screenshot": ".qa/e2e-audit/staff-announcements-desktop-1280.png",
+          "loadTime": 6212,
+          "issues": []
+        }
+      },
+      {
+        "path": "/staff/enrollments",
+        "desktop": {
+          "screenshot": ".qa/e2e-audit/staff-enrollments-desktop-1280.png",
+          "loadTime": 6236,
+          "issues": []
+        }
+      }
+    ],
+    "overall": {
+      "score": 100,
+      "issues": [],
+      "recommendations": [
+        "Excellent UI/UX - maintain current standards"
+      ]
+    }
+  },
+  {
+    "role": "Trainee",
+    "email": "campioncheryl498@gmail.com",
+    "login": {
+      "success": true,
+      "error": null
+    },
+    "pages": [
+      {
+        "path": "/trainee",
+        "desktop": {
+          "screenshot": ".qa/e2e-audit/trainee-desktop-1280.png",
+          "loadTime": 1412,
+          "issues": [
+            "Page appears to have no visible content"
+          ]
+        },
+        "mobile": {
+          "screenshot": ".qa/e2e-audit/trainee-mobile-390.png",
+          "loadTime": 5892,
+          "issues": []
+        }
+      },
+      {
+        "path": "/trainee/application",
+        "desktop": {
+          "screenshot": ".qa/e2e-audit/trainee-application-desktop-1280.png",
+          "loadTime": 7803,
+          "issues": []
+        }
+      },
+      {
+        "path": "/trainee/tracking",
+        "desktop": {
+          "screenshot": ".qa/e2e-audit/trainee-tracking-desktop-1280.png",
+          "loadTime": 6375,
+          "issues": []
+        }
+      }
+    ],
+    "overall": {
+      "score": 95,
+      "issues": [
+        "Page appears to have no visible content"
+      ],
+      "recommendations": [
+        "Excellent UI/UX - maintain current standards"
+      ]
+    }
+  }
+]

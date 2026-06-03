@@ -1,0 +1,50 @@
+[
+  {
+    "role": "Admin",
+    "email": "campionsamuelnapone.0000@gmail.com",
+    "login": {
+      "success": false,
+      "error": "Unexpected redirect to: https://accounts.google.com/v3/signin/identifier?opparams=%253F&dsh=S1680118682%3A1780482487645643&access_type=offline&client_id=794363993868-49lpd80vt8be3mkjpaj0dqe5i093h1tb.apps.googleusercontent.com&o2v=2&redirect_uri=https%3A%2F%2F2r6c3q25.ap-southeast.insforge.app%2Fapi%2Fauth%2Foauth%2Fgoogle%2Fcallback&response_type=code&scope=openid+email+profile&service=lso&state=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwcm92aWRlciI6Imdvb2dsZSIsInJlZGlyZWN0VXJpIjoiaHR0cHM6Ly9saXN0YS5kcGRucy5vcmcvYXV0aC9jYWxsYmFjayIsImNvZGVDaGFsbGVuZ2UiOiJhQzlCaXRiblZGR0NReDRiamRESlJhRXU4RW5PeWU2LWtPWjdVOGppTE9JIiwiY3JlYXRlZEF0IjoxNzgwNDgyNDg2NDM5LCJpYXQiOjE3ODA0ODI0ODYsImV4cCI6MTc4MDQ4NjA4Nn0.MSZM8D9MalhNMcadIXr6JHC52DDyBwa0dfOGZmjocjY&flowName=GeneralOAuthLite&continue=https%3A%2F%2Faccounts.google.com%2Fsignin%2Foauth%2Flegacy%2Fconsent%3Fauthuser%3Dunknown%26part%3DAJi8hANekaY61YvO-3suP1iCVj-ztolbc-eYbRqA-3l9xPE35TNLiXavvN6LPBDzQN1iJkxB7vIExQjGwXcebxeLGBVT1FmCyhR5OsMGW2VozcuS6bCKNE3B_6Rzn3U-OzqnJYpvgDGtBkEABOjg5uw4BT6nal6i6755w-eiuX1nA63W9Cmar3JsaFakomJIxMVye1W6CCSwinLj9tGSTyqpARx4bO4Z5rDStjOi8gdnjVwSohAkesYurFh3BD7xP1O-LIQwvncB47R1yWeVM9T7vmAurUvs37_1MsdEiDf6cGEkDfKMsoHqvUzB7QaKDb4FzK9I7cg0BLGg77zIhZ0qY0HG56kogh5YNbjD8KrDoM65BWUwV3TvJTgeY0OzA5JE9vdzk9CA5Aoxkc3TQiUlc595Nq4h0LB4jUqGQKg0Biomo74-n1rOaSxxWOp7gnH6VKpgyY5TAcaPPODOwoye25PMoGjcgxli7MaeNjRK3tEZOcLVtUQ%26flowName%3DGeneralOAuthFlow%26as%3DS1680118682%253A1780482487645643%26client_id%3D794363993868-49lpd80vt8be3mkjpaj0dqe5i093h1tb.apps.googleusercontent.com%23&app_domain=https%3A%2F%2F2r6c3q25.ap-southeast.insforge.app&rart=ANgoxcc7qwVAPBeGfWwW4mSX3KAzwQ4oC4H6BaJnjezYH7S9wDOFgWBWKl71wK3lxAQqYbP8gm5Dm9k4_iyA8OeLZONOGH9Yv-nY-YvxDOTigm15OmD7u8s"
+    },
+    "pages": [],
+    "overall": {
+      "score": 70,
+      "issues": [],
+      "recommendations": [
+        "Good UI/UX - address identified issues"
+      ]
+    }
+  },
+  {
+    "role": "Staff",
+    "email": "dracs008@gmail.com",
+    "login": {
+      "success": false,
+      "error": "Unexpected redirect to: https://accounts.google.com/v3/signin/identifier?opparams=%253F&dsh=S-618590931%3A1780482499319202&access_type=offline&client_id=794363993868-49lpd80vt8be3mkjpaj0dqe5i093h1tb.apps.googleusercontent.com&o2v=2&redirect_uri=https%3A%2F%2F2r6c3q25.ap-southeast.insforge.app%2Fapi%2Fauth%2Foauth%2Fgoogle%2Fcallback&response_type=code&scope=openid+email+profile&service=lso&state=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwcm92aWRlciI6Imdvb2dsZSIsInJlZGlyZWN0VXJpIjoiaHR0cHM6Ly9saXN0YS5kcGRucy5vcmcvYXV0aC9jYWxsYmFjayIsImNvZGVDaGFsbGVuZ2UiOiJ5VGhwd1c5NUpOUmdnZTQ2dFVNZm9wNmNPQjJfcUZCaHpsVjBCNERXekJNIiwiY3JlYXRlZEF0IjoxNzgwNDgyNDk4NzQ3LCJpYXQiOjE3ODA0ODI0OTgsImV4cCI6MTc4MDQ4NjA5OH0.0sBOaSJI8KwodOY4cwGsKIRGjNBsUzbrM9NRyrZg1vA&flowName=GeneralOAuthLite&continue=https%3A%2F%2Faccounts.google.com%2Fsignin%2Foauth%2Flegacy%2Fconsent%3Fauthuser%3Dunknown%26part%3DAJi8hAPFixxmAofTsRPyw5y005-6F9wgRLdGNAGIwkts58CQywp-lRQJ-D34S_rMiFHAardnhnf4zuQlTDQigQXV11doJ2zq8SQs4DnXWHzwp2xfOPjzXYZOENt87Y2M2iFheEHRw7XVNR4xdeRtC4IxUS-erQabx2PxjMOR3bAYcu-LI1RbLbqp23qtRU_DDT9tjMNgJG4bu-XkXHmpR1tpgbEHJLpVUTaTzZw1jKYmDhwRTj_dCur3EgIxzt_Ss0q7yh8nssUhHsAMX16WdB4diH7NNC2aGEwnY0bH96q4QTu8bxBM_mDdtYwNrFo89uo0kKWO70_G1Qk_aTzokNi_x60bzusvWUvC0lVbhGXFNJI6hpL52b7nwQaG2BQ9LV5TMwz6uZvcyC_jMg6D2sbKA7AwzJlcZ4Nky15cjg9wkUs8aEbZiTPiK2fdfNrmP8OiqHBHJkUAbpnMASMPBldHjnz1xYIRTCIzsLs60TaMsaCZ-9ZKX7U%26flowName%3DGeneralOAuthFlow%26as%3DS-618590931%253A1780482499319202%26client_id%3D794363993868-49lpd80vt8be3mkjpaj0dqe5i093h1tb.apps.googleusercontent.com%23&app_domain=https%3A%2F%2F2r6c3q25.ap-southeast.insforge.app&rart=ANgoxccuR9P_6kh_GbQpOBWm-BQqjDVLXtC36WtA6_YbWDDlzS6YzkRAEZCIj5qTX0I9iFmoCSQeXS0Aw9_5EEMP_t-i6X1VlCfRRsLrbMWyrQMnKF0RC6Y"
+    },
+    "pages": [],
+    "overall": {
+      "score": 70,
+      "issues": [],
+      "recommendations": [
+        "Good UI/UX - address identified issues"
+      ]
+    }
+  },
+  {
+    "role": "Trainee",
+    "email": "campioncheryl498@gmail.com",
+    "login": {
+      "success": false,
+      "error": "Unexpected redirect to: https://accounts.google.com/v3/signin/identifier?opparams=%253F&dsh=S-786079300%3A1780482509965463&access_type=offline&client_id=794363993868-49lpd80vt8be3mkjpaj0dqe5i093h1tb.apps.googleusercontent.com&o2v=2&redirect_uri=https%3A%2F%2F2r6c3q25.ap-southeast.insforge.app%2Fapi%2Fauth%2Foauth%2Fgoogle%2Fcallback&response_type=code&scope=openid+email+profile&service=lso&state=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwcm92aWRlciI6Imdvb2dsZSIsInJlZGlyZWN0VXJpIjoiaHR0cHM6Ly9saXN0YS5kcGRucy5vcmcvYXV0aC9jYWxsYmFjayIsImNvZGVDaGFsbGVuZ2UiOiJQMHBSNy1VRE4yTlBkTDZVTUNzUzRMVDdUSTY2cE1aTXgtNGJiTkp6N1l3IiwiY3JlYXRlZEF0IjoxNzgwNDgyNTA5Mzk3LCJpYXQiOjE3ODA0ODI1MDksImV4cCI6MTc4MDQ4NjEwOX0.-FTrzH-Yyo2DSuYBDZj2VMnFtKmRi4HqPxa9W45nI4Y&flowName=GeneralOAuthLite&continue=https%3A%2F%2Faccounts.google.com%2Fsignin%2Foauth%2Flegacy%2Fconsent%3Fauthuser%3Dunknown%26part%3DAJi8hAOCLyHmMuaxYP21XZoBWrE5VHZgyjbYUjH6IYTPj9wnemNHNoaQiweW5z-vYWH5bT00JYwIRXLGk1hlxs9NQkEveXAFanjwqOyM-Z7O3NVcpAtqBa2m1E-Ul0ntRo3GZEtsbWBGcQ6c1bgRzTS9WP3Yc8fWgxuvo9BqNm2gUDYGka1XstL_CZAcW5TyfQ67nqEghBw44nYMZxxWmIYFBr_gTBXq40y1SRPwX7zzZ084Oc20QtktnQLoWaRZkIpcjaLsEaFdIuoeXpKR9Spkk6LBee82_j5NLvjciUJD5GQcyQlRvx-WqzxtCMiBT_vpRIAfwEJbCGw2jThatNij4uPKNMeyUUv51pZIsLn-spv096o8xbpy9J_o8TYAzOZ5ANpV5FABXRcPybSnc-w30qw1EQNOoZ7AWMqP_GQAbvXtksLRAxkk19Q6TWOFTo9o5HsezNts39hV5fKzrrnKMnBEVMC0lT9msdcrvDSRxRVVizT98ac%26flowName%3DGeneralOAuthFlow%26as%3DS-786079300%253A1780482509965463%26client_id%3D794363993868-49lpd80vt8be3mkjpaj0dqe5i093h1tb.apps.googleusercontent.com%23&app_domain=https%3A%2F%2F2r6c3q25.ap-southeast.insforge.app&rart=ANgoxcemS2MI8Lpg0UtAK17c0MnrZ7Zjg_1nV-zAR_gTP-MXP6gCGDjgkieUWDo7aVKC30Wkb127BQ5z7Nd1BTmMzpsv0toOyhmO7Q5Su6aQVhK3ur54aX0"
+    },
+    "pages": [],
+    "overall": {
+      "score": 70,
+      "issues": [],
+      "recommendations": [
+        "Good UI/UX - address identified issues"
+      ]
+    }
+  }
+]
